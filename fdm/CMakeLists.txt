@@ -15,6 +15,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(BUILD_DOCS OFF CACHE INTERNAL "")
 
 ################################################################################
 # Define Project
