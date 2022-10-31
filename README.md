@@ -24,8 +24,8 @@
 assets/
     aircraft/
         <aircraft-name>.xml
-        <aircraft-name>_fcs.xml
-        <aircraft-name>_viz.xml
+        <!-- <aircraft-name>_fcs.xml -->
+        <!-- <aircraft-name>_viz.xml -->
         <aircraft-name>.obj
         <aircraft-name>_init_001.xml
     engine/

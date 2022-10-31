@@ -209,7 +209,56 @@
     </aerodynamics>
 
     <viz>
-        <root>sabre_light.001</root>
+        <!--
+            File might not be needed
+            User will supply any files to fill the required mesh names
+         -->
+        <properties>
+            <property> fcs/aileron </property>
+            <property> fcs/elevator </property>
+        </properties> 
+         
+        <file>rocket.obj</file>
+        <node name="sabre_light.001">
+            <node name="left_ailer">
+                <rotation>
+                    <property> fcs/aileron </property>
+                    <pivot>
+                        <x> 0.5 </x>
+                        <y> -2.5 </y>
+                        <z> 0.1 </z>
+                    </pivot>
+                    <axis>
+                        <x> 0.0 </x>
+                        <y> -1.0 </y>
+                        <z> 0.05 </z>
+                    </axis>
+                </rotation>
+            </node>
+        </node>
     </viz>
+
+    <user_control type="Joystick">
+        <mapping>
+            <from> channel_1 </from>
+            <to> user_control/roll  </to>
+        </mapping>
+
+        <mapping>
+            <from> channel_2 </from>
+            <to> user_control/pitch  </to>
+        </mapping>
+    </user_control>
+
+    <sitl type="JCS">
+        <to_sitl>
+            <property> user_control/aileron </property>
+            <property> user_control/elevator </property>
+        </to_sitl>
+
+        <from_sitl>
+            <property> fcs/aileron </property>
+        </from_sitl>
+    </sitl>
 
 </fdm_config>

@@ -1,0 +1,6 @@
+[submodule "fdm/lib/jsbsim"]
+	path = fdm/lib/jsbsim
+	url = git@github.com:JSBSim-Team/jsbsim.git
+[submodule "fdm/lib/json"]
+	path = fdm/lib/json
+	url = git@github.com:nlohmann/json.git
