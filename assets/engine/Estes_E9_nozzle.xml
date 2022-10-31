@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<nozzle name="Estes E9 nozzle">
+  <!--
+    area = nozzle exit area
+  -->
+  <area unit="FT2">  0.000368 </area>
+</nozzle>

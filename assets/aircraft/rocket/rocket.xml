@@ -1,0 +1,215 @@
+<?xml-stylesheet type="text/xsl" href="http://jsbsim.sourceforge.net/JSBSim.xsl"?>
+<fdm_config name="sabre light" version="2.0" release="BETA"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://jsbsim.sourceforge.net/JSBSim.xsd">
+
+    <fileheader>
+        <author> Jakub Výmola </author>
+        <filecreationdate> 2022-01-15 </filecreationdate>
+        <version> $id:sabre_light.xml v 0.02 2022/01/15 15:32:49 jentron Exp $ </version>
+        <description> Sabre light </description>
+    </fileheader>
+
+    <metrics>
+        <wingarea unit="M2"> 0.021 </wingarea>
+        <wingspan unit="M"> 0 </wingspan>
+        <chord unit="M"> 0.0 </chord>
+        <htailarea unit="M2"> 0.0021 </htailarea>
+        <htailarm unit="M"> 0.04 </htailarm>
+        <vtailarea unit="M2"> 0.0021 </vtailarea>
+        <vtailarm unit="M"> 0.04 </vtailarm>
+        <location name="AERORP" unit="M">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+        <location name="EYEPOINT" unit="M">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+        <location name="VRP" unit="IN">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+    </metrics>
+
+    <mass_balance>
+        <ixx unit="SLUG*FT2"> 0.14 </ixx>
+        <iyy unit="SLUG*FT2"> 0.14 </iyy>
+        <izz unit="SLUG*FT2"> 0.14 </izz>
+        <ixy unit="SLUG*FT2"> -0 </ixy>
+        <ixz unit="SLUG*FT2"> -0 </ixz>
+        <iyz unit="SLUG*FT2"> -0 </iyz>
+
+        <!-- 0.3 -->
+        <emptywt unit="KG">0.3</emptywt>
+        <location name="CG" unit="M">
+            <!-- 0.265 -->
+            <x> 0.265 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+    </mass_balance>
+
+    <ground_reactions>
+        <contact type="STRUCTURAL" name="BOTTOM_1">
+            <location unit="M">
+                <x> 0.57 </x>
+                <y> 0.05 </y>
+                <z> 0.0 </z>
+            </location>
+            <static_friction> 0.2 </static_friction>
+            <dynamic_friction> 0.2 </dynamic_friction>
+            <rolling_friction> 0.2 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 4 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 1 </damping_coeff>
+        </contact>
+
+        <contact type="STRUCTURAL" name="BOTTOM_2">
+            <location unit="M">
+                <x> 0.57 </x>
+                <y> -0.05 </y>
+                <z> 0.0 </z>
+            </location>
+            <static_friction> 0.2 </static_friction>
+            <dynamic_friction> 0.2 </dynamic_friction>
+            <rolling_friction> 0.2 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 4 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 1 </damping_coeff>
+        </contact>
+
+        <contact type="STRUCTURAL" name="BOTTOM_3">
+            <location unit="M">
+                <x> 0.57 </x>
+                <y> 0.0 </y>
+                <z> -0.05 </z>
+            </location>
+            <static_friction> 0.2 </static_friction>
+            <dynamic_friction> 0.2 </dynamic_friction>
+            <rolling_friction> 0.2 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 4 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 1 </damping_coeff>
+        </contact>
+
+        <contact type="STRUCTURAL" name="BOTTOM_4">
+            <location unit="M">
+                <x> 0.57 </x>
+                <y> 0.0 </y>
+                <z> 0.05 </z>
+            </location>
+            <static_friction> 0.2 </static_friction>
+            <dynamic_friction> 0.2 </dynamic_friction>
+            <rolling_friction> 0.2 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 4 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 1 </damping_coeff>
+        </contact>
+
+        <contact type="STRUCTURAL" name="TOP">
+            <location unit="M">
+                <x> 0.0 </x>
+                <y> 0.0 </y>
+                <z> 0.0 </z>
+            </location>
+            <static_friction> 0.2 </static_friction>
+            <dynamic_friction> 0.2 </dynamic_friction>
+            <rolling_friction> 0.2 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 20 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 1 </damping_coeff>
+        </contact>
+    </ground_reactions>
+
+    <propulsion>
+        <engine file="Estes_E9_mine">
+            <feed>0</feed>
+            <location unit="M">
+                <x> 0.50 </x>
+                <y> 0.0 </y>
+                <z> 0.0 </z>
+            </location>
+            <thruster file="Estes_E9_nozzle">
+                <location unit="M">
+                    <x> 0.57 </x>
+                    <y> 0.0 </y>
+                    <z> 0.0 </z>
+                </location>
+                <orient unit="DEG">
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 0.0 </z>
+                </orient>
+            </thruster>
+        </engine>
+
+        <tank type="FUEL">
+            <location unit="M">
+                <x> 0.50 </x>
+                <y> -0 </y>
+                <z>  0 </z>
+            </location>
+            <radius unit="M">0.03</radius>
+            <grain_config type="CYLINDRICAL">
+                <length unit="M">0.1</length>
+                <bore_diameter unit="M"> 0.01 </bore_diameter>
+            </grain_config>
+            <capacity unit="KG"> 0.013 </capacity>
+            <contents unit="KG"> 0.013 </contents>
+        </tank>
+    </propulsion>
+
+    <aerodynamics>
+        <!-- <axis name="DRAG">
+            <function name="aero/force/drag">
+                <description>Drag_minimum</description>
+                <product>
+                    <property>aero/qbar-psf</property>
+                    <property>metrics/Sw-sqft</property>
+                    <value>0.75</value>
+                </product>
+            </function>
+        </axis> -->
+
+        <axis name="LIFT">
+            <function name="aero/coefficient/Blabla">
+                <description>Constant_lift_force</description>
+                <value> 0.0 </value>
+            </function>
+        </axis>
+
+        <axis name="YAW">
+            <function name="aero/coefficient/Crc">
+                <description>Constant pitch force</description>
+                <product>
+                    <property>aero/qbar-psf</property>
+                    <value> 0.1 </value>
+                </product>
+            </function>
+        </axis>
+        
+        <!-- <axis name="PITCH">
+            <function name="aero/coefficient/Crc">
+                <description>Constant pitch force</description>
+                <product>
+                    <property>aero/qbar-psf</property>
+                    <value> 0.1 </value>
+                </product>
+            </function>
+        </axis> -->
+
+        <!-- <axis name="ROLL">
+            <function name="aero/coefficient/Crc">
+                <description>Constant pitch force</description>
+                <product>
+                    <property>aero/qbar-psf</property>
+                    <value> 0.1 </value>
+                </product>
+            </function>
+        </axis> -->
+    </aerodynamics>
+
+    <viz>
+        <root>sabre_light.001</root>
+    </viz>
+
+</fdm_config>

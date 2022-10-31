@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "noResolve": false,
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "preserveConstEnums": true,
+        "lib": ["dom", "es6"],
+        "rootDir": "src",
+        "types": [
+            "babylonjs",
+            "babylonjs-loaders",
+        ],
+    },
+}
