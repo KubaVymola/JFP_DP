@@ -28,8 +28,20 @@
             </condition>
             <set name="fcs/throttle-cmd-norm[0]" value="0.3" />
             <set name="fcs/throttle-cmd-norm[1]" value="0.3" />
-            <!-- <set name="fcs/throttle-cmd-norm[2]" value="0.3" /> -->
-            <!-- <set name="fcs/throttle-cmd-norm[3]" value="0.297" /> -->
+            <set name="fcs/throttle-cmd-norm[2]" value="0.297" />
+            <set name="fcs/throttle-cmd-norm[3]" value="0.297" />
+        </event>
+
+        <event>
+            <description>Start</description>
+            <notify />
+            <condition>
+                simulation/sim-time-sec ge 10.0
+            </condition>
+            <set name="fcs/throttle-cmd-norm[0]" value="0" />
+            <set name="fcs/throttle-cmd-norm[1]" value="0" />
+            <set name="fcs/throttle-cmd-norm[2]" value="0" />
+            <set name="fcs/throttle-cmd-norm[3]" value="0" />
         </event>
     </run>
 </runscript>

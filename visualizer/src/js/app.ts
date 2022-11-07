@@ -12,6 +12,8 @@ import {
     Color3,
     AxesViewer,
     CreatePlane,
+    CreateTiledPlane,
+    Texture,
 } from "@babylonjs/core";
 import { OBJFileLoader } from "babylonjs-loaders";
 
@@ -77,18 +79,35 @@ class App {
         axes.yAxis.parent = axesEntity;
         axes.zAxis.parent = axesEntity;
 
+        const tiledMaterial = new StandardMaterial("");
+        tiledMaterial.diffuseTexture = new Texture("../assets/tiled_grass.jpg");
+
+        const options = {
+            sideOrientation: Mesh.DOUBLESIDE,
+            pattern: Mesh.NO_FLIP,
+            width: 5,
+            height: 5,
+            tileSize: 1,
+            tileWidth:1
+        }
+
+        // const tiledPane = CreateTiledPlane("", options);
+        // tiledPane.material = mat;
+
+
         /**
          * Create basic ground
          */
-        const groundPlane = CreatePlane('groundPlane', { size: 200 });
+        const groundPlane = CreateTiledPlane('groundPlane', options);
         groundPlane.position = new Vector3(0, 0, 0);
         groundPlane.rotation = new Vector3(Math.PI, 0, 0);
         const groundPlaneEntity = createEntity('groundPlaneEntity', this.scene, this.camera);
         groundPlaneEntity.doublepos = new Vector3(0, 0, EARTH_RADIUS);
         groundPlane.parent = groundPlaneEntity;
-        var groundMaterial = new StandardMaterial('groundMaterial', this.scene);
-        groundMaterial.diffuseColor = new Color3(65 / 255, 152 / 255, 10 / 255);
-        groundPlane.material = groundMaterial;
+        groundPlane.material = tiledMaterial;
+        // var groundMaterial = new StandardMaterial('groundMaterial', this.scene);
+        // groundMaterial.diffuseColor = new Color3(65 / 255, 152 / 255, 10 / 255);
+         
         
         /**
          * Hide/show the Inspector
