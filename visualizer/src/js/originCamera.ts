@@ -31,7 +31,7 @@ class OriginCamera extends ArcRotateCamera {
         // this.doublepos = position;
         this.doubletgt = target;
 
-        this.lowerRadiusLimit = 0.3;
+        this.lowerRadiusLimit = 0.2;
         this.angularSensibilityX = 500;
         this.angularSensibilityY = 500;
 

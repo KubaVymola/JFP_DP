@@ -22,38 +22,44 @@ void sighandler(int signum) {
 }
 
 void message_thread(websocket_server* server_instance,
-                    sim_data_t* sim_data,
+                    json *sim_data,
                     std::mutex& sim_data_lock) {
     while (continue_running) {
         {
             std::lock_guard<std::mutex> guard(sim_data_lock);
 
-            json j;
-            j["altitude_m"] = sim_data->altitude_m;
-            j["latitude_deg"] = sim_data->latitude_deg;
-            j["latitude_rad"] = sim_data->latitude_rad;
-            j["longitude_deg"] = sim_data->longitude_deg;
-            j["longitude_rad"] = sim_data->longitude_rad;
+            // json j;
+            // sim_data["altitude_m"] = 500;
+            // j["altitude_m"] = sim_data->altitude_m;
+            // j["latitude_deg"] = sim_data->latitude_deg;
+            // j["latitude_rad"] = sim_data->latitude_rad;
+            // j["longitude_deg"] = sim_data->longitude_deg;
+            // j["longitude_rad"] = sim_data->longitude_rad;
 
-            j["euler_yaw"] = sim_data->euler_yaw;
-            j["euler_pitch"] = sim_data->euler_pitch;
-            j["euler_roll"] = sim_data->euler_roll;
+            // j["euler_yaw"] = sim_data->euler_yaw;
+            // j["euler_pitch"] = sim_data->euler_pitch;
+            // j["euler_roll"] = sim_data->euler_roll;
             
-            j["local_q_1"] = sim_data->local_q_1;
-            j["local_q_2"] = sim_data->local_q_2;
-            j["local_q_3"] = sim_data->local_q_3;
-            j["local_q_4"] = sim_data->local_q_4;
+            // j["local_q_1"] = sim_data->local_q_1;
+            // j["local_q_2"] = sim_data->local_q_2;
+            // j["local_q_3"] = sim_data->local_q_3;
+            // j["local_q_4"] = sim_data->local_q_4;
 
-            j["ecef_q_1"] = sim_data->ecef_q_1;
-            j["ecef_q_2"] = sim_data->ecef_q_2;
-            j["ecef_q_3"] = sim_data->ecef_q_3;
-            j["ecef_q_4"] = sim_data->ecef_q_4;
+            // j["ecef_q_1"] = sim_data->ecef_q_1;
+            // j["ecef_q_2"] = sim_data->ecef_q_2;
+            // j["ecef_q_3"] = sim_data->ecef_q_3;
+            // j["ecef_q_4"] = sim_data->ecef_q_4;
 
-            j["cg_x_m"] = sim_data->cg_x_m;
-            j["cg_y_m"] = sim_data->cg_y_m;
-            j["cg_z_m"] = sim_data->cg_z_m;
+            // j["cg_x_m"] = sim_data->cg_x_m;
+            // j["cg_y_m"] = sim_data->cg_y_m;
+            // j["cg_z_m"] = sim_data->cg_z_m;
+
+            // j["m0_rpm"] = sim_data->m0_rpm;
+            // j["m1_rpm"] = sim_data->m1_rpm;
+            // j["m2_rpm"] = sim_data->m2_rpm;
+            // j["m3_rpm"] = sim_data->m3_rpm;
             
-            server_instance->send_message(j.dump());
+            server_instance->send_message((*sim_data).dump());
         }
         
         usleep(1'000'000.0 / 60);
@@ -84,7 +90,9 @@ int main(int argc, char **argv) {
     websocket_server server_instance;
 
     std::mutex sim_data_lock;
-    sim_data_t sim_data;
+    json sim_data;
+    // sim_data_t sim_data;
+
 
     std::thread server_thread(std::bind(&websocket_server::run, &server_instance, 9002));
     std::thread push_thread(message_thread,

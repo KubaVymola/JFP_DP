@@ -63,4 +63,8 @@ function createEarth(scene: Scene, earthEntity: Entity): Mesh {
     return earthSphere;
 }
 
-export { createEntity, createCamera, createEarth };
+export {
+    createEntity,
+    createCamera,
+    createEarth,
+};

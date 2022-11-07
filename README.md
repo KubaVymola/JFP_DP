@@ -35,3 +35,11 @@ assets/
         <aircraft-name>_001.xml
         <aircraft-name>_002.xml
 ```
+
+## .obj requirements
+
+The craft, after loading, should have the nose to +x, up to -z and left -y. To achieve this, do the following in blender:
+
+1. The craft has fwd pointing to -x, left is to -y, and bottom to -z
+2. Export the craft with the following blender settings: +y forward, -z up
+3. Don't export materials

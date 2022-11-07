@@ -10,7 +10,7 @@
         <property> simulation/notify-time-trigger </property>
         <property value="1"> forces/hold-down </property>
 
-        <event name="engine start">
+        <!-- <event name="engine start">
             <description>Ignition</description>
             <notify/>
             <condition>
@@ -23,6 +23,6 @@
             <condition>forces/fbx-prop-lbs gt inertia/weight-lbs</condition>
             <set name="forces/hold-down" value="0"/>
             <notify/>
-        </event>
+        </event> -->
     </run>
 </runscript>

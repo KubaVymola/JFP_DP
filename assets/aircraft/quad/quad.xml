@@ -1,0 +1,140 @@
+<?xml-stylesheet type="text/xsl" href="http://jsbsim.sourceforge.net/JSBSim.xsl"?>
+<fdm_config name="quad" version="2.0" release="BETA"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://jsbsim.sourceforge.net/JSBSim.xsd">
+
+    <fileheader>
+        <author> Jakub Výmola </author>
+        <filecreationdate> 2022-10-31 </filecreationdate>
+        <version> $id:quad.xml v 0.01 2022/10/31 15:32:49 Exp $ </version>
+        <description> Quadrocopter </description>
+    </fileheader>
+
+    <metrics file="quad_metrics.xml" />
+
+    <mass_balance file="quad_mass.xml" />
+
+    <ground_reactions file="quad_ground.xml" />
+
+    <propulsion file="quad_propulsion.xml" />
+
+    <aerodynamics />
+
+
+    <!-- ==== JFP required nodes follow ==== -->
+
+    <viz>
+        <properties>
+            <!-- <property> fcs/aileron </property> -->
+            <!-- <property> fcs/elevator </property> -->
+            <property> fcs/throttle-rpm[0] </property>
+            <property> fcs/throttle-rpm[1] </property>
+            <property> fcs/throttle-rpm[2] </property>
+            <property> fcs/throttle-rpm[3] </property>
+        </properties> 
+        
+        <!--
+            File might not be needed
+            User will supply any files to fill the required mesh names
+         -->
+        <file>rocket.obj</file>
+        <node mesh="quad_body_quad.001">
+            <node mesh="front_right_prop_quad.004">
+                <spinner_property> m0_rpm  </spinner_property>
+                <prop_sense_property> m0_sense </prop_sense_property>
+                <pivot>
+                    <x> -0.068 </x>
+                    <y>  0.09  </y>
+                    <z>  0.0   </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 1.0 </z>
+                </axis>
+            </node>
+            <node mesh="aft_right_prop_quad.002">
+                <spinner_property> m3_rpm </spinner_property>
+                <prop_sense_property> m3_sense </prop_sense_property>
+                <pivot>
+                    <x> 0.065 </x>
+                    <y> 0.09  </y>
+                    <z> 0.0   </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 1.0 </z>
+                </axis>
+                <!-- <property_norm> fcs/throttle-rpm[3] </property_norm> -->
+            </node>
+            <node mesh="front_left_prop_quad.003">
+                <spinner_property> m2_rpm </spinner_property>
+                <prop_sense_property> m2_sense </prop_sense_property>
+                <pivot>
+                    <x> -0.065 </x>
+                    <y> -0.09  </y>
+                    <z>  0.0   </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 1.0 </z>
+                </axis>
+            </node>
+            <node mesh="aft_left_prop_quad">
+                <spinner_property> m1_rpm  </spinner_property>
+                <prop_sense_property> m1_sense </prop_sense_property>
+                <pivot>
+                    <x>  0.065 </x>
+                    <y> -0.09  </y>
+                    <z>  0.0   </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 1.0 </z>
+                </axis>
+            </node>
+
+            <!-- <node name="left_ailer">
+                <angle_property> fcs/aileron </angle_property>
+                <angle_offset> 0.0 </angle_offset>
+                <pivot>
+                    <x> 0.5 </x>
+                    <y> -2.5 </y>
+                    <z> 0.1 </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> -1.0 </y>
+                    <z> 0.05 </z>
+                </axis>
+            </node> -->
+        </node>
+    </viz>
+
+    <user_control type="Joystick">
+        <mapping>
+            <from> channel_1 </from>
+            <to> user_control/roll  </to>
+        </mapping>
+
+        <mapping>
+            <from> channel_2 </from>
+            <to> user_control/pitch  </to>
+        </mapping>
+    </user_control>
+
+    <sitl type="JCS">
+        <to_sitl>
+            <property> user_control/aileron </property>
+            <property> user_control/elevator </property>
+        </to_sitl>
+
+        <from_sitl>
+            <property> fcs/aileron </property>
+        </from_sitl>
+    </sitl>
+    
+</fdm_config>

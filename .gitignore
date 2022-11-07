@@ -20,3 +20,6 @@ CTestTestfile.cmake
 _deps
 
 node_modules/
+
+*.blend*
+*.mtl

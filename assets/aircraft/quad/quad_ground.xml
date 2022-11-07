@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ground_reactions>
+    <!-- Back-right contact point -->
+    <contact type="STRUCTURAL" name="BOTTOM_1">
+        <location unit="M">
+            <x>  0.07 </x>
+            <y>  0.09 </y>
+            <z> -0.02 </z>
+        </location>
+        <static_friction> 0.2 </static_friction>
+        <dynamic_friction> 0.2 </dynamic_friction>
+        <rolling_friction> 0.2 </rolling_friction>
+        <spring_coeff unit="N/M"> 1000 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+    </contact>
+
+    <!-- Front-right contact point -->
+    <contact type="STRUCTURAL" name="BOTTOM_2">
+        <location unit="M">
+            <x> -0.07 </x>
+            <y>  0.09 </y>
+            <z> -0.02 </z>
+        </location>
+        <static_friction> 0.2 </static_friction>
+        <dynamic_friction> 0.2 </dynamic_friction>
+        <rolling_friction> 0.2 </rolling_friction>
+        <spring_coeff unit="N/M"> 1000 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+    </contact>
+
+    <!-- Front-left contact point -->
+    <contact type="STRUCTURAL" name="BOTTOM_3">
+        <location unit="M">
+            <x> -0.07 </x>
+            <y> -0.09 </y>
+            <z> -0.02 </z>
+        </location>
+        <static_friction> 0.2 </static_friction>
+        <dynamic_friction> 0.2 </dynamic_friction>
+        <rolling_friction> 0.2 </rolling_friction>
+        <spring_coeff unit="N/M"> 1000 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+    </contact>
+
+    <!-- Back-left contact point -->
+    <contact type="STRUCTURAL" name="BOTTOM_4">
+        <location unit="M">
+            <x>  0.07 </x>
+            <y> -0.09 </y>
+            <z> -0.02 </z>
+        </location>
+        <static_friction> 0.2 </static_friction>
+        <dynamic_friction> 0.2 </dynamic_friction>
+        <rolling_friction> 0.2 </rolling_friction>
+        <spring_coeff unit="N/M"> 1000 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+    </contact>
+</ground_reactions>

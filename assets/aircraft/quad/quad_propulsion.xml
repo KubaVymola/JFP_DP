@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+
+<propulsion>
+    <!-- Front right -->
+    <engine file="Simple_quad_engine">
+        <thruster file="Quad_prop">
+            <location unit="M">
+                <x> -0.07 </x>
+                <y>  0.09 </y>
+                <z>  0.0  </z>
+            </location>
+            <orient unit="DEG">
+                <roll>  0.0  </roll>
+                <pitch> 90.0 </pitch>
+                <yaw>   0.0  </yaw>
+            </orient>
+            <sense> 1 </sense>
+            <p_factor>0.0</p_factor>
+        </thruster>
+    </engine>
+
+    <!-- Aft left -->
+    <engine file="Simple_quad_engine">
+        <thruster file="Quad_prop">
+            <location unit="M">
+                <x>  0.07 </x>
+                <y> -0.09 </y>
+                <z>  0.0  </z>
+            </location>
+            <orient unit="DEG">
+                <roll>  0.0  </roll>
+                <pitch> 90.0 </pitch>
+                <yaw>   0.0  </yaw>
+            </orient>
+            <sense> 1 </sense>
+            <p_factor>0.0</p_factor>
+        </thruster>
+    </engine>
+
+    <!-- Front left -->
+    <engine file="Simple_quad_engine">
+        <thruster file="Quad_prop">
+            <location unit="M">
+                <x> -0.07 </x>
+                <y> -0.09 </y>
+                <z>  0.0  </z>
+            </location>
+            <orient unit="DEG">
+                <roll>  0.0  </roll>
+                <pitch> 90.0 </pitch>
+                <yaw>   0.0  </yaw>
+            </orient>
+            <sense> -1 </sense>
+            <p_factor>0.0</p_factor>
+        </thruster>
+    </engine>
+
+    <!-- Aft right -->
+    <engine file="Simple_quad_engine">
+        <thruster file="Quad_prop">
+            <location unit="M">
+                <x> 0.07 </x>
+                <y> 0.09 </y>
+                <z> 0.0  </z>
+            </location>
+            <orient unit="DEG">
+                <roll>  0.0  </roll>
+                <pitch> 90.0 </pitch>
+                <yaw>   0.0  </yaw>
+            </orient>
+            <sense> -1 </sense>
+            <p_factor>0.0</p_factor>
+        </thruster>
+    </engine>
+</propulsion>

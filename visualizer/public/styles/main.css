@@ -5,11 +5,14 @@ html, body {
 
 #gameCanvas {
     width: 99vw;
-    height: 90vh;
+    height: 80vh;
 }
 
 #connectBar {
     display: flex;
-    margin: 15px 0px;
     gap: 5px;
+}
+
+div.v_space {
+    margin: 15px 0px;
 }

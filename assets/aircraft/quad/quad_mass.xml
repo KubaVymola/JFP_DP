@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mass_balance>
+    <!-- ? Orig from F450 -->
+    <!-- <ixx unit="KG*M2">0.0190</ixx> -->
+    <!-- <iyy unit="KG*M2">0.0190</iyy> -->
+    <!-- <izz unit="KG*M2">0.0252</izz> -->
+
+    <ixx unit="KG*M2">0.0290</ixx>
+    <iyy unit="KG*M2">0.0290</iyy>
+    <izz unit="KG*M2">0.0352</izz>
+    <ixy unit="SLUG*FT2"> 0 </ixy>
+    <ixz unit="SLUG*FT2"> 0 </ixz>
+    <iyz unit="SLUG*FT2"> 0 </iyz>
+
+    <emptywt unit="KG">0.6</emptywt>
+    <location name="CG" unit="M">
+        <x> 0 </x>
+        <y> 0 </y>
+        <z> 0 </z>
+    </location>
+</mass_balance>

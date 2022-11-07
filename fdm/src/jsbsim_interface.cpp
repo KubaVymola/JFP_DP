@@ -8,6 +8,9 @@
 #include "models/FGPropagate.h"
 #include "models/FGMassBalance.h"
 #include "simgear/misc/sg_path.hxx"
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
 
 JSBSim::FGFDMExec* FDMExec;
 
@@ -49,8 +52,8 @@ void sim_nsleep(long nanosec) {
 
 void jsbsim_init(const std::string& root_dir,
                  const std::string& script_path,
-                 bool* continue_running,
-                 sim_data_t* sim_data,
+                 bool *continue_running,
+                 json *sim_data,
                  std::mutex& sim_data_lock) {
     FDMExec = new JSBSim::FGFDMExec();
 
@@ -125,6 +128,8 @@ void jsbsim_init(const std::string& root_dir,
     tzset();
     current_seconds = initial_seconds = getcurrentseconds();
 
+    FDMExec->PrintPropertyCatalog();
+
     while (result && *continue_running && FDMExec->GetSimTime() <= end_time) {
         // Check if increment then hold is on and take appropriate actions if it is
         // Iterate is not supported in realtime - only in batch and playnice modes
@@ -179,31 +184,45 @@ void jsbsim_init(const std::string& root_dir,
 
         {
             std::lock_guard<std::mutex> guard(sim_data_lock);
-            sim_data->altitude_m = FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M;
-            sim_data->latitude_deg = FDMExec->GetPropagate()->GetLatitudeDeg();
-            sim_data->latitude_rad = FDMExec->GetPropagate()->GetLatitude();
-            sim_data->longitude_deg = FDMExec->GetPropagate()->GetLongitudeDeg();
-            sim_data->longitude_rad = FDMExec->GetPropagate()->GetLongitude();
+            (*sim_data)["altitude_m"] = (const double)FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M;
+            (*sim_data)["latitude_deg"] = FDMExec->GetPropagate()->GetLatitudeDeg();
+            (*sim_data)["latitude_rad"] = FDMExec->GetPropagate()->GetLatitude();
+            (*sim_data)["longitude_deg"] = FDMExec->GetPropagate()->GetLongitudeDeg();
+            (*sim_data)["longitude_rad"] = FDMExec->GetPropagate()->GetLongitude();
 
-            sim_data->euler_yaw = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
-            sim_data->euler_pitch = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
-            sim_data->euler_roll = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
+            (*sim_data)["euler_yaw"] = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
+            (*sim_data)["euler_pitch"] = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
+            (*sim_data)["euler_roll"] = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
 
             JSBSim::FGQuaternion local_quaternion = FDMExec->GetPropagate()->GetQuaternion();
-            sim_data->local_q_1 = local_quaternion(1);
-            sim_data->local_q_2 = local_quaternion(2);
-            sim_data->local_q_3 = local_quaternion(3);
-            sim_data->local_q_4 = local_quaternion(4);
+            (*sim_data)["local_q_1"] = local_quaternion(1);
+            (*sim_data)["local_q_2"] = local_quaternion(2);
+            (*sim_data)["local_q_3"] = local_quaternion(3);
+            (*sim_data)["local_q_4"] = local_quaternion(4);
 
             JSBSim::FGQuaternion ecef_quaternion = FDMExec->GetPropagate()->GetQuaternionECEF();
-            sim_data->ecef_q_1 = ecef_quaternion(1);
-            sim_data->ecef_q_2 = ecef_quaternion(2);
-            sim_data->ecef_q_3 = ecef_quaternion(3);
-            sim_data->ecef_q_4 = ecef_quaternion(4);
+            (*sim_data)["ecef_q_1"] = ecef_quaternion(1);
+            (*sim_data)["ecef_q_2"] = ecef_quaternion(2);
+            (*sim_data)["ecef_q_3"] = ecef_quaternion(3);
+            (*sim_data)["ecef_q_4"] = ecef_quaternion(4);
 
-            sim_data->cg_x_m = FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M;
-            sim_data->cg_y_m = FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M;
-            sim_data->cg_z_m = FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M;
+            (*sim_data)["cg_x_m"] = FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M;
+            (*sim_data)["cg_y_m"] = FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M;
+            (*sim_data)["cg_z_m"] = FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M;
+
+            // /engines/engine[0]/thruster/rpm
+
+            (*sim_data)["m0_rpm"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm");
+            (*sim_data)["m1_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-rpm");
+            (*sim_data)["m2_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-rpm");
+            (*sim_data)["m3_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-rpm");
+
+            (*sim_data)["m0_sense"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-sense");
+            (*sim_data)["m1_sense"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-sense");
+            (*sim_data)["m2_sense"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-sense");
+            (*sim_data)["m3_sense"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-sense");
+
+            // printf("%f\n", FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm"));
         }
     }
 
