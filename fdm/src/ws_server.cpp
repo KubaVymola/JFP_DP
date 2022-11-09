@@ -75,7 +75,7 @@ void websocket_server::on_close(websocketpp::connection_hdl hdl) {
 void websocket_server::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
     {
         std::lock_guard<std::mutex> guard(m_action_lock);
-        m_actions.push(action(MESSAGE, hdl, msg));
+        m_actions.push(action(MESSAGE, hdl, msg->get_payload()));
     }
 
     m_action_cond.notify_one();
@@ -113,10 +113,7 @@ void websocket_server::process_messages() {
         }  else if (a.type == MESSAGE) {
             std::lock_guard<std::mutex> guard(m_connection_lock);
 
-            con_list::iterator it;
-            for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                m_server.send(*it, a.msg);
-            }
+            if (on_message_cb != nullptr) on_message_cb(a.payload);
         } else if (a.type == PUSH_MESSAGE) {
             std::lock_guard<std::mutex> guard(m_connection_lock);
 
@@ -128,4 +125,8 @@ void websocket_server::process_messages() {
             // Undefined
         }
     }
+}
+
+void websocket_server::register_on_message_cb(void (*cb)(std::string)) {
+    this->on_message_cb = cb;
 }

@@ -41,9 +41,21 @@ class App {
 
     engine: Engine;
     scene: Scene;
+
+    pressedKeys = {};
     
     constructor() {
         const canvas: HTMLCanvasElement = document.querySelector('#gameCanvas');
+
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
+            this.pressedKeys[e.key] = true;
+        });
+        document.addEventListener('keyup', (e: KeyboardEvent) => {
+            this.pressedKeys[e.key] = false;
+        });
+        window.addEventListener('resize', (e: UIEvent) => {
+            this.engine.resize(true);
+        })
 
         const loader: OBJFileLoader = new OBJFileLoader();
         SceneLoader.Append('/', '')
@@ -72,7 +84,7 @@ class App {
         /**
          * Create origin axes
          */
-        const axes = new AxesViewer(this.scene, 0.25);
+        const axes = new AxesViewer(this.scene, 0.5);
         const axesEntity = createEntity('axesEntity', this.scene, this.camera);
         axesEntity.doublepos = new Vector3(0, 0, EARTH_RADIUS);
         axes.xAxis.parent = axesEntity;
@@ -161,7 +173,10 @@ class App {
 
                 this.ws.onmessage = (event) => {
                     const parsedData = JSON.parse(event.data);
-                    this.craft.update(parsedData, this.engine.getDeltaTime(), this.camera);
+                    this.craft.update(parsedData, this.camera);
+
+                    const data = { keys: [...Object.keys(this.pressedKeys).filter((key) => this.pressedKeys[key])] };
+                    this.ws.send(JSON.stringify(data));
                 };
             };
             
