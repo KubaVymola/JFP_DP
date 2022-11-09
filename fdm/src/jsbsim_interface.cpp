@@ -1,5 +1,6 @@
 #include "jsbsim_interface.h"
 
+#include <iostream>
 #include <sys/time.h>
 
 #include "constants.h"
@@ -100,6 +101,7 @@ void jsbsim_init(const std::string& root_dir,
     // }
 
     FDMExec->RunIC();
+    update_data(sim_data, sim_data_lock);
 
     FDMExec->PrintSimulationConfiguration();
 
@@ -145,6 +147,8 @@ void jsbsim_init(const std::string& root_dir,
                  * Batch mode
                  */
                 result = FDMExec->Run();
+                update_data(sim_data, sim_data_lock);
+
                 if (play_nice) sim_nsleep(sleep_nseconds);
             } else {
                 /**
@@ -163,6 +167,8 @@ void jsbsim_init(const std::string& root_dir,
                                                                     // elapsed time.
                 for (int i=0; i<(int)(sim_lag_time/frame_duration); i++) {  // catch up sim time to actual elapsed time.
                     result = FDMExec->Run();
+                    update_data(sim_data, sim_data_lock);
+
                     cycle_duration = getcurrentseconds() - current_seconds;   // Calculate cycle duration
                     current_seconds = getcurrentseconds();                    // Get new current_seconds
                     if (FDMExec->Holding()) break;
@@ -180,49 +186,7 @@ void jsbsim_init(const std::string& root_dir,
             paused_seconds = getcurrentseconds() - current_seconds;
             sim_nsleep(sleep_nseconds);
             result = FDMExec->Run();
-        }
-
-        {
-            std::lock_guard<std::mutex> guard(sim_data_lock);
-            (*sim_data)["altitude_m"] = (const double)FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M;
-            (*sim_data)["latitude_deg"] = FDMExec->GetPropagate()->GetLatitudeDeg();
-            (*sim_data)["latitude_rad"] = FDMExec->GetPropagate()->GetLatitude();
-            (*sim_data)["longitude_deg"] = FDMExec->GetPropagate()->GetLongitudeDeg();
-            (*sim_data)["longitude_rad"] = FDMExec->GetPropagate()->GetLongitude();
-
-            (*sim_data)["euler_yaw"] = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
-            (*sim_data)["euler_pitch"] = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
-            (*sim_data)["euler_roll"] = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
-
-            JSBSim::FGQuaternion local_quaternion = FDMExec->GetPropagate()->GetQuaternion();
-            (*sim_data)["local_q_1"] = local_quaternion(1);
-            (*sim_data)["local_q_2"] = local_quaternion(2);
-            (*sim_data)["local_q_3"] = local_quaternion(3);
-            (*sim_data)["local_q_4"] = local_quaternion(4);
-
-            JSBSim::FGQuaternion ecef_quaternion = FDMExec->GetPropagate()->GetQuaternionECEF();
-            (*sim_data)["ecef_q_1"] = ecef_quaternion(1);
-            (*sim_data)["ecef_q_2"] = ecef_quaternion(2);
-            (*sim_data)["ecef_q_3"] = ecef_quaternion(3);
-            (*sim_data)["ecef_q_4"] = ecef_quaternion(4);
-
-            (*sim_data)["cg_x_m"] = FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M;
-            (*sim_data)["cg_y_m"] = FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M;
-            (*sim_data)["cg_z_m"] = FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M;
-
-            // /engines/engine[0]/thruster/rpm
-
-            (*sim_data)["m0_rpm"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm");
-            (*sim_data)["m1_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-rpm");
-            (*sim_data)["m2_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-rpm");
-            (*sim_data)["m3_rpm"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-rpm");
-
-            (*sim_data)["m0_sense"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-sense");
-            (*sim_data)["m1_sense"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-sense");
-            (*sim_data)["m2_sense"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-sense");
-            (*sim_data)["m3_sense"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-sense");
-
-            // printf("%f\n", FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm"));
+            update_data(sim_data, sim_data_lock);
         }
     }
 
@@ -234,5 +198,102 @@ void jsbsim_init(const std::string& root_dir,
     delete FDMExec;
 }
 
-void jsbsim_run() {
+void update_data(json *sim_data,
+                 std::mutex& sim_data_lock) {
+    {
+        std::lock_guard<std::mutex> guard(sim_data_lock);
+        (*sim_data)["time_sec"] = FDMExec->GetPropertyValue("simulation/sim-time-sec");
+        (*sim_data)["altitude_m"] = (const double)FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M;
+        (*sim_data)["latitude_deg"] = FDMExec->GetPropagate()->GetLatitudeDeg();
+        (*sim_data)["latitude_rad"] = FDMExec->GetPropagate()->GetLatitude();
+        (*sim_data)["longitude_deg"] = FDMExec->GetPropagate()->GetLongitudeDeg();
+        (*sim_data)["longitude_rad"] = FDMExec->GetPropagate()->GetLongitude();
+
+        (*sim_data)["euler_yaw"] = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
+        (*sim_data)["euler_pitch"] = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
+        (*sim_data)["euler_roll"] = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
+
+        JSBSim::FGQuaternion local_quaternion = FDMExec->GetPropagate()->GetQuaternion();
+        (*sim_data)["local_q_1"] = local_quaternion(1);
+        (*sim_data)["local_q_2"] = local_quaternion(2);
+        (*sim_data)["local_q_3"] = local_quaternion(3);
+        (*sim_data)["local_q_4"] = local_quaternion(4);
+
+        JSBSim::FGQuaternion ecef_quaternion = FDMExec->GetPropagate()->GetQuaternionECEF();
+        (*sim_data)["ecef_q_1"] = ecef_quaternion(1);
+        (*sim_data)["ecef_q_2"] = ecef_quaternion(2);
+        (*sim_data)["ecef_q_3"] = ecef_quaternion(3);
+        (*sim_data)["ecef_q_4"] = ecef_quaternion(4);
+
+        (*sim_data)["cg_x_m"] = FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M;
+        (*sim_data)["cg_y_m"] = FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M;
+        (*sim_data)["cg_z_m"] = FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M;
+
+        (*sim_data)["propulsion/engine/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm");
+        (*sim_data)["propulsion/engine[1]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-rpm");
+        (*sim_data)["propulsion/engine[2]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-rpm");
+        (*sim_data)["propulsion/engine[3]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-rpm");
+
+        (*sim_data)["propulsion/engine/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine/propeller-sense");
+        (*sim_data)["propulsion/engine[1]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-sense");
+        (*sim_data)["propulsion/engine[2]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-sense");
+        (*sim_data)["propulsion/engine[3]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-sense");
+
+        (*sim_data)["propulsion/engine/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine/thrust-lbs");
+        (*sim_data)["propulsion/engine[1]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[1]/thrust-lbs");
+        (*sim_data)["propulsion/engine[2]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[2]/thrust-lbs");
+        (*sim_data)["propulsion/engine[3]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[3]/thrust-lbs");
+
+        (*sim_data)["propulsion/engine/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine/pitch-angle-rad");
+        (*sim_data)["propulsion/engine[1]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[1]/pitch-angle-rad");
+        (*sim_data)["propulsion/engine[2]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[2]/pitch-angle-rad");
+        (*sim_data)["propulsion/engine[3]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[3]/pitch-angle-rad");
+
+        (*sim_data)["propulsion/engine/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine/yaw-angle-rad");
+        (*sim_data)["propulsion/engine[1]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[1]/yaw-angle-rad");
+        (*sim_data)["propulsion/engine[2]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[2]/yaw-angle-rad");
+        (*sim_data)["propulsion/engine[3]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[3]/yaw-angle-rad");
+        
+
+        /**
+         * ==== FCS ====
+         */
+        
+        FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", sim_data->value<double>("fcs/throttle-cmd-norm[0]", 0));
+        FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", sim_data->value<double>("fcs/throttle-cmd-norm[1]", 0));
+        FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", sim_data->value<double>("fcs/throttle-cmd-norm[2]", 0));
+        FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", sim_data->value<double>("fcs/throttle-cmd-norm[3]", 0));
+    
+        /**
+         * ==== User control ====
+         */
+
+        // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0);
+        // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0);
+        // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0);
+        // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0);
+
+        // auto pressed_keys = (*sim_data)["keys"];
+
+        // if (std::find(pressed_keys.begin(), pressed_keys.end(), "Shift") != pressed_keys.end()) {
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0.3);
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0.3);
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0.3);
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0.3);
+        // }
+
+        // if (std::find(pressed_keys.begin(), pressed_keys.end(), "w") != pressed_keys.end()) {
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0.2);
+        // }
+        // if (std::find(pressed_keys.begin(), pressed_keys.end(), "s") != pressed_keys.end()) {
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0.2);
+        // }
+
+        // if (std::find(pressed_keys.begin(), pressed_keys.end(), "a") != pressed_keys.end()) {
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0.2);
+        // }
+        // if (std::find(pressed_keys.begin(), pressed_keys.end(), "d") != pressed_keys.end()) {
+        //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0.2);
+        // }
+    }
 }

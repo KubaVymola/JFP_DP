@@ -20,13 +20,12 @@ enum action_type {
 
 struct action {
     action(action_type t, websocketpp::connection_hdl h): type(t), hdl(h) {}
-    action(action_type t, websocketpp::connection_hdl h, server::message_ptr m)
-        : type(t), hdl(h), msg(m) {}
+    action(action_type t, websocketpp::connection_hdl h, std::string p)
+        : type(t), hdl(h), payload(p) {}
     action(action_type t, std::string p): type(t), payload(p) {}
 
     action_type type;
     websocketpp::connection_hdl hdl;
-    server::message_ptr msg;
     std::string payload;
 };
 
@@ -41,6 +40,7 @@ public:
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
     void send_message(std::string payload);
     void process_messages();
+    void register_on_message_cb(void (*cb)(std::string));
 private:
     typedef std::set<websocketpp::connection_hdl, std::owner_less<websocketpp::connection_hdl>> con_list;
 
@@ -51,6 +51,8 @@ private:
     std::mutex m_action_lock;
     std::mutex m_connection_lock;
     std::condition_variable m_action_cond;
+
+    void (*on_message_cb)(std::string) = nullptr;
 
     bool m_done;
 };

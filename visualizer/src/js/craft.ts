@@ -5,6 +5,11 @@ import {
     Quaternion,
     Scene,
     TransformNode,
+    CreateCylinder,
+    Mesh,
+    StandardMaterial,
+    Color4,
+    Color3,
 } from '@babylonjs/core';
 
 import Entity from './entity';
@@ -26,7 +31,10 @@ interface NodeTreeItem {
     angleProperty?: string,
     angleOffset?: number,
     spinnerProperty?: string,
-    spinnerSenseProperty?: string,
+    propSenseProperty?: string,
+    thrustProperty?: string,
+    enginePitchProperty?: string,
+    engineYawProperty?: string,
     children?: Array<NodeTreeItem>,
 };
 
@@ -35,6 +43,7 @@ class Craft {
     craftEntities: Array<CraftEntity> = [];
     nodeTree: object = {};
     objFileInput: HTMLInputElement;
+    lastTime: number;
     
     constructor(scene: Scene, camera: OriginCamera) {
         this.rootEntity = createEntity('craftEntity', scene, camera);
@@ -54,7 +63,7 @@ class Craft {
         this.load3D_Models(scene);
     }
 
-    update(craftData, deltaT: number, camera: OriginCamera) {
+    update(craftData, camera: OriginCamera) {
         /**
          * [?] - my coordinates
          * {?} - JSBSim coordinates
@@ -69,6 +78,9 @@ class Craft {
 
         console.log(craftData);
 
+        const deltaT_s = Math.max((craftData["time_sec"] || 0) - this.lastTime, 0);
+        this.lastTime = craftData["time_sec"] || 0;
+        
         // latitude -> North-south
         // longitude -> East-west
         const latitude_rad = craftData['latitude_rad'];
@@ -143,7 +155,7 @@ class Craft {
         this.rootEntity.rotationQuaternion = Quaternion.FromRotationMatrix(rotationMatrix);
 
         for (const childEntity of this.craftEntities) {
-            childEntity.updateFromSim(craftData, deltaT);
+            childEntity.updateFromSim(craftData, deltaT_s);
         }
     }
 
@@ -189,6 +201,10 @@ class Craft {
             pivot: new Vector3(0, 0, 0),
             axis: new Vector3(1, 0, 0),
             spinnerProperty: null,
+            propSenseProperty: null,
+            thrustProperty: null,
+            enginePitchProperty: null,
+            engineYawProperty: null,
             angleProperty: null,
             angleOffset: 0,
             children: [],
@@ -213,9 +229,9 @@ class Craft {
                      * TODO maybe add position offset 
                      */
                     
-                    if (positionEls[j].nodeName === 'x') posX = Number(positionEls[j].textContent);
-                    if (positionEls[j].nodeName === 'y') posY = Number(positionEls[j].textContent);
-                    if (positionEls[j].nodeName === 'z') posZ = Number(positionEls[j].textContent);
+                    if (positionEls[j].nodeName === 'x') posX = -Number(positionEls[j].textContent);
+                    if (positionEls[j].nodeName === 'y') posY =  Number(positionEls[j].textContent);
+                    if (positionEls[j].nodeName === 'z') posZ = -Number(positionEls[j].textContent);
                 }
 
                 toReturn.position = new Vector3(posX, posY, posZ);
@@ -248,7 +264,16 @@ class Craft {
                 toReturn.spinnerProperty = childEls[i].textContent.trim();
                 break;
             case 'prop_sense_property':
-                toReturn.spinnerSenseProperty = childEls[i].textContent.trim();
+                toReturn.propSenseProperty = childEls[i].textContent.trim();
+                break;
+            case 'thrust_property':
+                toReturn.thrustProperty = childEls[i].textContent.trim();
+                break;
+            case 'engine_pitch_property':
+                toReturn.enginePitchProperty = childEls[i].textContent.trim();
+                break;
+            case 'engine_yaw_property':
+                toReturn.engineYawProperty = childEls[i].textContent.trim();
                 break;
             case 'angle_property':
                 toReturn.angleProperty = childEls[i].textContent.trim();
@@ -277,20 +302,24 @@ class Craft {
     async loadMeshEntityFromTree(scene: Scene, currentDefNode: NodeTreeItem, parentEntity: TransformNode) {
         const fileList = this.objFileInput.files;
         
+        if (fileList.length == 0) return;
         if (!currentDefNode) return;
-        if (!fileList) return;
         
         console.log(currentDefNode.mesh || 'Loading node without mesh');
 
         const newCraftEntity = new CraftEntity('', scene);
         newCraftEntity.parent = parentEntity;
         // newCraftEntity.setposi = currentDefNode.position;
+        newCraftEntity.position = currentDefNode.position;
         newCraftEntity.setPivotPoint(currentDefNode.pivot);
         newCraftEntity.axis = currentDefNode.axis;
         newCraftEntity.angleProperty = currentDefNode.angleProperty;
         newCraftEntity.angleOffset = currentDefNode.angleOffset;
         newCraftEntity.spinnerProperty = currentDefNode.spinnerProperty;
-        newCraftEntity.spinnerSenseProperty = currentDefNode.spinnerSenseProperty;
+        newCraftEntity.propSenseProperty = currentDefNode.propSenseProperty;
+        newCraftEntity.thrustProperty = currentDefNode.thrustProperty;
+        newCraftEntity.enginePitchProperty = currentDefNode.enginePitchProperty;
+        newCraftEntity.engineYawProperty = currentDefNode.engineYawProperty;
         this.craftEntities.push(newCraftEntity);
 
         if (currentDefNode.mesh) {
@@ -305,6 +334,28 @@ class Craft {
                     console.error(e);
                 }
             }
+        }
+
+        if (currentDefNode.thrustProperty) {
+            const height = 0.3;
+            const widht = 0.15;
+            
+            const mesh: Mesh = CreateCylinder(currentDefNode.thrustProperty, {
+                height: height,
+                diameterTop: 0,
+                diameterBottom: 0.15,
+                sideOrientation: Mesh.FRONTSIDE,
+            }, scene);
+
+            const thrustMaterial: StandardMaterial = new StandardMaterial(currentDefNode.thrustProperty + 'Mat', scene);
+            thrustMaterial.diffuseColor = new Color3(1, 0, 0);
+            thrustMaterial.alpha = 0.3;
+
+            mesh.material = thrustMaterial;
+            mesh.rotation = new Vector3(0, 0, -Math.PI / 2);
+            mesh.position = new Vector3(-height / 2, 0, 0);
+            // newCraftEntity.setPivotPoint(currentDefNode.position);
+            mesh.parent = newCraftEntity;
         }
 
         

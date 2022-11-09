@@ -25,10 +25,10 @@ function createCamera(scene: Scene, canvas: HTMLCanvasElement): OriginCamera {
     const camera: OriginCamera = new OriginCamera("camera", new Vector3(0, 0, 6378 * 1000), 3, scene);
     camera.inertia = 0;
     camera.speed = 3;
-    camera.keysUp.push(87);    		  // W
-    camera.keysDown.push(83)   		  // D
-    camera.keysLeft.push(65);  		  // A
-    camera.keysRight.push(68); 		  // S
+    // camera.keysUp.push(87);    		  // W
+    // camera.keysDown.push(83)   		  // D
+    // camera.keysLeft.push(65);  		  // A
+    // camera.keysRight.push(68); 		  // S
     camera.minZ = 0.01;
     camera.maxZ = 50000000;
     camera.fov = 1;
