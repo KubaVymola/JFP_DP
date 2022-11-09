@@ -4,3 +4,12 @@
 [submodule "fdm/lib/json"]
 	path = fdm/lib/json
 	url = git@github.com:nlohmann/json.git
+[submodule "fdm/lib/tinyxml2"]
+	path = fdm/lib/tinyxml2
+	url = git@github.com:leethomason/tinyxml2.git
+[submodule "fcs/lib/tinyxml2"]
+	path = fcs/lib/tinyxml2
+	url = git@github.com:leethomason/tinyxml2.git
+[submodule "fcs/lib/json"]
+	path = fcs/lib/json
+	url = git@github.com:nlohmann/json.git
