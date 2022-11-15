@@ -1,17 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "es6",
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "noResolve": false,
-        "noImplicitAny": false,
-        "sourceMap": true,
-        "preserveConstEnums": true,
-        "lib": ["dom", "es6"],
-        "rootDir": "src",
-        "types": [
-            "babylonjs",
-            "babylonjs-loaders",
-        ],
-    },
+  "compilerOptions": {
+    "target": "ES6",
+    "allowJs": true,
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "paths": {
+      "*": ["node_modules/*"]
+    }
+  },
+  "include": ["src/**/*"]
 }
