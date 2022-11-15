@@ -37,7 +37,7 @@
             File might not be needed
             User will supply any files to fill the required mesh names
          -->
-        <file>rocket.obj</file>
+        <file>quad.obj</file>
         <node mesh="quad_body_quad.001">
             <node mesh="front_right_prop_quad.004">
                 <spinner_property> propulsion/engine/propeller-rpm  </spinner_property>

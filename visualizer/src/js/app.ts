@@ -60,6 +60,7 @@ class App {
         const loader: OBJFileLoader = new OBJFileLoader();
         SceneLoader.Append('/', '')
 
+        // TODO is this correct?
         document.body.appendChild(canvas);
 
         /**

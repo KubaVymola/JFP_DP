@@ -212,6 +212,8 @@ void update_data(json *sim_data,
         (*sim_data)["euler_yaw"] = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
         (*sim_data)["euler_pitch"] = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
         (*sim_data)["euler_roll"] = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
+        (*sim_data)["attitude/heading-true-rad"] = FDMExec->GetPropertyValue("attitude/heading-true-rad");
+        (*sim_data)["attitude/heading-true-deg"] = FDMExec->GetPropertyValue("attitude/heading-true-rad") * RAD_TO_DEG;
 
         JSBSim::FGQuaternion local_quaternion = FDMExec->GetPropagate()->GetQuaternion();
         (*sim_data)["local_q_1"] = local_quaternion(1);

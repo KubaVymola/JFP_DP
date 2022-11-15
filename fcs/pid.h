@@ -45,9 +45,9 @@ void pid_init(struct pid_state_t &pid, double k_p, double k_i, double k_d, doubl
 double pid_update(struct pid_state_t &pid, double set_point, double measurement, double delta_t) {
     double error = set_point - measurement;
 
-    printf("meas  %f\n", measurement);
-    printf("sp    %f\n", set_point);
-    printf("error %f\n", error);
+    // printf("meas  %f\n", measurement);
+    // printf("sp    %f\n", set_point);
+    // printf("error %f\n", error);
 
     pid.proportional = pid.k_p * error;
 
@@ -67,10 +67,10 @@ double pid_update(struct pid_state_t &pid, double set_point, double measurement,
     pid.prev_error = error;
     pid.prev_measurement = measurement;
 
-    printf("pid_p %f\n", pid.proportional);
-    printf("pid_i %f\n", pid.integrator);
-    printf("pid_d %f\n", pid.differentiator);
-    printf("pid_o %f\n", pid.output);
+    // printf("pid_p %f\n", pid.proportional);
+    // printf("pid_i %f\n", pid.integrator);
+    // printf("pid_d %f\n", pid.differentiator);
+    // printf("pid_o %f\n", pid.output);
 
     return pid.output;
 }
