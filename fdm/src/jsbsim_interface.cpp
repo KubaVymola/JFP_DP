@@ -15,26 +15,12 @@ using json = nlohmann::json;
 
 JSBSim::FGFDMExec* FDMExec;
 
-bool override_sim_rate = false;
-bool realtime = true;
-bool was_paused = false;
-bool result = false;
-bool play_nice = false;
+// extern bool realtime;
+// extern bool simulation_rate;
+// extern bool end_time;
+// bool override_sim_rate = false;
 
-long sleep_nseconds = 0;
-
-double simulation_rate = 1./120.;
-double override_sim_rate_value = 0.0;
-double sleep_period=0.01;
-double frame_duration;
-double new_five_second_value = 0.0;
-double actual_elapsed_time = 0;
-double sim_lag_time = 0;
-double cycle_duration = 0.0;
-double initial_seconds = 0;
-double current_seconds = 0.0;
-double paused_seconds = 0.0;
-double end_time = 1e99;
+// double end_time = 1e99;
 
 double getcurrentseconds(void) {
     struct timeval tval;
@@ -51,61 +37,104 @@ void sim_nsleep(long nanosec) {
     nanosleep(&ts, &ts1);
 }
 
-void jsbsim_init(const std::string& root_dir,
-                 const std::string& script_path,
+void jsbsim_init(sim_config_t& sim_config,
                  bool *continue_running,
                  json *sim_data,
                  std::mutex& sim_data_lock) {
+    bool was_paused = false;
+    bool result = false;
+    bool play_nice = false;
+
+    double override_sim_rate_value = 0.0;
+    double new_five_second_value = 0.0;
+    double actual_elapsed_time = 0;
+    double sim_lag_time = 0;
+    double cycle_duration = 0.0;
+    double frame_duration;
+    double initial_seconds = 0;
+    double current_seconds = 0.0;
+    double paused_seconds = 0.0;
+    double sleep_period = 0.01;
+
+    long sleep_nseconds = 0;
+
+                    
     FDMExec = new JSBSim::FGFDMExec();
 
-    printf("Script path: %s\n", script_path.c_str());
-    printf("Root dir: %s\n", root_dir.c_str());
+    printf("Script path: %s\n", sim_config.script_path.c_str());
+    printf("Root dir: %s\n", sim_config.root_dir.c_str());
     
-    FDMExec->SetRootDir(SGPath::fromLocal8Bit(root_dir.c_str()));
+    FDMExec->SetRootDir(SGPath::fromLocal8Bit(sim_config.root_dir.c_str()));
     FDMExec->SetAircraftPath(SGPath("aircraft"));
     FDMExec->SetEnginePath(SGPath("engine"));
     FDMExec->SetSystemsPath(SGPath("systems"));
     FDMExec->SetOutputPath(SGPath("."));
+    FDMExec->GetPropertyManager()->Tie("simulation/frame_start_time", &actual_elapsed_time);
+    FDMExec->GetPropertyManager()->Tie("simulation/cycle_duration", &cycle_duration);
 
-    if (simulation_rate < 1.0 )
-        FDMExec->Setdt(simulation_rate);
+    if (sim_config.simulation_rate < 1.0 )
+        FDMExec->Setdt(sim_config.simulation_rate);
     else
-        FDMExec->Setdt(1.0/simulation_rate);
+        FDMExec->Setdt(1.0 / sim_config.simulation_rate);
 
-    if (override_sim_rate) override_sim_rate_value = FDMExec->GetDeltaT();
+    if (sim_config.override_sim_rate) override_sim_rate_value = FDMExec->GetDeltaT();
 
+    for (unsigned int i=0; i < sim_config.command_line_properties.size(); i++) {
+        if (sim_config.command_line_properties[i].find("simulation") != std::string::npos) {
+            if (FDMExec->GetPropertyManager()->GetNode(sim_config.command_line_properties[i])) {
+                FDMExec->SetPropertyValue(sim_config.command_line_properties[i], sim_config.command_line_property_values[i]);
+            }
+        }
+    }
 
     /**
      * Load script that loads all other files
      */
-    result = FDMExec->LoadScript(SGPath::fromLocal8Bit(script_path.c_str()),
+    result = FDMExec->LoadScript(SGPath::fromLocal8Bit(sim_config.script_path.c_str()),
                                  override_sim_rate_value);
 
     if (!result) {
-      printf("Script %s was not successfully loaded\n", script_path.c_str());
+      printf("Script %s was not successfully loaded\n", sim_config.script_path.c_str());
       delete FDMExec;
       exit(-1);
     }
 
     /**
-     * TODO Load output directives file[s], if given
+     * Load output directives file[s], if given
      */
-    // for (unsigned int i=0; i<LogDirectiveName.size(); i++) {
-    //     if (!LogDirectiveName[i].isNull()) {
-    //         if (!FDMExec->SetOutputDirectives(LogDirectiveName[i])) {
-    //             cout << "Output directives not properly set in file " << LogDirectiveName[i] << endl;
-    //             delete FDMExec;
-    //             exit(-1);
-    //         }
-    //     }
-    // }
+    for (unsigned int i=0; i < sim_config.log_outputs.size(); i++) {
+        SGPath logOutput = SGPath::fromLocal8Bit(sim_config.log_outputs[i].c_str());
+        
+        if (!logOutput.isNull()) {
+            if (!FDMExec->SetOutputDirectives(logOutput)) {
+                cout << "Output directives not properly set in file " << sim_config.log_outputs[i] << endl;
+            }
+        }
+    }
 
     FDMExec->RunIC();
+    
+    /**
+     * Set simulation options from command line
+     */
+    for (unsigned int i=0; i < sim_config.command_line_properties.size(); i++) {
+        if (FDMExec->GetPropertyManager()->GetNode(sim_config.command_line_properties[i])) {
+            printf("Setting %s to %f\n", sim_config.command_line_properties[i].c_str(), sim_config.command_line_property_values[i]);
+            FDMExec->SetPropertyValue(sim_config.command_line_properties[i], sim_config.command_line_property_values[i]);
+        } else {
+            printf("Unknown property to set: %s\n", sim_config.command_line_properties[i].c_str());
+        }
+    }
+
     update_data(sim_data, sim_data_lock);
 
     FDMExec->PrintSimulationConfiguration();
 
     FDMExec->GetPropagate()->DumpState();
+
+    if (sim_config.print_all_properties) {
+        FDMExec->PrintPropertyCatalog();
+    }
 
     cout << endl << JSBSim::FGFDMExec::fggreen << JSBSim::FGFDMExec::highint
          << "---- JSBSim Execution beginning ... --------------------------------------------"
@@ -121,7 +150,7 @@ void jsbsim_init(const std::string& root_dir,
     cout << "Start: " << s << " (HH:MM:SS)" << endl;
 
     frame_duration = FDMExec->GetDeltaT();
-    if (realtime) {
+    if (sim_config.realtime) {
         sleep_nseconds = (long)(frame_duration*1e9);
     } else {
         sleep_nseconds = (sleep_period)*1e9; // 0.01 seconds
@@ -130,9 +159,9 @@ void jsbsim_init(const std::string& root_dir,
     tzset();
     current_seconds = initial_seconds = getcurrentseconds();
 
-    FDMExec->PrintPropertyCatalog();
-
-    while (result && *continue_running && FDMExec->GetSimTime() <= end_time) {
+    while (result
+           && *continue_running
+           && (FDMExec->GetSimTime() <= sim_config.end_time || sim_config.end_time == 0.0)) {
         // Check if increment then hold is on and take appropriate actions if it is
         // Iterate is not supported in realtime - only in batch and playnice modes
         FDMExec->CheckIncrementalHold();
@@ -142,10 +171,11 @@ void jsbsim_init(const std::string& root_dir,
         // If suspended, then don't increment cumulative realtime "stopwatch".
 
         if ( ! FDMExec->Holding()) {
-            if ( ! realtime ) {
+            if ( ! sim_config.realtime ) {
                 /**
                  * Batch mode
                  */
+                
                 result = FDMExec->Run();
                 update_data(sim_data, sim_data_lock);
 
@@ -165,7 +195,7 @@ void jsbsim_init(const std::string& root_dir,
                 actual_elapsed_time = current_seconds - initial_seconds;    // Real world elapsed seconds since start
                 sim_lag_time = actual_elapsed_time - FDMExec->GetSimTime(); // How far behind sim-time is from actual
                                                                     // elapsed time.
-                for (int i=0; i<(int)(sim_lag_time/frame_duration); i++) {  // catch up sim time to actual elapsed time.
+                for (int i = 0; i < (int)(sim_lag_time / frame_duration); i++) {  // catch up sim time to actual elapsed time.
                     result = FDMExec->Run();
                     update_data(sim_data, sim_data_lock);
 

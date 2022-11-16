@@ -104,8 +104,6 @@ extern "C" void loop(void) {
 
     const double roll_measure = local_sim_data.value<double>("euler_roll", 0);
     const double pitch_measure = local_sim_data.value<double>("euler_pitch", 0);
-
-    printf("pos measure: %f %f\n", x_body_measure_m, y_body_measure_m);
     
     /**
      * ==== PIDs ====

@@ -31,7 +31,7 @@ $ cmake --build . -j4
 # Running
 
 ```
-$ ./fdm <path_to_assets_root> <relative_path_from_assets_root_to_script>
+$ ./fdm <script_file> [<output_file> [<output_file>...]] <options>
 e.g.
-$ ./fdm ../../assets/ script/rocket_script_001.xml
+$ ./fdm script/quad_script_001.xml --root_dir=../../assets --fcs=../../fcs/build/libfcs.dylib --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1
 ```

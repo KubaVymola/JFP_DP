@@ -8,26 +8,22 @@
 
 using json = nlohmann::json;
 
-// typedef void (*setup)(void);
-
-void fcs_init(const std::string& fcs_path,
+void fcs_init(sim_config_t& sim_config,
               bool *continue_running,
               json *sim_data,
               std::mutex& sim_data_lock) {
     
-    printf("starting to open\n");
-    
-    void *lib = dlopen(fcs_path.c_str(), RTLD_NOW);
+    void *lib = dlopen(sim_config.fcs_path.c_str(), RTLD_NOW);
 
     if (lib == nullptr) {
         printf("lib not found\n");
         return;
     }
 
-    auto init = (void (*)(void))dlsym(lib, "init");
-    auto data_to_fcs = (void (*)(json*, std::mutex&))dlsym(lib, "data_to_fcs");
-    auto loop = (void (*)(void))dlsym(lib, "loop");
-    auto data_from_fcs = (void (*)(json*, std::mutex&))dlsym(lib, "data_from_fcs");
+    init_func init =                   (init_func)dlsym(lib, "init");
+    data_to_fcs_func data_to_fcs =     (data_to_fcs_func)dlsym(lib, "data_to_fcs");
+    loop_func loop =                   (loop_func)dlsym(lib, "loop");
+    data_from_fcs_func data_from_fcs = (data_from_fcs_func)dlsym(lib, "data_from_fcs");
 
     init();
     

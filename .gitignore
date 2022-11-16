@@ -2,6 +2,7 @@
 .cache/
 .webpack/
 out/
+data_output/
 
 build*/
 

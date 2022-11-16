@@ -7,10 +7,11 @@
 
 #include "nlohmann/json.hpp"
 
+#include "sim_config.h"
+
 using json = nlohmann::json;
 
-void jsbsim_init(const std::string& root_dir,
-                 const std::string& script_path,
+void jsbsim_init(sim_config_t& sim_config,
                  bool *continue_running,
                  json *sim_data,
                  std::mutex& sim_data_lock);
