@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<output name="data_output/position.csv" type="CSV" rate="20">
-    <property> position/h-agl-ft </property>
-</output>

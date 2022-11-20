@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<output name="data_output/position.csv" type="CSV" rate="249">
+    <property> position/h-agl-ft </property>
+    <property> fcs/throttle-cmd-norm[0] </property>
+</output>

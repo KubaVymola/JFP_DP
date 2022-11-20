@@ -13,5 +13,5 @@
     <!-- Aircraft ROLL - Z-axis -->
     <phi unit="DEG"> 0.0 </phi>
 
-    <altitude unit="M"> 0.4 </altitude>
+    <altitude unit="M"> 0.02 </altitude>
 </initialize>

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<output name="aircraft/quad/data_output/quad_out.csv" type="CSV" rate="250">
+    <!-- ? These property names are taken from JSBSim and are different from what is available via websocket -->
+    <property> position/h-agl-ft </property>
+    
+    <property> position/long-gc-deg </property>
+    <property> position/lat-gc-deg </property>
+    
+    <property> attitude/psi-deg </property>
+    <property> attitude/theta-deg </property>
+    <property> attitude/phi-deg </property>
+    
+    <property> fcs/psi_est </property>
+    <property> fcs/theta_est </property>
+    <property> fcs/phi_est </property>
+    
+    <property> fcs/throttle-cmd-norm[0] </property>
+    <property> fcs/throttle-cmd-norm[1] </property>
+    <property> fcs/throttle-cmd-norm[2] </property>
+    <property> fcs/throttle-cmd-norm[3] </property>
+
+    <property> sensor/baro/presStatic_Pa </property>
+</output>

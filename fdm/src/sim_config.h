@@ -4,7 +4,7 @@
 struct sim_config_t {
     std::string root_dir;
     std::string script_path;
-    std::string fcs_path;
+    std::string sitl_path;
 
     std::vector<std::string> log_outputs;
     std::vector<std::string> command_line_properties;
@@ -16,6 +16,8 @@ struct sim_config_t {
 
     double simulation_rate;
     double end_time;
+
+    int sitl_div;
 
     uint16_t ws_port;
 };

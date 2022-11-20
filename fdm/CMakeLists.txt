@@ -48,7 +48,14 @@ add_subdirectory(lib/tinyxml2)
 # Define the main executable
 ################################################################################
 
-add_executable(fdm src/main.cpp src/ws_server.cpp src/jsbsim_interface.cpp src/fcs_interface.cpp)
+list(APPEND JFP_SOURCES
+    src/main.cpp
+    src/ws_server.cpp
+    src/jsbsim_interface.cpp
+    src/sitl_interface.cpp
+    src/sim_events.cpp)
+
+add_executable(fdm "${JFP_SOURCES}")
 
 list(APPEND JFP_LIBS websocketpp::websocketpp)
 list(APPEND JFP_LIBS libJSBSim)

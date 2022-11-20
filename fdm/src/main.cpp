@@ -14,11 +14,11 @@
 
 #include "ws_server.h"
 #include "jsbsim_interface.h"
-#include "fcs_interface.h"
+#include "sitl_interface.h"
 #include "sim_config.h"
+#include "sim_events.h"
 
 using json = nlohmann::json;
-
 
 /**
  * ==== FORWARD DECLARATION ====
@@ -36,7 +36,7 @@ void print_help();
 bool continue_running = true;
 
 std::mutex sim_data_lock;
-json sim_data;
+json sim_data = {};
 
 void sighandler(int signum) {
     if (signum == SIGINT) {
@@ -44,7 +44,7 @@ void sighandler(int signum) {
     }
 }
 
-void viz_thread(websocket_server* server_instance) {
+void push_thread_func(websocket_server* server_instance) {
     while (continue_running) {
         json sim_data_cpy;
         
@@ -66,8 +66,6 @@ void viz_thread(websocket_server* server_instance) {
 }
 
 void user_input_cb(std::string message) {
-    // printf("Callback with data %s\n", message.c_str());
-
     {
         std::lock_guard<std::mutex> guard(sim_data_lock);
         auto tmp_data = json::parse(message);
@@ -77,6 +75,9 @@ void user_input_cb(std::string message) {
 }
 
 int main(int argc, char **argv) {
+    /**
+     * Config
+     */
     sim_config_t sim_config;
     sim_config.realtime = true;
     sim_config.end_time = 60;
@@ -87,52 +88,65 @@ int main(int argc, char **argv) {
     sim_config.root_dir = ".";
     sim_config.ws_port = 0;
 
-    // sim_config.frame_duration;
-    
+    sim_config.sitl_div = 1;
+
     parse_cli_options(sim_config, argc, argv);
     
     signal(SIGINT, sighandler);
 
     websocket_server server_instance;
-    server_instance.register_on_message_cb(user_input_cb);
-
+    SimEvents sim_events;
+    JSBSimInterface jsbsim_interface;
+    SITLInterface sitl_interface;
+    
     std::thread push_thread;
     std::thread server_thread;
-    std::thread fcs_thread;
     std::thread sim_thread;
+    
+    /**
+     * Init
+     */
+    jsbsim_interface.jsbsim_init(sim_config, &sim_data);
+
+    if (!sim_config.sitl_path.empty()) {
+        sitl_interface.sitl_init(sim_config, &sim_data);
+        sim_events.register_client("sim:before_iter", &sitl_interface);
+        sim_events.register_client("sim:after_iter",  &sitl_interface);
+    }
+
+    printf("initialized\n");
+
+    /**
+     * Run
+     */
+    sim_thread = std::thread(&JSBSimInterface::jsbsim_iter,
+                             &jsbsim_interface,
+                             std::ref(sim_config),
+                             &continue_running,
+                             &sim_data,
+                             std::ref(sim_data_lock),
+                             std::ref(sim_events));
+
+    printf("sim running\n");
 
     if (sim_config.ws_port != 0) {
         printf("Starting websocket server\n");
         
+        server_instance.register_on_message_cb(user_input_cb);
+
         server_thread = std::thread(std::bind(&websocket_server::run, &server_instance, sim_config.ws_port));
+        push_thread   = std::thread(push_thread_func, &server_instance);
 
-        push_thread   = std::thread(viz_thread,
-                                    &server_instance);
+        printf("ws server running\n");
     }
 
-    sim_thread = std::thread(jsbsim_init,
-                             std::ref(sim_config),
-                             &continue_running,
-                             &sim_data,
-                             std::ref(sim_data_lock));
-
-    if (!sim_config.fcs_path.empty()) {
-        printf("Starting FCS thread\n");
-        
-        fcs_thread = std::thread(fcs_init,
-                                std::ref(sim_config),
-                                &continue_running,
-                                &sim_data,
-                                std::ref(sim_data_lock));
-    }
-
-    /**
-     * TODO have app exit in Ctrl-C signal
-     */
     while (continue_running) {
         sleep(3);
     }
 
+    /**
+     * Stop
+     */
     if (sim_config.ws_port != 0) {
         server_instance.stop();
 
@@ -141,10 +155,6 @@ int main(int argc, char **argv) {
     }
 
     sim_thread.join();
-
-    if (!sim_config.fcs_path.empty()) {
-        fcs_thread.join();
-    }
 
     return 0;
 }
@@ -193,9 +203,12 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         } else if (keyword == "--ws") {
             sim_config.ws_port = atoi(value.c_str());
 
-        } else if (keyword == "--fcs") {
-            sim_config.fcs_path = value;
+        } else if (keyword == "--sitl") {
+            sim_config.sitl_path = value;
 
+        } else if (keyword == "--sitl_div") {
+            sim_config.sitl_div = atoi(value.c_str());
+            
         } else if (keyword == "--set") {
             std::string prop_name = value.substr(0, value.find("="));
             std::string propValueString = value.substr(value.find("=") + 1);
@@ -230,12 +243,13 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
 
 void print_help() {
     printf("\n");
-    printf("Usage: fdm <script_file> <fcs_file> [<output_file> [<output_file>...]] <options>\n");
+    printf("Usage: fdm <script_file> [<output_file> [<output_file>...]] <options>\n");
     printf("\n");
     printf("options:\n");
     printf("  <script_file>  relative path to the main script\n");
     printf("  <output_file>  relative path to a file the specifies the output format\n");
-    printf("  --fcs=<path>  relative path to the dynamic library with FCS\n");
+    printf("  --sitl=<path>  relative path to the dynamic library with SITL FCS\n");
+    printf("  --sitl_div=<value>  divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n");
     printf("  --ws=<port>  start a websocket server on a given port\n");
     printf("  --root_dir=<dir>  root path for JSBSim assets (aircraft, script, engine; default '.')\n");
     printf("  --sim_rate=<hertz>  how many iterations will the simulation do in a second\n");
@@ -249,7 +263,7 @@ void print_help() {
     printf("\n");
     printf("notes:\n");
     printf("  script, aircraft and engine paths are relative to the root directory (CWD by default)\n");
-    printf("  output definitions and fcs paths are always relative to CWD");
+    printf("  output definitions and FCS paths are always relative to CWD");
     printf("\n");
 }
 

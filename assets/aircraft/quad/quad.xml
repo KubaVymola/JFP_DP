@@ -20,24 +20,22 @@
 
     <aerodynamics />
 
+    <!-- ? The path is relative to {root_dir}/systems directory, hence the ".." -->
+    <system file="../aircraft/quad/SensorImu_quad.xml" />
+    <system file="../aircraft/quad/SensorBaro_quad.xml" />
+
 
     <!-- ==== JFP required nodes follow ==== -->
 
     <viz>
         <properties>
-            <!-- <property> fcs/aileron </property> -->
-            <!-- <property> fcs/elevator </property> -->
             <property> fcs/throttle-rpm[0] </property>
             <property> fcs/throttle-rpm[1] </property>
             <property> fcs/throttle-rpm[2] </property>
             <property> fcs/throttle-rpm[3] </property>
         </properties> 
         
-        <!--
-            File might not be needed
-            User will supply any files to fill the required mesh names
-         -->
-        <file>quad.obj</file>
+        <file>3d/quad.obj</file>
         <node mesh="quad_body_quad.001">
             <node mesh="front_right_prop_quad.004">
                 <spinner_property> propulsion/engine/propeller-rpm  </spinner_property>

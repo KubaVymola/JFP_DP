@@ -3,6 +3,7 @@
 .webpack/
 out/
 data_output/
+venv/
 
 build*/
 

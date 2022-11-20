@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<viz_def grid_x="2" grid_y="2">
+    
+    <lines pos_x="0" pos_y="0" x_range_min="0" x_range_max="60" y_range_min="-5" y_range_max="5">
+        <x_data>Time</x_data>
+        <y_data>/fdm/jsbsim/position/h-agl-ft</y_data>
+    </lines>
+
+    <lines pos_x="1" pos_y="0" x_range_min="0" x_range_max="60" y_range_min="-0.1" y_range_max="1.1">
+        <x_data>Time</x_data>
+        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm</y_data>
+        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[1]</y_data>
+        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[2]</y_data>
+        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[3]</y_data>
+    </lines>
+
+    <dots pos_x="1" pos_y="1" x_range_min="-0.001" x_range_max="0.001" y_range_min="-0.001" y_range_max="0.001">
+        <xdata> position/long-gc-deg </xdata>
+        <ydata> position/lat-gc-deg  </ydata>
+    </dots>
+</viz_def>

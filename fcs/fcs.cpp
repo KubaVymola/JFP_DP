@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <mutex>
 #include <algorithm>
 #include <math.h>
 
 #include "nlohmann/json.hpp"
+#include "MadgwickAHRS.h"
 
 #include "pid.h"
 
@@ -12,7 +12,7 @@
 
 using json = nlohmann::json;
 
-json local_sim_data;
+// json local_sim_data = {};
 
 pid_state_t alt_pid;
 pid_state_t yaw_pid;
@@ -21,9 +21,36 @@ pid_state_t y_body_pid;
 pid_state_t roll_pid;
 pid_state_t pitch_pid;
 
-extern "C" void init(void);
-extern "C" void data_to_fcs(json *sim_data, std::mutex& sim_data_lock);
-extern "C" void data_from_fcs(json *sim_data, std::mutex& sim_data_lock);
+double time_sec;
+double prev_time_sec;
+double x_world_measure_m;
+double y_world_measure_m;
+double ax, ay, az, gx, gy, gz;
+double pressure_pa;
+
+double alt_measure;
+double yaw_measure;
+double yaw_rad;
+double pitch_measure;
+double roll_measure;
+
+// double yaw_est;
+// double pitch_est;
+// double roll_est;
+
+double phi_est, theta_est, psi_est;
+
+double engine_0_cmd_norm;
+double engine_1_cmd_norm;
+double engine_2_cmd_norm;
+double engine_3_cmd_norm;
+
+/**
+ * ==== FORWARD DECLARATIONS ====
+ */ 
+extern "C" void init(json *sim_data);
+extern "C" void data_to_fcs(json *sim_data);
+extern "C" void data_from_fcs(json *sim_data);
 extern "C" void loop(void);
 const double engine_mixer(const int engine_id,
                     const double throttle_cmd,
@@ -34,50 +61,82 @@ const double mixer_to_cmd(const double mixer_output);
 const double get_x_body(const double yaw_rad, const double x_world, const double y_world);
 const double get_y_body(const double yaw_rad, const double x_world, const double y_world);
 
-extern "C" void init(void) {
+/**
+ * ==== END FORWARD DECLARATIONS ====
+ */ 
+
+extern "C" void init(json *sim_data) {
     printf("Hello from FCS\n");
 
     pid_init(alt_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
     pid_init(yaw_pid,    0.022, 0.088, 0.001325, 0.15, -0.2, 0.2);
-    pid_init(x_body_pid, 3,     0,     6,    0.15, -5,   5);  // Output is used as roll  setpoint
-    pid_init(y_body_pid, 3,     0,     6,    0.15, -5,   5);  // Output is used as pitch setpoint
+    pid_init(x_body_pid, 3,     0,     6,        0.15, -5,   5);  // Output is used as roll  setpoint
+    pid_init(y_body_pid, 3,     0,     6,        0.15, -5,   5);  // Output is used as pitch setpoint
     pid_init(roll_pid,   0.001, 0,     0.0005,   0.15, -0.1, 0.1);
     pid_init(pitch_pid,  0.001, 0,     0.0005,   0.15, -0.1, 0.1);
 
-    sleep(3);
+    prev_time_sec = -1;
+
+    engine_0_cmd_norm = 0.0;
+    engine_1_cmd_norm = 0.0;
+    engine_2_cmd_norm = 0.0;
+    engine_3_cmd_norm = 0.0;
 }
 
-extern "C" void data_to_fcs(json *sim_data, std::mutex& sim_data_lock) {
-    {
-        std::lock_guard<std::mutex> guard(sim_data_lock);
-        local_sim_data.merge_patch(*sim_data);
-    }
-}
-
-extern "C" void data_from_fcs(json *sim_data, std::mutex& sim_data_lock) {
-    {
-        std::lock_guard<std::mutex> guard(sim_data_lock);
-        sim_data->merge_patch(local_sim_data);
-    }
+extern "C" void data_to_fcs(json *sim_data) {
+    // TODO define in file
     
+    time_sec          = sim_data->value<double>("time_sec", 0);
+    
+    x_world_measure_m = sim_data->value<double>("longitude_deg", 0) * DEG_TO_GEO_M;
+    y_world_measure_m = sim_data->value<double>("latitude_deg", 0) * DEG_TO_GEO_M;
+
+    alt_measure       = sim_data->value<double>("altitude_m", 0);
+    yaw_measure       = sim_data->value<double>("attitude/heading-true-deg", 0);
+    yaw_rad           = sim_data->value<double>("attitude/heading-true-rad", 0);
+    pitch_measure     = sim_data->value<double>("euler_pitch", 0);
+    roll_measure      = sim_data->value<double>("euler_roll", 0);
+
+    ax                = sim_data->value<double>("sensor/imu/accelX_mps2", 0);
+    ay                = sim_data->value<double>("sensor/imu/accelY_mps2", 0);
+    az                = sim_data->value<double>("sensor/imu/accelZ_mps2", 0);
+
+    gx                = sim_data->value<double>("sensor/imu/gyroX_rps", 0);
+    gy                = sim_data->value<double>("sensor/imu/gyroY_rps", 0);
+    gz                = sim_data->value<double>("sensor/imu/gyroZ_rps", 0);
+
+    if (prev_time_sec < 0) prev_time_sec = time_sec;
+}
+
+extern "C" void data_from_fcs(json *sim_data) {
+    // TODO define in file
+    // TODO output FCS internal state to sim_data to allow logging via JSBSim output directives
+    
+    (*sim_data)["fcs/throttle-cmd-norm[0]"] = engine_0_cmd_norm;
+    (*sim_data)["fcs/throttle-cmd-norm[1]"] = engine_1_cmd_norm;
+    (*sim_data)["fcs/throttle-cmd-norm[2]"] = engine_2_cmd_norm;
+    (*sim_data)["fcs/throttle-cmd-norm[3]"] = engine_3_cmd_norm;
+
+    (*sim_data)["fcs/phi_est"]   = phi_est;
+    (*sim_data)["fcs/theta_est"] = theta_est;
+    (*sim_data)["fcs/psi_est"]   = psi_est;
 }
 
 extern "C" void loop(void) {
-    const double deltaT = 1.0 / 60;
-    const double time = local_sim_data.value<double>("time_sec", 0);
-    
+    const double deltaT = time_sec - prev_time_sec;
+    prev_time_sec = time_sec;
+
     /**
      * ==== Altitude ====
      */
-    const double alt_sp = 1.0;
-    const double alt_measure = local_sim_data.value<double>("altitude_m", alt_sp);
+    double alt_sp = 0.0;
+    if (time_sec > 3) alt_sp = 1.0;
 
     /**
      * ==== Yaw ====
      */
     double yaw_sp = 0;
     if (alt_measure > 0.5) yaw_sp = 60;
-    double yaw_measure = local_sim_data.value<double>("attitude/heading-true-deg", yaw_sp);
     if (yaw_sp - yaw_measure >  180) yaw_measure += 360;
     if (yaw_sp - yaw_measure < -180) yaw_measure -= 360;
     
@@ -85,14 +144,10 @@ extern "C" void loop(void) {
      * Position: world_x -> east -> longitude
      *           world_y -> north -> latitude
     */
-    const double yaw_rad = local_sim_data.value<double>("attitude/heading-true-rad", 0);
-
-    const double x_world_measure_m = local_sim_data.value<double>("longitude_deg", 0) * DEG_TO_GEO_M;
-    const double y_world_measure_m = local_sim_data.value<double>("latitude_deg", 0) * DEG_TO_GEO_M;
     double x_world_sp_m = 0;
     double y_world_sp_m = 0;
 
-    if (time > 7) {
+    if (time_sec > 7) {
         x_world_sp_m = 1;
         y_world_sp_m = 2.5;
     }
@@ -101,9 +156,6 @@ extern "C" void loop(void) {
     const double y_body_measure_m = get_y_body(-yaw_rad, x_world_measure_m, y_world_measure_m);
     const double x_body_sp_m = get_x_body(-yaw_rad, x_world_sp_m, y_world_sp_m);
     const double y_body_sp_m = get_y_body(-yaw_rad, x_world_sp_m, y_world_sp_m);
-
-    const double roll_measure = local_sim_data.value<double>("euler_roll", 0);
-    const double pitch_measure = local_sim_data.value<double>("euler_pitch", 0);
     
     /**
      * ==== PIDs ====
@@ -120,19 +172,25 @@ extern "C" void loop(void) {
     /**
      * ==== Output ====
      */
-    local_sim_data["fcs/throttle-cmd-norm[0]"]
-        = mixer_to_cmd(engine_mixer(0, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));;
-    local_sim_data["fcs/throttle-cmd-norm[1]"]
-        = mixer_to_cmd(engine_mixer(1, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));;
-    local_sim_data["fcs/throttle-cmd-norm[2]"]
-        = mixer_to_cmd(engine_mixer(2, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));;
-    local_sim_data["fcs/throttle-cmd-norm[3]"]
-        = mixer_to_cmd(engine_mixer(3, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));;
+    engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+
+    MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az, deltaT);
+
+    phi_est   = atan2(q2 * q3 + q0 * q1, 1 / 2 - (q1 * q1 + q2 * q2));
+    theta_est = asin(-2 * (q1 * q3 - q0 * q2));
+    psi_est   = atan2(q1 * q2 + q0 * q3, 1 / 2 - (q2 * q2 + q3 * q3));
+
+    phi_est   = phi_est   / M_PI * 180.0;
+    theta_est = theta_est / M_PI * 180.0;
+    psi_est   = psi_est   / M_PI * 180.0;
 }
 
 /**
  * @param engine_id Engine id from 1 to 4
-*/
+ */
 const double engine_mixer(const int engine_id,
                     const double throttle_cmd,
                     const double yaw_cmd,
@@ -153,7 +211,7 @@ const double engine_mixer(const int engine_id,
     if (engine_id == 3) {
         return throttle_cmd - yaw_cmd - pitch_cmd - roll_cmd;
     }
-    
+
     return 0;
 }
 
