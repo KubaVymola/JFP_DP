@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<viz_def grid_x="2" grid_y="2">
+<timeseries grid_x="2" grid_y="2">
+    <time range_from="0" range_to="60">Time</time>
     
-    <lines pos_x="0" pos_y="0" x_range_min="0" x_range_max="60" y_range_min="-5" y_range_max="5">
-        <x_data>Time</x_data>
-        <y_data>/fdm/jsbsim/position/h-agl-ft</y_data>
-    </lines>
+    <plot pos_x="0" pos_y="0" range_from="0" range_to="5" title="Altitude" ylabel="Alt [ft]">
+        <data>/fdm/jsbsim/position/h-agl-ft</data>
+    </plot>
 
-    <lines pos_x="1" pos_y="0" x_range_min="0" x_range_max="60" y_range_min="-0.1" y_range_max="1.1">
-        <x_data>Time</x_data>
-        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm</y_data>
-        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[1]</y_data>
-        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[2]</y_data>
-        <y_data>/fdm/jsbsim/fcs/throttle-cmd-norm[3]</y_data>
-    </lines>
+    <plot pos_x="1" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]">
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[1]</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[2]</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[3]</data>
+    </plot>
 
-    <dots pos_x="1" pos_y="1" x_range_min="-0.001" x_range_max="0.001" y_range_min="-0.001" y_range_max="0.001">
-        <xdata> position/long-gc-deg </xdata>
-        <ydata> position/lat-gc-deg  </ydata>
-    </dots>
-</viz_def>
+
+    <plot pos_x="0" pos_y="1" range_from="-0.00005" range_to="0.00005" title="Geo position" ylabel="Pos [deg]">
+        <data>/fdm/jsbsim/position/long-gc-deg</data>
+        <data>/fdm/jsbsim/position/lat-gc-deg</data>
+    </plot>
+</timeseries>

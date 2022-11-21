@@ -10,8 +10,15 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 new_data = False
 lns = []
+
+# 2d array that contains each line
 data = []
-data_labels = []
+# 1d array that contains the first line of the log
+data_header = []
+
+time_property = 'Time'
+# 1d array that contains property name for each line artist
+data_properties = []
 
 def main():
     args = parse_cli_args()
@@ -19,12 +26,12 @@ def main():
     
     file = open(args.input_file, 'r')
     
-    data_header = parse_data_header(file)
-
+    parse_data_header(file)
+    
     ani = FuncAnimation(
         fig,
         update_plot,
-        partial(follow_file, file, data_header),
+        partial(follow_file, file),
         blit=True,
         interval=50)
         # init_func=init_plot,
@@ -41,7 +48,7 @@ def parse_cli_args():
     return parser.parse_args()
 
 def parse_config(file_name: str):
-    global lns
+    global lns, data_properties, time_property
     
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -49,33 +56,52 @@ def parse_config(file_name: str):
     plots_x = int(root.attrib['grid_x'])
     plots_y = int(root.attrib['grid_y'])
 
-    fig, axs = plt.subplots(plots_x, plots_y, squeeze=False, sharex=True)
+    fig, axs = plt.subplots(plots_y, plots_x, squeeze=False, sharex=True)
+
+    fig.set_size_inches(10, 8)
+
+    time_range_from = 0
+    time_range_to   = 60
 
     for child in root:
-        if child.tag != 'lines': continue
+        if child.tag == 'time':
+            time_property = child.text.strip()
+            time_range_from = float(child.attrib['range_from'])
+            time_range_to   = float(child.attrib['range_to'])
 
-        pos_y = int(child.attrib['pos_x'])
-        pos_x = int(child.attrib['pos_y'])
 
-        axs[pos_x][pos_y].set_xlim(float(child.attrib['x_range_min']), float(child.attrib['x_range_max']))
-        axs[pos_x][pos_y].set_ylim(float(child.attrib['y_range_min']), float(child.attrib['y_range_max']))
+    for child in root:
+        if child.tag == 'plot':
+            pos_y = int(child.attrib['pos_x'])
+            pos_x = int(child.attrib['pos_y'])
 
-        x_data = child.find('x_data').text
-        y_data = [x.text for x in child.findall('y_data')]
-        for _ in y_data:
-            lns.append(axs[pos_x][pos_y].plot([], [])[0])
-        
-        data_labels.append([x_data] + y_data)
-        data.append([[] for _ in [x_data] + y_data])
+            data_range_from = float(child.attrib['range_from'])
+            data_range_to   = float(child.attrib['range_to'])
+
+            axs[pos_x][pos_y].set_xlim(time_range_from, time_range_to)
+            axs[pos_x][pos_y].set_ylim(data_range_from, data_range_to)
+            
+            axs[pos_x][pos_y].set_xlabel('Time [s]')
+            axs[pos_x][pos_y].set_xlabel(child.attrib['ylabel'])
+            axs[pos_x][pos_y].set_title(child.attrib['title'])
+            
+            for x in child.findall('data'):
+                new_data_property = x.text.strip()
+                data_properties.append(new_data_property)
+                lns.append(axs[pos_x][pos_y].plot([], [], label=new_data_property)[0])
+
+            axs[pos_x][pos_y].legend()
 
     return fig, axs
 
 def parse_data_header(file: TextIO):
-    file.seek(0)
-    return file.readline().split(',')
+    global data_header
     
-def follow_file(file, data_header):
-    global new_data, data, data_labels
+    file.seek(0)
+    data_header = [x.strip() for x in file.readline().split(',')]
+    
+def follow_file(file):
+    global new_data, data, data_properties
     
     file_reset = False
     
@@ -100,33 +126,23 @@ def follow_file(file, data_header):
         line_data = line.split(',')
         
         if file_reset:
-            data = [[[] for _ in x] for x in data_labels]
+            data = []
             file_reset = False
 
-        # print('data', data)
-        # print('data_labels', data_labels)
-
-        for i, labels in enumerate(data_labels):
-            for j, label in enumerate(labels):
-                data[i][j].append(float(line_data[data_header.index(label)]))
+        data.append([float(x) for x in line_data])
 
 
 def update_plot(frame):
-    global new_data, data, lns
+    global new_data, data, data_header, time_property, data_properties, lns
 
-    # print('update plot')
-    # print(data)
-    # print(data_labels)
-    
-    i = 0
-    
     if new_data:
-        for ax_data in data:
-            x_data = ax_data[0]
-            
-            for y_data in ax_data[1:]:
-                lns[i].set_data(x_data, y_data)
-                i += 1
+        x_data = [x[data_header.index(time_property)] for x in data]
+        
+        for i, data_property in enumerate(data_properties):
+            index = data_header.index(data_property)
+            y_data = [y[index] for y in data]
+
+            lns[i].set_data(x_data, y_data)
         
         new_data = False
 
