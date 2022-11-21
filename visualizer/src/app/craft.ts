@@ -84,24 +84,24 @@ class Craft {
 
         console.log(craftData);
 
-        const deltaT_s = Math.max((craftData["time_sec"] || 0) - this.lastTime, 0);
-        this.lastTime = craftData["time_sec"] || 0;
+        const deltaT_s = Math.max((craftData["simulation/sim-time-sec"] || 0) - this.lastTime, 0);
+        this.lastTime = craftData["simulation/sim-time-sec"] || 0;
         
         // latitude -> North-south
         // longitude -> East-west
-        const latitude_rad = craftData['latitude_rad'];
-        const longitude_rad = craftData['longitude_rad'];
+        const latitude_rad = craftData['ext/latitude-rad'];
+        const longitude_rad = craftData['ext/longitude-rad'];
 
-        const craftRadius = EARTH_RADIUS + craftData['altitude_m'];
+        const craftRadius = EARTH_RADIUS + craftData['ext/altitude-m'];
         
         /**
          * Source coordinates: JSBSim
          * Target coordinates: viz
          */
         const craftCG = new Vector3(
-            -craftData['cg_x_m'],
-             craftData['cg_y_m'],
-            -craftData['cg_z_m'],
+            -craftData['ext/cg-x-m'],
+             craftData['ext/cg-y-m'],
+            -craftData['ext/cg-z-m'],
         );
         
         const rocketPos = new Vector3(
@@ -121,10 +121,10 @@ class Craft {
          * where w is the real part of quaternion. Hence the order of (2, 3, 4, 1)
          */
         const rotationQuaternion: Quaternion = new Quaternion(
-            craftData['ecef_q_2'],
-            craftData['ecef_q_3'],
-            craftData['ecef_q_4'],
-            craftData['ecef_q_1'],
+            craftData['ext/ecef-q-2'],
+            craftData['ext/ecef-q-3'],
+            craftData['ext/ecef-q-4'],
+            craftData['ext/ecef-q-1'],
         );
 
         let rotationMatrix: Matrix = Matrix.Identity();

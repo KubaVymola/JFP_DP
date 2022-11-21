@@ -10,15 +10,9 @@
 #include "models/FGMassBalance.h"
 #include "simgear/misc/sg_path.hxx"
 #include "nlohmann/json.hpp"
+#include "tinyxml2.h"
 
 using json = nlohmann::json;
-
-// extern bool realtime;
-// extern bool simulation_rate;
-// extern bool end_time;
-// bool override_sim_rate = false;
-
-// double end_time = 1e99;
 
 double getcurrentseconds(void) {
     struct timeval tval;
@@ -40,6 +34,73 @@ JSBSimInterface::JSBSimInterface() {
 }
 JSBSimInterface::~JSBSimInterface() {
     delete FDMExec;
+}
+
+void JSBSimInterface::init(sim_config_t& sim_config,
+                           json *sim_data) {
+
+    parse_xml_config(sim_config, sim_data);
+    jsbsim_init(sim_config, sim_data);
+}
+
+void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
+                                       json *sim_data) {
+
+    using namespace tinyxml2;
+
+    XMLDocument craft_doc(true, COLLAPSE_WHITESPACE);
+    craft_doc.LoadFile(sim_config.craft_config_path.c_str());
+    XMLElement *root_elem = craft_doc.FirstChildElement("fdm_config");
+    
+    // TODO avoid duplicit properties defined in either direction
+    
+    /**
+     * Get properties for the 3d visualizer
+     */
+    XMLElement *viz_elem = root_elem->FirstChildElement("viz");
+    XMLElement *viz_prop_elem = viz_elem->FirstChildElement("property");
+
+    for (; viz_prop_elem != nullptr; viz_prop_elem = viz_prop_elem->NextSiblingElement("property")) {
+        std::string to_sim_data_property(viz_prop_elem->GetText());
+
+        properties_to_sim_data.push_back(to_sim_data_property);
+        (*sim_data)[to_sim_data_property] = 0.0;
+    }
+
+    /**
+     * Get properties for FCS interface
+     */
+    XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
+    
+    /**
+     * Data from FCS into sim_data into JSBSim
+    */
+    XMLElement *from_fcs_elem = fcs_elem->FirstChildElement("from_fcs");
+    XMLElement *from_fcs_prop_elem = from_fcs_elem->FirstChildElement("property");
+
+    for (; from_fcs_prop_elem != nullptr; from_fcs_prop_elem = from_fcs_prop_elem->NextSiblingElement("property")) {
+        std::string to_jsbsim_property(from_fcs_prop_elem->GetText());
+
+        properties_to_jsbsim.push_back(to_jsbsim_property);
+        (*sim_data)[to_jsbsim_property] = 0.0;
+
+        // ? Default JSBSim data is supplied to FDMExec later (because now FDMExec is null)
+    }
+
+    /**
+     * Data from JSBSim into FCS
+     */
+    XMLElement *to_fcs_elem   = fcs_elem->FirstChildElement("to_fcs");
+    XMLElement *to_fcs_prop_elem = to_fcs_elem->FirstChildElement("property");
+
+    for (; to_fcs_prop_elem != nullptr; to_fcs_prop_elem = to_fcs_prop_elem->NextSiblingElement("property")) {
+        std::string to_sim_data_property(to_fcs_prop_elem->GetText());
+
+        properties_to_sim_data.push_back(to_sim_data_property);
+        (*sim_data)[to_sim_data_property] = 0.0;
+    }
+    
+    // TODO allow default values for all properties
 }
 
 void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
@@ -99,6 +160,41 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
     }
 
     /**
+     * Create all properties that are propagated back to JSBSim (to enable logging)
+     */
+    for (const std::string& to_jsbsim_property : properties_to_jsbsim) {
+        if (FDMExec->GetPropertyManager()->GetNode(to_jsbsim_property) == nullptr) {
+            FDMExec->SetPropertyValue(to_jsbsim_property, 0.0);
+            printf("Created property %s\n", to_jsbsim_property.c_str());
+        }
+    }
+
+    FDMExec->SetPropertyValue("ext/altitude-m", 0.0);
+    FDMExec->SetPropertyValue("ext/latitude-deg", 0.0);
+    FDMExec->SetPropertyValue("ext/latitude-rad", 0.0);
+    FDMExec->SetPropertyValue("ext/longitude-deg", 0.0);
+    FDMExec->SetPropertyValue("ext/longitude-rad", 0.0);
+
+    FDMExec->SetPropertyValue("ext/euler-yaw", 0.0);
+    FDMExec->SetPropertyValue("ext/euler-pitch", 0.0);
+    FDMExec->SetPropertyValue("ext/euler-roll", 0.0);
+    FDMExec->SetPropertyValue("ext/heading-true-deg", 0.0);
+
+    FDMExec->SetPropertyValue("ext/local-q-1", 0.0);
+    FDMExec->SetPropertyValue("ext/local-q-2", 0.0);
+    FDMExec->SetPropertyValue("ext/local-q-3", 0.0);
+    FDMExec->SetPropertyValue("ext/local-q-4", 0.0);
+
+    FDMExec->SetPropertyValue("ext/ecef-q-1", 0.0);
+    FDMExec->SetPropertyValue("ext/ecef-q-2", 0.0);
+    FDMExec->SetPropertyValue("ext/ecef-q-3", 0.0);
+    FDMExec->SetPropertyValue("ext/ecef-q-4", 0.0);
+
+    FDMExec->SetPropertyValue("ext/cg-x-m", 0.0);
+    FDMExec->SetPropertyValue("ext/cg-y-m", 0.0);
+    FDMExec->SetPropertyValue("ext/cg-z-m", 0.0);
+
+    /**
      * Load output directives file[s], if given
      */
     for (unsigned int i=0; i < sim_config.log_outputs.size(); i++) {
@@ -130,7 +226,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
      * ^ don't care about mutexes since the server should not be running at this point
      */
     update_sim_data(sim_data);
-
+    
     std::cout << "data" << sim_data->dump(4) << std::endl;
 
     FDMExec->PrintSimulationConfiguration();
@@ -263,86 +359,52 @@ bool JSBSimInterface::handle_iter(json *sim_data,
 }
 
 void JSBSimInterface::update_sim_properties(json *sim_data) {
-    FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", sim_data->value<double>("fcs/throttle-cmd-norm[0]", 0));
-    FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", sim_data->value<double>("fcs/throttle-cmd-norm[1]", 0));
-    FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", sim_data->value<double>("fcs/throttle-cmd-norm[2]", 0));
-    FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", sim_data->value<double>("fcs/throttle-cmd-norm[3]", 0));
+    /**
+     * Take data from FCS (stored in sim_data JSON) and use them to update JSBSim
+     */
 
-    FDMExec->SetPropertyValue("fcs/psi_est", sim_data->value<double>("fcs/psi_est", 0));
-    FDMExec->SetPropertyValue("fcs/theta_est", sim_data->value<double>("fcs/theta_est", 0));
-    FDMExec->SetPropertyValue("fcs/phi_est", sim_data->value<double>("fcs/phi_est", 0));
+    for (const std::string& to_jsbsim_prop : properties_to_jsbsim) {
+        FDMExec->SetPropertyValue(to_jsbsim_prop, sim_data->value<double>(to_jsbsim_prop, 0.0));
+    }
 }
 
 void JSBSimInterface::update_sim_data(json *sim_data) {
-    (*sim_data)["time_sec"] = FDMExec->GetPropertyValue("simulation/sim-time-sec");
-    (*sim_data)["altitude_m"] = (const double)FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M;
-    (*sim_data)["latitude_deg"] = FDMExec->GetPropagate()->GetLatitudeDeg();
-    (*sim_data)["latitude_rad"] = FDMExec->GetPropagate()->GetLatitude();
-    (*sim_data)["longitude_deg"] = FDMExec->GetPropagate()->GetLongitudeDeg();
-    (*sim_data)["longitude_rad"] = FDMExec->GetPropagate()->GetLongitude();
+    /**
+     * Default properties defined by the interface
+     */
+    FDMExec->SetPropertyValue("ext/altitude-m", FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M);
+    FDMExec->SetPropertyValue("ext/latitude-deg", FDMExec->GetPropagate()->GetLatitudeDeg());
+    FDMExec->SetPropertyValue("ext/latitude-rad", FDMExec->GetPropagate()->GetLatitude());
+    FDMExec->SetPropertyValue("ext/longitude-deg", FDMExec->GetPropagate()->GetLongitudeDeg());
+    FDMExec->SetPropertyValue("ext/longitude-rad", FDMExec->GetPropagate()->GetLongitude());
 
-    (*sim_data)["euler_yaw"] = FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG;
-    (*sim_data)["euler_pitch"] = FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG;
-    (*sim_data)["euler_roll"] = FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG;
-    (*sim_data)["attitude/heading-true-rad"] = FDMExec->GetPropertyValue("attitude/heading-true-rad");
-    (*sim_data)["attitude/heading-true-deg"] = FDMExec->GetPropertyValue("attitude/heading-true-rad") * RAD_TO_DEG;
+    FDMExec->SetPropertyValue("ext/euler-yaw", FDMExec->GetPropagate()->GetEuler(3) * RAD_TO_DEG);
+    FDMExec->SetPropertyValue("ext/euler-pitch", FDMExec->GetPropagate()->GetEuler(2) * RAD_TO_DEG);
+    FDMExec->SetPropertyValue("ext/euler-roll", FDMExec->GetPropagate()->GetEuler(1) * RAD_TO_DEG);
+    FDMExec->SetPropertyValue("ext/heading-true-deg", FDMExec->GetPropertyValue("attitude/heading-true-rad") * RAD_TO_DEG);
 
     JSBSim::FGQuaternion local_quaternion = FDMExec->GetPropagate()->GetQuaternion();
-    (*sim_data)["local_q_1"] = local_quaternion(1);
-    (*sim_data)["local_q_2"] = local_quaternion(2);
-    (*sim_data)["local_q_3"] = local_quaternion(3);
-    (*sim_data)["local_q_4"] = local_quaternion(4);
+    FDMExec->SetPropertyValue("ext/local-q-1", local_quaternion(1));
+    FDMExec->SetPropertyValue("ext/local-q-2", local_quaternion(2));
+    FDMExec->SetPropertyValue("ext/local-q-3", local_quaternion(3));
+    FDMExec->SetPropertyValue("ext/local-q-4", local_quaternion(4));
 
     JSBSim::FGQuaternion ecef_quaternion = FDMExec->GetPropagate()->GetQuaternionECEF();
-    (*sim_data)["ecef_q_1"] = ecef_quaternion(1);
-    (*sim_data)["ecef_q_2"] = ecef_quaternion(2);
-    (*sim_data)["ecef_q_3"] = ecef_quaternion(3);
-    (*sim_data)["ecef_q_4"] = ecef_quaternion(4);
+    FDMExec->SetPropertyValue("ext/ecef-q-1", ecef_quaternion(1));
+    FDMExec->SetPropertyValue("ext/ecef-q-2", ecef_quaternion(2));
+    FDMExec->SetPropertyValue("ext/ecef-q-3", ecef_quaternion(3));
+    FDMExec->SetPropertyValue("ext/ecef-q-4", ecef_quaternion(4));
 
-    (*sim_data)["cg_x_m"] = FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M;
-    (*sim_data)["cg_y_m"] = FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M;
-    (*sim_data)["cg_z_m"] = FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M;
+    FDMExec->SetPropertyValue("ext/cg-x-m", FDMExec->GetMassBalance()->GetXYZcg(1) * IN_TO_M);
+    FDMExec->SetPropertyValue("ext/cg-y-m", FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M);
+    FDMExec->SetPropertyValue("ext/cg-z-m", FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M);
 
-    (*sim_data)["propulsion/engine/propeller-rpm"]    = FDMExec->GetPropertyValue("propulsion/engine/propeller-rpm");
-    (*sim_data)["propulsion/engine[1]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-rpm");
-    (*sim_data)["propulsion/engine[2]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-rpm");
-    (*sim_data)["propulsion/engine[3]/propeller-rpm"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-rpm");
-
-    (*sim_data)["propulsion/engine/propeller-sense"]    = FDMExec->GetPropertyValue("propulsion/engine/propeller-sense");
-    (*sim_data)["propulsion/engine[1]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[1]/propeller-sense");
-    (*sim_data)["propulsion/engine[2]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[2]/propeller-sense");
-    (*sim_data)["propulsion/engine[3]/propeller-sense"] = FDMExec->GetPropertyValue("propulsion/engine[3]/propeller-sense");
-
-    (*sim_data)["propulsion/engine/thrust-lbs"]    = FDMExec->GetPropertyValue("propulsion/engine/thrust-lbs");
-    (*sim_data)["propulsion/engine[1]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[1]/thrust-lbs");
-    (*sim_data)["propulsion/engine[2]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[2]/thrust-lbs");
-    (*sim_data)["propulsion/engine[3]/thrust-lbs"] = FDMExec->GetPropertyValue("propulsion/engine[3]/thrust-lbs");
-
-    (*sim_data)["propulsion/engine/pitch-angle-rad"]    = FDMExec->GetPropertyValue("propulsion/engine/pitch-angle-rad");
-    (*sim_data)["propulsion/engine[1]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[1]/pitch-angle-rad");
-    (*sim_data)["propulsion/engine[2]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[2]/pitch-angle-rad");
-    (*sim_data)["propulsion/engine[3]/pitch-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[3]/pitch-angle-rad");
-
-    (*sim_data)["propulsion/engine/yaw-angle-rad"]    = FDMExec->GetPropertyValue("propulsion/engine/yaw-angle-rad");
-    (*sim_data)["propulsion/engine[1]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[1]/yaw-angle-rad");
-    (*sim_data)["propulsion/engine[2]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[2]/yaw-angle-rad");
-    (*sim_data)["propulsion/engine[3]/yaw-angle-rad"] = FDMExec->GetPropertyValue("propulsion/engine[3]/yaw-angle-rad");
-    
-    (*sim_data)["sensor/imu/accelX_mps2"] = FDMExec->GetPropertyValue("sensor/imu/accelX_mps2");
-    (*sim_data)["sensor/imu/accelY_mps2"] = FDMExec->GetPropertyValue("sensor/imu/accelY_mps2");
-    (*sim_data)["sensor/imu/accelZ_mps2"] = FDMExec->GetPropertyValue("sensor/imu/accelZ_mps2");
-
-    (*sim_data)["sensor/imu/gyroX_rps"] = FDMExec->GetPropertyValue("sensor/imu/gyroX_rps");
-    (*sim_data)["sensor/imu/gyroY_rps"] = FDMExec->GetPropertyValue("sensor/imu/gyroY_rps");
-    (*sim_data)["sensor/imu/gyroZ_rps"] = FDMExec->GetPropertyValue("sensor/imu/gyroZ_rps");
-
-    (*sim_data)["sensor/imu/magX_nT"] = FDMExec->GetPropertyValue("sensor/imu/magX_nT");
-    (*sim_data)["sensor/imu/magY_nT"] = FDMExec->GetPropertyValue("sensor/imu/magY_nT");
-    (*sim_data)["sensor/imu/magZ_nT"] = FDMExec->GetPropertyValue("sensor/imu/magZ_nT");
-
-    (*sim_data)["sensor/baro/presStatic_Pa"] = FDMExec->GetPropertyValue("sensor/baro/presStatic_Pa");
-    (*sim_data)["sensor/baro/temp_C"]        = FDMExec->GetPropertyValue("sensor/baro/temp_C");
-
+    /**
+     * Update properties from jsbsim into the sim_data for 3d visualization 
+     */
+    for (const std::string& to_sim_data_prop : properties_to_sim_data) {
+        (*sim_data)[to_sim_data_prop] = FDMExec->GetPropertyValue(to_sim_data_prop.c_str());
+    }
     
     /**
      * ==== User control ====

@@ -49,14 +49,14 @@ double engine_3_cmd_norm;
  * ==== FORWARD DECLARATIONS ====
  */ 
 extern "C" void init(json *sim_data);
-extern "C" void data_to_fcs(json *sim_data);
-extern "C" void data_from_fcs(json *sim_data);
+extern "C" void data_to_fcs(double *data);
+extern "C" void data_from_fcs(double *data);
 extern "C" void loop(void);
 const double engine_mixer(const int engine_id,
-                    const double throttle_cmd,
-                    const double yaw_cmd,
-                    const double pitch_cmd,
-                    const double roll_cmd);
+                          const double throttle_cmd,
+                          const double yaw_cmd,
+                          const double pitch_cmd,
+                          const double roll_cmd);
 const double mixer_to_cmd(const double mixer_output);
 const double get_x_body(const double yaw_rad, const double x_world, const double y_world);
 const double get_y_body(const double yaw_rad, const double x_world, const double y_world);
@@ -83,43 +83,38 @@ extern "C" void init(json *sim_data) {
     engine_3_cmd_norm = 0.0;
 }
 
-extern "C" void data_to_fcs(json *sim_data) {
-    // TODO define in file
-    
-    time_sec          = sim_data->value<double>("time_sec", 0);
-    
-    x_world_measure_m = sim_data->value<double>("longitude_deg", 0) * DEG_TO_GEO_M;
-    y_world_measure_m = sim_data->value<double>("latitude_deg", 0) * DEG_TO_GEO_M;
+extern "C" void data_to_fcs(double *data) {
+    time_sec          = data[0];
 
-    alt_measure       = sim_data->value<double>("altitude_m", 0);
-    yaw_measure       = sim_data->value<double>("attitude/heading-true-deg", 0);
-    yaw_rad           = sim_data->value<double>("attitude/heading-true-rad", 0);
-    pitch_measure     = sim_data->value<double>("euler_pitch", 0);
-    roll_measure      = sim_data->value<double>("euler_roll", 0);
+    x_world_measure_m = data[1] * DEG_TO_GEO_M;
+    y_world_measure_m = data[2] * DEG_TO_GEO_M;
 
-    ax                = sim_data->value<double>("sensor/imu/accelX_mps2", 0);
-    ay                = sim_data->value<double>("sensor/imu/accelY_mps2", 0);
-    az                = sim_data->value<double>("sensor/imu/accelZ_mps2", 0);
+    alt_measure       = data[3];
+    yaw_rad           = data[4];
+    yaw_measure       = data[5];
+    pitch_measure     = data[6];
+    roll_measure      = data[7];
 
-    gx                = sim_data->value<double>("sensor/imu/gyroX_rps", 0);
-    gy                = sim_data->value<double>("sensor/imu/gyroY_rps", 0);
-    gz                = sim_data->value<double>("sensor/imu/gyroZ_rps", 0);
+    ax                = data[8];
+    ay                = data[9];
+    az                = data[10];
+
+    gx                = data[11];
+    gy                = data[12];
+    gz                = data[13];
 
     if (prev_time_sec < 0) prev_time_sec = time_sec;
 }
 
-extern "C" void data_from_fcs(json *sim_data) {
-    // TODO define in file
-    // TODO output FCS internal state to sim_data to allow logging via JSBSim output directives
-    
-    (*sim_data)["fcs/throttle-cmd-norm[0]"] = engine_0_cmd_norm;
-    (*sim_data)["fcs/throttle-cmd-norm[1]"] = engine_1_cmd_norm;
-    (*sim_data)["fcs/throttle-cmd-norm[2]"] = engine_2_cmd_norm;
-    (*sim_data)["fcs/throttle-cmd-norm[3]"] = engine_3_cmd_norm;
+extern "C" void data_from_fcs(double *data) {
+    data[0] = engine_0_cmd_norm;
+    data[1] = engine_1_cmd_norm;
+    data[2] = engine_2_cmd_norm;
+    data[3] = engine_3_cmd_norm;
 
-    (*sim_data)["fcs/phi_est"]   = phi_est;
-    (*sim_data)["fcs/theta_est"] = theta_est;
-    (*sim_data)["fcs/psi_est"]   = psi_est;
+    data[4] = phi_est;
+    data[5] = theta_est;
+    data[6] = psi_est;
 }
 
 extern "C" void loop(void) {
@@ -186,6 +181,9 @@ extern "C" void loop(void) {
     phi_est   = phi_est   / M_PI * 180.0;
     theta_est = theta_est / M_PI * 180.0;
     psi_est   = psi_est   / M_PI * 180.0;
+
+    // printf("alt_measure: %f\n", alt_measure);
+    // printf("ax: %f\n", ax);
 }
 
 /**

@@ -11,8 +11,9 @@
 #include <vector>
 
 #include "nlohmann/json.hpp"
-
 #include "ws_server.h"
+#include "tinyxml2.h"
+
 #include "jsbsim_interface.h"
 #include "sitl_interface.h"
 #include "sim_config.h"
@@ -25,13 +26,12 @@ using json = nlohmann::json;
  */
 
 void parse_cli_options(sim_config_t& sim_config, int argc, char **argv);
+void get_craft_config_path(sim_config_t& sim_config);
 void print_help();
 
 /**
  * ==== END FORWARD DECLARATION ====
  */
-
-
 
 bool continue_running = true;
 
@@ -106,7 +106,8 @@ int main(int argc, char **argv) {
     /**
      * Init
      */
-    jsbsim_interface.jsbsim_init(sim_config, &sim_data);
+    get_craft_config_path(sim_config);
+    jsbsim_interface.init(sim_config, &sim_data);
 
     if (!sim_config.sitl_path.empty()) {
         sitl_interface.sitl_init(sim_config, &sim_data);
@@ -239,6 +240,33 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         print_help();
         exit(1);
     }
+}
+
+void get_craft_config_path(sim_config_t& sim_config) {
+    using namespace tinyxml2;
+
+    SGPath script_path;
+    SGPath aircraft_path;
+
+    /**
+     * Load main script to get aircraft name
+     */
+    script_path = SGPath(sim_config.root_dir)/sim_config.script_path;
+    
+    XMLDocument script_doc;
+    script_doc.LoadFile(script_path.c_str());
+
+    XMLElement *runscript_elem = script_doc.FirstChildElement("runscript");
+    XMLElement *use_elem = runscript_elem->FirstChildElement("use");
+
+    /**
+     * Load aircraft to get properites 
+     */
+    std::string aircraft_name(use_elem->Attribute("aircraft"));
+    
+    aircraft_path = SGPath(sim_config.root_dir)/"aircraft"/aircraft_name/(aircraft_name + ".xml");
+
+    sim_config.craft_config_path = aircraft_path.str();
 }
 
 void print_help() {

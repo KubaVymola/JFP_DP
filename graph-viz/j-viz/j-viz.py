@@ -14,8 +14,6 @@ data = []
 data_labels = []
 
 def main():
-    new_data = False
-    
     args = parse_cli_args()
     fig, axs = parse_config(args.config_file)
     

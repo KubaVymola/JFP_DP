@@ -10,9 +10,9 @@
     <property> attitude/theta-deg </property>
     <property> attitude/phi-deg </property>
     
-    <property> fcs/psi_est </property>
-    <property> fcs/theta_est </property>
-    <property> fcs/phi_est </property>
+    <property> fcs/psi-est </property>
+    <property> fcs/theta-est </property>
+    <property> fcs/phi-est </property>
     
     <property> fcs/throttle-cmd-norm[0] </property>
     <property> fcs/throttle-cmd-norm[1] </property>

@@ -2,7 +2,7 @@
 
 <system name="Sensor - IMU">
 
-    <function name="sensor/imu/time_us">
+    <function name="sensor/imu/time-us">
         <product>
             <property>simulation/sim-time-sec</property>
             <value>1000000.0</value>
@@ -24,7 +24,7 @@
                 <yaw>0</yaw>
             </orientation>
 
-            <output>sensor/imu/accelX_true_fps2</output>
+            <output>sensor/imu/accelX-true-fps2</output>
         </accelerometer>
 
         <accelerometer name="AccelY">
@@ -41,7 +41,7 @@
                 <yaw>0</yaw>
             </orientation>
 
-            <output>sensor/imu/accelY_true_fps2</output>
+            <output>sensor/imu/accelY-true-fps2</output>
         </accelerometer>
 
         <accelerometer name="AccelZ">
@@ -58,32 +58,32 @@
                 <yaw>0</yaw>
             </orientation>
 
-            <output>sensor/imu/accelZ_true_fps2</output>
+            <output>sensor/imu/accelZ-true-fps2</output>
         </accelerometer>
     </channel>
 
-    <function name="sensor/imu/accelX_true_mps2">
+    <function name="sensor/imu/accelX-true-mps2">
         <product>
-            <property>sensor/imu/accelX_true_fps2</property>
+            <property>sensor/imu/accelX-true-fps2</property>
             <value>0.3048</value>
         </product>
     </function>
 
-    <function name="sensor/imu/accelY_true_mps2">
+    <function name="sensor/imu/accelY-true-mps2">
         <product>
-            <property>sensor/imu/accelY_true_fps2</property>
+            <property>sensor/imu/accelY-true-fps2</property>
             <value>0.3048</value>
         </product>
     </function>
 
-    <function name="sensor/imu/accelZ_true_mps2">
+    <function name="sensor/imu/accelZ-true-mps2">
         <product>
-            <property>sensor/imu/accelZ_true_fps2</property>
+            <property>sensor/imu/accelZ-true-fps2</property>
             <value>0.3048</value>
         </product>
     </function>
 
-    <function name="sensor/imu/temp_true_C">
+    <function name="sensor/imu/temp-true-C">
         <product>
             <sum>
                 <property>atmosphere/T-R</property>
@@ -95,50 +95,50 @@
 
 
     <channel name="Temperature Error Model">
-        <sensor name="temp_C">
-            <input>sensor/imu/temp_true_C</input>
+        <sensor name="temp-C">
+            <input>sensor/imu/temp-true-C</input>
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/temp_C</output>
+            <output>sensor/imu/temp-C</output>
         </sensor>
     </channel>
 
     <channel name="Accelerometer Error Model">
         <sensor name="AccelX">
-            <input>sensor/imu/accelX_true_mps2</input>
+            <input>sensor/imu/accelX-true-mps2</input>
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/accelX_mps2</output>
+            <output>sensor/imu/accelX-mps2</output>
         </sensor>
 
         <sensor name="AccelY">
-            <input>sensor/imu/accelY_true_mps2</input>
+            <input>sensor/imu/accelY-true-mps2</input>
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/accelY_mps2</output>
+            <output>sensor/imu/accelY-mps2</output>
         </sensor>
 
         <sensor name="AccelZ">
-            <input>sensor/imu/accelZ_true_mps2</input>
+            <input>sensor/imu/accelZ-true-mps2</input>
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/accelZ_mps2</output>
+            <output>sensor/imu/accelZ-mps2</output>
         </sensor>
     </channel>
 
@@ -163,7 +163,7 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/gyroX_rps</output>
+            <output>sensor/imu/gyroX-rps</output>
         </gyro>
 
         <gyro name="GyroY">
@@ -186,7 +186,7 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/gyroY_rps</output>
+            <output>sensor/imu/gyroY-rps</output>
         </gyro>
 
         <gyro name="GyroZ">
@@ -209,7 +209,7 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/gyroZ_rps</output>
+            <output>sensor/imu/gyroZ-rps</output>
         </gyro>
     </channel>
 
@@ -234,7 +234,7 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/magX_nT</output>
+            <output>sensor/imu/magX-nT</output>
         </magnetometer>
 
         <magnetometer name="MagY">
@@ -257,7 +257,7 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/magY_nT</output>
+            <output>sensor/imu/magY-nT</output>
         </magnetometer>
 
         <magnetometer name="MagZ">
@@ -280,28 +280,28 @@
             <gain>1</gain>
             <bias>0</bias>
             <delay>0</delay>
-            <output>sensor/imu/magZ_nT</output>
+            <output>sensor/imu/magZ-nT</output>
         </magnetometer>
 
     </channel>
 
-    <function name="sensor/imu/magX_uT">
+    <function name="sensor/imu/magX-uT">
         <product>
-            <property>sensor/imu/magX_nT</property>
+            <property>sensor/imu/magX-nT</property>
             <value>0.001</value>
         </product>
     </function>
 
-    <function name="sensor/imu/magY_uT">
+    <function name="sensor/imu/magY-uT">
         <product>
-            <property>sensor/imu/magY_nT</property>
+            <property>sensor/imu/magY-nT</property>
             <value>0.001</value>
         </product>
     </function>
 
-    <function name="sensor/imu/magZ_uT">
+    <function name="sensor/imu/magZ-uT">
         <product>
-            <property>sensor/imu/magZ_nT</property>
+            <property>sensor/imu/magZ-nT</property>
             <value>0.001</value>
         </product>
     </function>
