@@ -142,6 +142,27 @@
         </sensor>
     </channel>
 
+    <function name="sensor/imu/accelX-g">
+        <product>
+            <property>sensor/imu/accelX-mps2</property>
+            <value>0.1020</value>
+        </product>
+    </function>
+
+    <function name="sensor/imu/accelY-g">
+        <product>
+            <property>sensor/imu/accelY-mps2</property>
+            <value>0.1020</value>
+        </product>
+    </function>
+
+    <function name="sensor/imu/accelZ-g">
+        <product>
+            <property>sensor/imu/accelZ-mps2</property>
+            <value>0.1020</value>
+        </product>
+    </function>
+
     <channel name="Gyros">
         <gyro name="GyroX">
             <axis>X</axis>

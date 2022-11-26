@@ -164,7 +164,7 @@ class App {
                     const parsedData = JSON.parse(event.data);
                     this._craft.update(parsedData, this._camera);
 
-                    const data = { keys: [...Object.keys(this.pressedKeys).filter((key) => this.pressedKeys[key])] };
+                    const data = this._craft.getGamepadData();
                     this._ws.send(JSON.stringify(data));
                 };
             };

@@ -10,6 +10,18 @@
     <property> attitude/theta-deg </property>
     <property> attitude/phi-deg </property>
     
+    <property> sensor/imu/accelX-g </property>
+    <property> sensor/imu/accelY-g </property>
+    <property> sensor/imu/accelZ-g </property>
+
+    <property> sensor/imu/gyroX-rps </property>
+    <property> sensor/imu/gyroY-rps </property>
+    <property> sensor/imu/gyroZ-rps </property>
+
+    <property> sensor/imu/magX-uT </property>
+    <property> sensor/imu/magY-uT </property>
+    <property> sensor/imu/magZ-uT </property>
+
     <property> fcs/psi-est </property>
     <property> fcs/theta-est </property>
     <property> fcs/phi-est </property>
@@ -19,5 +31,10 @@
     <property> fcs/throttle-cmd-norm[2] </property>
     <property> fcs/throttle-cmd-norm[3] </property>
 
-    <property> sensor/baro/presStatic_Pa </property>
+    <property> user-control/channel-1 </property>
+    <property> user-control/channel-2 </property>
+    <property> user-control/channel-3 </property>
+    <property> user-control/channel-4 </property>
+
+    <property> sensor/baro/presStatic-Pa </property>
 </output>

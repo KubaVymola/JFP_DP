@@ -8,6 +8,7 @@
 #include "models/FGInertial.h"
 #include "models/FGPropagate.h"
 #include "models/FGMassBalance.h"
+#include "input_output/FGScript.h"
 #include "simgear/misc/sg_path.hxx"
 #include "nlohmann/json.hpp"
 #include "tinyxml2.h"
@@ -57,14 +58,29 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     /**
      * Get properties for the 3d visualizer
      */
-    XMLElement *viz_elem = root_elem->FirstChildElement("viz");
-    XMLElement *viz_prop_elem = viz_elem->FirstChildElement("property");
+    XMLElement *ws_elem = root_elem->FirstChildElement("ws");
+    XMLElement *ws_from_jsb_elem = ws_elem->FirstChildElement("from_jsbsim");
+    XMLElement *ws_from_jsb_prop_elem = ws_from_jsb_elem->FirstChildElement("property");
 
-    for (; viz_prop_elem != nullptr; viz_prop_elem = viz_prop_elem->NextSiblingElement("property")) {
-        std::string to_sim_data_property(viz_prop_elem->GetText());
+    for (; 
+           ws_from_jsb_prop_elem != nullptr;
+           ws_from_jsb_prop_elem = ws_from_jsb_prop_elem->NextSiblingElement("property")) {
+        std::string from_jsbsim_property(ws_from_jsb_prop_elem->GetText());
 
-        properties_to_sim_data.push_back(to_sim_data_property);
-        (*sim_data)[to_sim_data_property] = 0.0;
+        properties_from_jsbsim.push_back(from_jsbsim_property);
+        (*sim_data)[from_jsbsim_property] = 0.0;
+    }
+
+    XMLElement *ws_to_jsb_elem = ws_elem->FirstChildElement("to_jsbsim");
+    XMLElement *ws_to_jsb_prop_elem = ws_to_jsb_elem->FirstChildElement("property");
+
+    for (;
+           ws_to_jsb_prop_elem != nullptr;
+           ws_to_jsb_prop_elem = ws_to_jsb_prop_elem->NextSiblingElement("property")) {
+        std::string to_jsbsim_property(ws_to_jsb_prop_elem->GetText());
+
+        properties_to_jsbsim.push_back(to_jsbsim_property);
+        (*sim_data)[to_jsbsim_property] = 0.0;
     }
 
     /**
@@ -75,11 +91,11 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     /**
      * Data from FCS into sim_data into JSBSim
     */
-    XMLElement *from_fcs_elem = fcs_elem->FirstChildElement("from_fcs");
-    XMLElement *from_fcs_prop_elem = from_fcs_elem->FirstChildElement("property");
+    XMLElement *fcs_to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
+    XMLElement *fcs_to_jsb_prop_elem = fcs_to_jsb_elem->FirstChildElement("property");
 
-    for (; from_fcs_prop_elem != nullptr; from_fcs_prop_elem = from_fcs_prop_elem->NextSiblingElement("property")) {
-        std::string to_jsbsim_property(from_fcs_prop_elem->GetText());
+    for (; fcs_to_jsb_prop_elem != nullptr; fcs_to_jsb_prop_elem = fcs_to_jsb_prop_elem->NextSiblingElement("property")) {
+        std::string to_jsbsim_property(fcs_to_jsb_prop_elem->GetText());
 
         properties_to_jsbsim.push_back(to_jsbsim_property);
         (*sim_data)[to_jsbsim_property] = 0.0;
@@ -90,17 +106,18 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     /**
      * Data from JSBSim into FCS
      */
-    XMLElement *to_fcs_elem   = fcs_elem->FirstChildElement("to_fcs");
-    XMLElement *to_fcs_prop_elem = to_fcs_elem->FirstChildElement("property");
+    XMLElement *fcs_from_jsb_elem   = fcs_elem->FirstChildElement("from_jsbsim");
+    XMLElement *fcs_from_jsb_prop_elem = fcs_from_jsb_elem->FirstChildElement("property");
 
-    for (; to_fcs_prop_elem != nullptr; to_fcs_prop_elem = to_fcs_prop_elem->NextSiblingElement("property")) {
-        std::string to_sim_data_property(to_fcs_prop_elem->GetText());
+    for (; fcs_from_jsb_prop_elem != nullptr; fcs_from_jsb_prop_elem = fcs_from_jsb_prop_elem->NextSiblingElement("property")) {
+        std::string from_jsbsim_property(fcs_from_jsb_prop_elem->GetText());
 
-        properties_to_sim_data.push_back(to_sim_data_property);
-        (*sim_data)[to_sim_data_property] = 0.0;
+        properties_from_jsbsim.push_back(from_jsbsim_property);
+        (*sim_data)[from_jsbsim_property] = 0.0;
     }
     
     // TODO allow default values for all properties
+    // TODO make all entries in the properties_from_jsbsim and properties_to_jsbsim unique
 }
 
 void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
@@ -169,6 +186,9 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         }
     }
 
+    /**
+     * Default values for extended properties that are not by default in the property catalogue
+     */
     FDMExec->SetPropertyValue("ext/altitude-m", 0.0);
     FDMExec->SetPropertyValue("ext/latitude-deg", 0.0);
     FDMExec->SetPropertyValue("ext/latitude-rad", 0.0);
@@ -202,7 +222,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         
         if (!logOutput.isNull()) {
             if (!FDMExec->SetOutputDirectives(logOutput)) {
-                cout << "Output directives not properly set in file " << sim_config.log_outputs[i] << endl;
+                std::cout << "Output directives not properly set in file " << sim_config.log_outputs[i] << std::endl;
             }
         }
     }
@@ -242,9 +262,9 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
                                   json *sim_data,
                                   std::mutex& sim_data_lock,
                                   SimEvents& sim_events) {
-    cout << endl << JSBSim::FGFDMExec::fggreen << JSBSim::FGFDMExec::highint
-         << "---- JSBSim Execution beginning ... --------------------------------------------"
-         << JSBSim::FGFDMExec::reset << endl << endl;
+    std::cout << endl << JSBSim::FGFDMExec::fggreen << JSBSim::FGFDMExec::highint
+              << "---- JSBSim Execution beginning ... --------------------------------------------"
+              << JSBSim::FGFDMExec::reset << std::endl << std::endl;
 
 
     char s[100];
@@ -253,7 +273,7 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
     struct tm local;
     localtime_r(&tod, &local);
     strftime(s, 99, "%A %B %d %Y %X", &local);
-    cout << "Start: " << s << " (HH:MM:SS)" << endl;
+    std::cout << "Start: " << s << " (HH:MM:SS)" << std::endl;
 
     frame_duration = FDMExec->GetDeltaT();
     if (sim_config.realtime) {
@@ -265,9 +285,8 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
     tzset();
     current_seconds = initial_seconds = getcurrentseconds();
 
-    while (result
-           && *continue_running
-           && (FDMExec->GetSimTime() <= sim_config.end_time || sim_config.end_time == 0.0)) {
+    while ((sim_config.end_time < 0.0 && *continue_running)
+        || (result && *continue_running && (FDMExec->GetSimTime() <= sim_config.end_time || sim_config.end_time == 0.0))) {
         // Check if increment then hold is on and take appropriate actions if it is
         // Iterate is not supported in realtime - only in batch and playnice modes
         FDMExec->CheckIncrementalHold();
@@ -282,7 +301,7 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
                  * Batch mode
                  */
                 
-                handle_iter(sim_data, sim_data_lock, sim_events);
+                result = handle_iter(sim_data, sim_data_lock, sim_events);
 
                 if (play_nice) sim_nsleep(sleep_nseconds);
             } else {
@@ -311,7 +330,7 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
                 if (play_nice) sim_nsleep(sleep_nseconds);
 
                 if (FDMExec->GetSimTime() >= new_five_second_value) { // Print out elapsed time every five seconds.
-                    cout << "Simulation elapsed time: " << FDMExec->GetSimTime() << endl;
+                    std::cout << "Simulation elapsed time: " << FDMExec->GetSimTime() << std::endl;
                     new_five_second_value += 5.0;
                 }
             }
@@ -326,7 +345,7 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
     time(&tod);
     localtime_r(&tod, &local);
     strftime(s, 99, "%A %B %d %Y %X", &local);
-    cout << "End: " << s << " (HH:MM:SS)" << endl;
+    std::cout << "End: " << s << " (HH:MM:SS)" << std::endl;
 }
 
 bool JSBSimInterface::handle_iter(json *sim_data,
@@ -402,7 +421,7 @@ void JSBSimInterface::update_sim_data(json *sim_data) {
     /**
      * Update properties from jsbsim into the sim_data for 3d visualization 
      */
-    for (const std::string& to_sim_data_prop : properties_to_sim_data) {
+    for (const std::string& to_sim_data_prop : properties_from_jsbsim) {
         (*sim_data)[to_sim_data_prop] = FDMExec->GetPropertyValue(to_sim_data_prop.c_str());
     }
     

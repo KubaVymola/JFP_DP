@@ -50,6 +50,8 @@ class Craft {
     craftEntities: Array<CraftEntity> = [];
     nodeTree: object = {};
     lastTime: number;
+    gamepadId: number = null;
+    toJSBSimNames: Array<string> = [];
     
     constructor(scene: Scene, camera: OriginCamera) {
         this.rootEntity = createEntity('craftEntity', scene, camera);
@@ -67,6 +69,14 @@ class Craft {
 
         const inputButton: HTMLButtonElement = document.querySelector('#open-root-dir');
         inputButton.addEventListener('click', () => this.handleLoadAllData(scene));
+
+        window.addEventListener('gamepadconnected', (e: GamepadEvent) => {
+            this.gamepadId = e.gamepad.index;
+        });
+
+        window.addEventListener('gamepaddisconnected', () => {
+            this.gamepadId = null;
+        });
     }
 
     update(craftData: any, camera: OriginCamera) {
@@ -82,7 +92,7 @@ class Craft {
          * t = longitude
          */
 
-        console.log(craftData);
+        // console.log(craftData);
 
         const deltaT_s = Math.max((craftData["simulation/sim-time-sec"] || 0) - this.lastTime, 0);
         this.lastTime = craftData["simulation/sim-time-sec"] || 0;
@@ -191,19 +201,23 @@ class Craft {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
 
-        const vizEl = xmlDoc.documentElement.getElementsByTagName('viz');
+        const wsEl = xmlDoc.documentElement.getElementsByTagName('ws');
 
-        if (!vizEl[0]) return;
+        if (!wsEl[0]) return;
 
-        const nodeEls = vizEl[0].children;
+        const nodeEls = wsEl[0].children;
 
         for (let i = 0; i < nodeEls.length; ++i) {
-            if (nodeEls[i].nodeName === 'node') {
-                this.nodeTree = this.parseJSBSimDefNode(nodeEls[i]);
+            if (nodeEls[i].nodeName === 'to_jsbsim') {
+                this.parseToJSBSimNode(nodeEls[i]);
             }
-
+            
             if (nodeEls[i].nodeName === 'file') {
                 objPaths.push(nodeEls[i].textContent);
+            }
+            
+            if (nodeEls[i].nodeName === 'node') {
+                this.nodeTree = this.parseWSNode(nodeEls[i]);
             }
         }
 
@@ -224,7 +238,19 @@ class Craft {
         this.loadMeshEntityFromTree(scene, this.nodeTree, this.rootEntity, objFiles);
     }
 
-    parseJSBSimDefNode(currentNode: Element): object {
+    parseToJSBSimNode(parentNode: Element) {
+        const children = parentNode.children;
+        
+        for (let i = 0; i < children.length; ++i) {
+            if (children[i].nodeName === 'property') {
+                this.toJSBSimNames.push(children[i].textContent.trim());
+            }
+        }
+
+        console.log(this.toJSBSimNames);
+    }
+
+    parseWSNode(currentNode: Element): object {
         const toReturn: NodeTreeItem = {
             mesh: null,
             position: new Vector3(0, 0, 0),
@@ -248,7 +274,7 @@ class Craft {
         for (let i = 0; i < childEls.length; ++i) {
             switch (childEls[i].nodeName) {
             case 'node':
-                toReturn.children.push(this.parseJSBSimDefNode(childEls[i]));
+                toReturn.children.push(this.parseWSNode(childEls[i]));
                 break;
             case 'position':
                 const positionEls = childEls[i].children;
@@ -389,6 +415,40 @@ class Craft {
         }
 
         return null;
+    }
+
+    getGamepadData() {
+        let gamepad: Gamepad = null;
+        
+        if (navigator.getGamepads().length > 0) {
+            gamepad = navigator.getGamepads()[0];
+        }
+        
+        const toReturn: any = {};
+        
+        // console.log('num gamepads', navigator.getGamepads().length);
+        // console.log('gamepad is null', this.gamepad === null);
+        // if (this.gamepad !== null) {
+        //     console.log('gamepad num axes', this.gamepad.axes.length);
+        //     console.log('gamepad axes', this.gamepad.axes);
+        // }
+
+        if (gamepad === null || !gamepad.connected) {
+            this.toJSBSimNames.forEach((name) => {
+                toReturn[name] = 0.0;
+            });
+            
+            return toReturn;
+        }
+
+        this.toJSBSimNames.forEach((name, id) => {
+            if (id >= gamepad.axes.length) toReturn[name] = 0.0;
+            else toReturn[name] = (gamepad.axes[id] + 1) / 2;
+        });
+
+        console.log('data', toReturn);
+
+        return toReturn;
     }
 }
 

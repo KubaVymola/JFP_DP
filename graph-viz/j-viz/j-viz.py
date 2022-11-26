@@ -82,8 +82,10 @@ def parse_config(file_name: str):
             axs[pos_x][pos_y].set_ylim(data_range_from, data_range_to)
             
             axs[pos_x][pos_y].set_xlabel('Time [s]')
-            axs[pos_x][pos_y].set_xlabel(child.attrib['ylabel'])
-            axs[pos_x][pos_y].set_title(child.attrib['title'])
+            if child.attrib['ylabel']:
+                axs[pos_x][pos_y].set_ylabel(child.attrib['ylabel'])
+            if child.attrib['title']:
+                axs[pos_x][pos_y].set_title(child.attrib['title'])
             
             for x in child.findall('data'):
                 new_data_property = x.text.strip()

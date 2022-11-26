@@ -1,6 +1,7 @@
 add_library(app_external_deps INTERFACE)
 
 set(BUILD_DOCS OFF CACHE INTERNAL "")
+set(BUILD_PYTHON_MODULE OFF CACHE INTERNAL "")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(tinyxml2_BUILD_TESTING OFF CACHE INTERNAL "")
 

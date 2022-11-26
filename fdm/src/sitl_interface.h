@@ -30,8 +30,8 @@ private:
     unsigned int iter_num;
     unsigned int sitl_div;
 
-    std::vector<std::string> to_fcs_properties;
-    std::vector<std::string> from_fcs_properties;
+    std::vector<std::string> from_jsbsim_properties;
+    std::vector<std::string> to_jsbsim_properties;
 
     init_func init_fcs;
     data_to_fcs_func data_to_fcs;

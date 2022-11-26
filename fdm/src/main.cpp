@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
      */
     sim_config_t sim_config;
     sim_config.realtime = true;
-    sim_config.end_time = 60;
+    sim_config.end_time = 0.0;
     sim_config.override_sim_rate = false;
 
     sim_config.simulation_rate = 1./120.;
@@ -108,6 +108,8 @@ int main(int argc, char **argv) {
      */
     get_craft_config_path(sim_config);
     jsbsim_interface.init(sim_config, &sim_data);
+
+    printf("Init done\n");
 
     if (!sim_config.sitl_path.empty()) {
         sitl_interface.sitl_init(sim_config, &sim_data);

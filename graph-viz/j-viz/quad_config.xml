@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<timeseries grid_x="5" grid_y="2">
+    <time range_from="0" range_to="120">Time</time>
+    
+    <plot pos_x="0" pos_y="0" range_from="0" range_to="5" title="Altitude" ylabel="Alt [ft]">
+        <data>/fdm/jsbsim/position/h-agl-ft</data>
+    </plot>
+
+    <plot pos_x="1" pos_y="0" range_from="-0.00005" range_to="0.00005" title="Geo position" ylabel="Pos [deg]">
+        <data>/fdm/jsbsim/position/long-gc-deg</data>
+        <data>/fdm/jsbsim/position/lat-gc-deg</data>
+    </plot>
+
+    <plot pos_x="2" pos_y="0" range_from="-30" range_to="30" title="JSBSim attitude" ylabel="Angle [deg]">
+        <data>/fdm/jsbsim/attitude/psi-deg</data>
+        <data>/fdm/jsbsim/attitude/theta-deg</data>
+        <data>/fdm/jsbsim/attitude/phi-deg</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]">
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[1]</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[2]</data>
+        <data>/fdm/jsbsim/fcs/throttle-cmd-norm[3]</data>
+    </plot>
+
+    <plot pos_x="4" pos_y="0" range_from="0" range_to="1" title="User control" ylabel="[norm]">
+        <data>/fdm/jsbsim/user-control/channel-1</data>
+        <data>/fdm/jsbsim/user-control/channel-2</data>
+        <data>/fdm/jsbsim/user-control/channel-3</data>
+        <data>/fdm/jsbsim/user-control/channel-4</data>
+    </plot>
+
+    <plot pos_x="0" pos_y="1" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
+        <data>/fdm/jsbsim/sensor/imu/accelX-g</data>
+        <data>/fdm/jsbsim/sensor/imu/accelY-g</data>
+        <data>/fdm/jsbsim/sensor/imu/accelZ-g</data>
+    </plot>
+
+    <plot pos_x="1" pos_y="1" range_from="-3" range_to="3" title="Rotation" ylabel="[rps]">
+        <data>/fdm/jsbsim/sensor/imu/gyroX-rps</data>
+        <data>/fdm/jsbsim/sensor/imu/gyroY-rps</data>
+        <data>/fdm/jsbsim/sensor/imu/gyroZ-rps</data>
+    </plot>
+
+    <plot pos_x="2" pos_y="1" range_from="-40" range_to="40" title="Magnetic flux" ylabel="[uT]">
+        <data>/fdm/jsbsim/sensor/imu/magX-uT</data>
+        <data>/fdm/jsbsim/sensor/imu/magY-uT</data>
+        <data>/fdm/jsbsim/sensor/imu/magZ-uT</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="1" range_from="-30" range_to="30" title="Estimated attitude" ylabel="Angle [deg]">
+        <data> /fdm/jsbsim/fcs/psi-est </data>
+        <data> /fdm/jsbsim/fcs/theta-est </data>
+        <data> /fdm/jsbsim/fcs/phi-est </data>
+    </plot>
+</timeseries>

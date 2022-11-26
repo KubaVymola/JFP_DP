@@ -44,7 +44,7 @@ public:
 private:
     JSBSim::FGFDMExec* FDMExec;
 
-    std::vector<std::string> properties_to_sim_data;
+    std::vector<std::string> properties_from_jsbsim;
     std::vector<std::string> properties_to_jsbsim;
 
     bool was_paused;

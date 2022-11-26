@@ -27,46 +27,58 @@
 
     <!-- ==== JFP required nodes follow ==== -->
 
-    <viz>
+    <ws>
+        <to_jsbsim>
+            <property> user-control/channel-1 </property>
+            <property> user-control/channel-2 </property>
+            <property> user-control/channel-3 </property>
+            <property> user-control/channel-4 </property>
+            <property> user-control/channel-5 </property>
+            <property> user-control/channel-6 </property>
+            <property> user-control/channel-7 </property>
+        </to_jsbsim>
+        
         <!-- Preperties will be sent via ws and can be excpected in 3d visualizer -->
-        <property> simulation/sim-time-sec </property>
+        <from_jsbsim>
+            <property> simulation/sim-time-sec </property>
 
-        <property> ext/altitude-m </property>
-        <property> ext/latitude-rad </property>
-        <property> ext/longitude-rad </property>
+            <property> ext/altitude-m </property>
+            <property> ext/latitude-rad </property>
+            <property> ext/longitude-rad </property>
 
-        <property> ext/ecef-q-1 </property>
-        <property> ext/ecef-q-2 </property>
-        <property> ext/ecef-q-3 </property>
-        <property> ext/ecef-q-4 </property>
+            <property> ext/ecef-q-1 </property>
+            <property> ext/ecef-q-2 </property>
+            <property> ext/ecef-q-3 </property>
+            <property> ext/ecef-q-4 </property>
 
-        <property> ext/cg-x-m </property>
-        <property> ext/cg-y-m </property>
-        <property> ext/cg-z-m </property>
+            <property> ext/cg-x-m </property>
+            <property> ext/cg-y-m </property>
+            <property> ext/cg-z-m </property>
 
-        <property> propulsion/engine/propeller-rpm </property>
-        <property> propulsion/engine/propeller-sense </property>
-        <property> propulsion/engine/thrust-lbs </property>
-        <property> propulsion/engine/yaw-angle-rad </property>
-        <property> propulsion/engine/pitch-angle-rad </property>
+            <property> propulsion/engine/propeller-rpm </property>
+            <property> propulsion/engine/propeller-sense </property>
+            <property> propulsion/engine/thrust-lbs </property>
+            <property> propulsion/engine/yaw-angle-rad </property>
+            <property> propulsion/engine/pitch-angle-rad </property>
 
-        <property> propulsion/engine[1]/propeller-rpm </property>
-        <property> propulsion/engine[1]/propeller-sense </property>
-        <property> propulsion/engine[1]/thrust-lbs </property>
-        <property> propulsion/engine[1]/yaw-angle-rad </property>
-        <property> propulsion/engine[1]/pitch-angle-rad </property>
+            <property> propulsion/engine[1]/propeller-rpm </property>
+            <property> propulsion/engine[1]/propeller-sense </property>
+            <property> propulsion/engine[1]/thrust-lbs </property>
+            <property> propulsion/engine[1]/yaw-angle-rad </property>
+            <property> propulsion/engine[1]/pitch-angle-rad </property>
 
-        <property> propulsion/engine[2]/propeller-rpm </property>
-        <property> propulsion/engine[2]/propeller-sense </property>
-        <property> propulsion/engine[2]/thrust-lbs </property>
-        <property> propulsion/engine[2]/yaw-angle-rad </property>
-        <property> propulsion/engine[2]/pitch-angle-rad </property>
+            <property> propulsion/engine[2]/propeller-rpm </property>
+            <property> propulsion/engine[2]/propeller-sense </property>
+            <property> propulsion/engine[2]/thrust-lbs </property>
+            <property> propulsion/engine[2]/yaw-angle-rad </property>
+            <property> propulsion/engine[2]/pitch-angle-rad </property>
 
-        <property> propulsion/engine[3]/propeller-rpm </property>
-        <property> propulsion/engine[3]/propeller-sense </property>
-        <property> propulsion/engine[3]/thrust-lbs </property>
-        <property> propulsion/engine[3]/yaw-angle-rad </property>
-        <property> propulsion/engine[3]/pitch-angle-rad </property>
+            <property> propulsion/engine[3]/propeller-rpm </property>
+            <property> propulsion/engine[3]/propeller-sense </property>
+            <property> propulsion/engine[3]/thrust-lbs </property>
+            <property> propulsion/engine[3]/yaw-angle-rad </property>
+            <property> propulsion/engine[3]/pitch-angle-rad </property>
+        </from_jsbsim>
         
         <file>3d/quad.obj</file>
         <node mesh="quad_body_quad.001">
@@ -185,63 +197,65 @@
                 </axis>
             </node> -->
         </node>
-    </viz>
-
-    <user_control type="Joystick">
-        <mapping>
-            <from> channel_1 </from>
-            <to> user_control/roll  </to>
-        </mapping>
-
-        <mapping>
-            <from> channel_2 </from>
-            <to> user_control/pitch  </to>
-        </mapping>
-    </user_control>
+    </ws>
 
     <fcs_interface>
         <!-- Sends binary data taken from sim_data JSON in the given order into the FCS -->
         <!-- (each value is 64-bit double) -->
-        <!-- impl_property is a property  -->
-        <to_fcs>
-            <property> simulation/sim-time-sec </property>
-
-            <property> ext/longitude-deg </property>
-            <property> ext/latitude-deg </property>
-
-            <property> ext/altitude-m </property>
-            <property> attitude/heading-true-rad </property>
-            <property> ext/heading-true-deg </property>
-            <property> ext/euler-pitch </property>
-            <property> ext/euler-roll </property>
-            
-            <property> sensor/imu/accelX-mps2 </property>
-            <property> sensor/imu/accelY-mps2 </property>
-            <property> sensor/imu/accelZ-mps2 </property>
-
-            <property> sensor/imu/gyroX-rps </property>
-            <property> sensor/imu/gyroY-rps </property>
-            <property> sensor/imu/gyroZ-rps </property>
-
-            <property> sensor/imu/magX-nT </property>
-            <property> sensor/imu/magY-nT </property>
-            <property> sensor/imu/magZ-nT </property>
-
-            <property> sensor/baro/presStatic-Pa </property>
-            <property> sensor/baro/temp-C </property>
-        </to_fcs>
 
         <!-- Retrieve properties from FCS (from sim_data JSON) back into JSBSim -->
-        <from_fcs>
+        <to_jsbsim>
+            <!-- [0,1,2,3] -->
             <property> fcs/throttle-cmd-norm[0] </property>
             <property> fcs/throttle-cmd-norm[1] </property>
             <property> fcs/throttle-cmd-norm[2] </property>
             <property> fcs/throttle-cmd-norm[3] </property>
 
+            <!-- [4,5,6] -->
             <property> fcs/psi-est </property>
             <property> fcs/theta-est </property>
             <property> fcs/phi-est </property>
-        </from_fcs>
+        </to_jsbsim>
+
+        <from_jsbsim>
+            <!-- [0] -->
+            <property> simulation/sim-time-sec </property>
+
+            <!-- [1,2] -->
+            <property> ext/longitude-deg </property>
+            <property> ext/latitude-deg </property>
+
+            <!-- [3,4,5,6] -->
+            <property> ext/altitude-m </property>
+            <property> attitude/psi-deg </property>
+            <property> attitude/theta-deg </property>
+            <property> attitude/phi-deg </property>
+
+            <!-- [7.8.9] -->
+            <property> sensor/imu/accelX-g </property>
+            <property> sensor/imu/accelY-g </property>
+            <property> sensor/imu/accelZ-g </property>
+
+            <!-- [10,11,12] -->
+            <property> sensor/imu/gyroX-rps </property>
+            <property> sensor/imu/gyroY-rps </property>
+            <property> sensor/imu/gyroZ-rps </property>
+
+            <!-- [13,14,15] -->
+            <property> sensor/imu/magX-uT </property>
+            <property> sensor/imu/magY-uT </property>
+            <property> sensor/imu/magZ-uT </property>
+
+            <!-- [16,17] -->
+            <property> sensor/baro/presStatic-Pa </property>
+            <property> sensor/baro/temp-C </property>
+
+            <!-- [18,19,20,21] -->
+            <property> user-control/channel-1 </property>
+            <property> user-control/channel-2 </property>
+            <property> user-control/channel-3 </property>
+            <property> user-control/channel-4 </property>
+        </from_jsbsim>
     </fcs_interface>
     
 </fdm_config>

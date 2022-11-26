@@ -11,8 +11,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Front-right contact point -->
@@ -25,8 +25,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Front-left contact point -->
@@ -39,8 +39,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Back-left contact point -->
@@ -53,8 +53,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
 
@@ -69,8 +69,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Front-right contact point -->
@@ -83,8 +83,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Front-left contact point -->
@@ -97,8 +97,8 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 
     <!-- Back-left contact point -->
@@ -111,7 +111,7 @@
         <static_friction> 0.2 </static_friction>
         <dynamic_friction> 0.2 </dynamic_friction>
         <rolling_friction> 0.2 </rolling_friction>
-        <spring_coeff unit="N/M"> 1000 </spring_coeff>
-		<damping_coeff unit="N/M/SEC"> 60 </damping_coeff>
+        <spring_coeff unit="N/M"> 600 </spring_coeff>
+		<damping_coeff unit="N/M/SEC"> 40 </damping_coeff>
     </contact>
 </ground_reactions>

@@ -6,7 +6,7 @@
 
     <description>Quad flight test</description>
     <use aircraft="quad" initialize="quad_init_001" />
-    <run start="0.0" end="60" dt="0.004">
+    <run start="0.0" end="60.0" dt="0.004">
         
         <property> simulation/notify-time-trigger </property>
 
