@@ -9,32 +9,38 @@ import xml.etree.ElementTree as ET
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 new_data = False
-lns = []
+lns = []    
 
 # 2d array that contains each line
 data = []
+# Highest time value
+current_time = 0
 # 1d array that contains the first line of the log
 data_header = []
+running = 0
 
 time_property = 'Time'
 # 1d array that contains property name for each line artist
 data_properties = []
 
 def main():
+    global running
+    
     args = parse_cli_args()
+    running = int(args.running)
+
     fig, axs = parse_config(args.config_file)
     
     file = open(args.input_file, 'r')
     
     parse_data_header(file)
-    
+
     ani = FuncAnimation(
         fig,
         update_plot,
         partial(follow_file, file),
         blit=True,
         interval=50)
-        # init_func=init_plot,
 
     plt.show()
 
@@ -44,11 +50,12 @@ def parse_cli_args():
 
     parser.add_argument('config_file', type=str, help='XML file with configuration')
     parser.add_argument('input_file', type=str, help='Input file')
+    parser.add_argument('--running', action='store', nargs='?', default=0, help='With this flag only last RUNNING seconds will be plotted')
 
     return parser.parse_args()
 
 def parse_config(file_name: str):
-    global lns, data_properties, time_property
+    global lns, data_properties, time_property, running
     
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -68,6 +75,15 @@ def parse_config(file_name: str):
             time_property = child.text.strip()
             time_range_from = float(child.attrib['range_from'])
             time_range_to   = float(child.attrib['range_to'])
+
+
+    if running > 0:
+        time_range_from = -running
+        time_range_to = 0
+
+    print(running)
+    print(time_range_from)
+    print(time_range_to)
 
 
     for child in root:
@@ -103,7 +119,7 @@ def parse_data_header(file: TextIO):
     data_header = [x.strip() for x in file.readline().split(',')]
     
 def follow_file(file):
-    global new_data, data, data_properties
+    global new_data, data, data_properties, current_time, running
     
     file_reset = False
     
@@ -129,17 +145,25 @@ def follow_file(file):
         
         if file_reset:
             data = []
+            current_time = 0
             file_reset = False
 
         data.append([float(x) for x in line_data])
+        current_time = float(line_data[data_header.index(time_property)])
+
+        if running > 0:
+            data = [line for line in data if line[data_header.index(time_property)] - current_time > -running]
 
 
 def update_plot(frame):
-    global new_data, data, data_header, time_property, data_properties, lns
+    global new_data, data, data_header, time_property, data_properties, lns, running
 
     if new_data:
         x_data = [x[data_header.index(time_property)] for x in data]
-        
+
+        if running > 0:
+            x_data = [x - current_time for x in x_data]
+
         for i, data_property in enumerate(data_properties):
             index = data_header.index(data_property)
             y_data = [y[index] for y in data]

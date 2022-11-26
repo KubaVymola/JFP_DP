@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <timeseries grid_x="5" grid_y="2">
-    <time range_from="0" range_to="120">Time</time>
+    <time range_from="0" range_to="60">Time</time>
     
     <plot pos_x="0" pos_y="0" range_from="0" range_to="5" title="Altitude" ylabel="Alt [ft]">
         <data>/fdm/jsbsim/position/h-agl-ft</data>
