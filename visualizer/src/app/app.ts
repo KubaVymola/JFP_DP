@@ -84,22 +84,20 @@ class App {
         axes.yAxis.parent = axesEntity;
         axes.zAxis.parent = axesEntity;
 
-        const options = {
-            sideOrientation: Mesh.DOUBLESIDE,
-            pattern: Mesh.NO_FLIP,
-            width: 5,
-            height: 5,
-            tileSize: 1,
-            tileWidth:1
-        }
-
-        // const tiledPane = CreateTiledPlane("", options);
-        // tiledPane.material = mat;
-
+        
 
         /**
          * Create basic ground
          */
+         const options = {
+            sideOrientation: Mesh.DOUBLESIDE,
+            pattern: Mesh.NO_FLIP,
+            width: 50,
+            height: 50,
+            tileSize: 1,
+            tileWidth:1
+        }
+        
         const tiledMaterial = new StandardMaterial("");
         tiledMaterial.diffuseTexture = new Texture("../assets/tiled_grass.jpg");
         

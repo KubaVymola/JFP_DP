@@ -425,13 +425,6 @@ class Craft {
         }
         
         const toReturn: any = {};
-        
-        // console.log('num gamepads', navigator.getGamepads().length);
-        // console.log('gamepad is null', this.gamepad === null);
-        // if (this.gamepad !== null) {
-        //     console.log('gamepad num axes', this.gamepad.axes.length);
-        //     console.log('gamepad axes', this.gamepad.axes);
-        // }
 
         if (gamepad === null || !gamepad.connected) {
             this.toJSBSimNames.forEach((name) => {
@@ -445,8 +438,6 @@ class Craft {
             if (id >= gamepad.axes.length) toReturn[name] = 0.0;
             else toReturn[name] = (gamepad.axes[id] + 1) / 2;
         });
-
-        console.log('data', toReturn);
 
         return toReturn;
     }

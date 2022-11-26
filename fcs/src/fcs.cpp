@@ -141,7 +141,7 @@ extern "C" void loop(void) {
     /**
      * Estimate attitude
      */
-    sensor_fusion.update(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az, mx, my, mz);
+    sensor_fusion.update(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az, 0, 0, 0);
     roll_est    = sensor_fusion.getRoll();
     pitch_est   = sensor_fusion.getPitch();
     yaw_est     = sensor_fusion.getYaw() - 180.0;
@@ -191,21 +191,28 @@ extern "C" void loop(void) {
     const double x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, deltaT);
     const double y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, deltaT);
 
-    const double roll_pid_out  = pid_update(roll_pid,   x_body_pid_out, roll_used,  deltaT);
-    const double pitch_pid_out = pid_update(pitch_pid, -y_body_pid_out, pitch_used, deltaT);
+    // const double roll_pid_out  = pid_update(roll_pid,   x_body_pid_out, roll_used,  deltaT);
+    // const double pitch_pid_out = pid_update(pitch_pid, -y_body_pid_out, pitch_used, deltaT);
+    const double roll_pid_out  = pid_update(roll_pid,   (ch_4 - 0.5) * 20, roll_used,  deltaT);
+    const double pitch_pid_out = pid_update(pitch_pid, -(ch_2 - 0.5) * 20, pitch_used, deltaT);
 
     /**
      * ==== Output ====
      */
+    engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
+    engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
+    engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
+    engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
+
     // engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
     // engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
     // engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
     // engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
 
-    engine_0_cmd_norm = ch_3 - 0.091;
-    engine_1_cmd_norm = ch_3 - 0.091;
-    engine_2_cmd_norm = ch_3 - 0.091;
-    engine_3_cmd_norm = ch_3 - 0.091;
+    // engine_0_cmd_norm = ch_3 - 0.091 + (ch_1 - 0.5);
+    // engine_1_cmd_norm = ch_3 - 0.091 + (ch_1 - 0.5);
+    // engine_2_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
+    // engine_3_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
 
     /**
      * ==== Attitude estimation ====

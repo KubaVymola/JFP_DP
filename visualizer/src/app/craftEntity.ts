@@ -27,12 +27,15 @@ class CraftEntity extends TransformNode {
     updateFromSim(data: any, deltaT_s: number) {
         const rotationQuat: Quaternion = Quaternion.Identity();
         
-        if (this.spinnerProperty && data[this.spinnerProperty]) {
+        if (this.spinnerProperty && this.spinnerProperty in data) {
             const currentRPM = Number(data[this.spinnerProperty]);
             const sense = Number(data[this.propSenseProperty]);
             this.spinnerAngle += (currentRPM / 60) * 2 * Math.PI * (deltaT_s) * SPINNER_COEF * sense;
 
-            if (Number.isNaN(this.spinnerAngle)) this.spinnerAngle = 0;
+            if (Number.isNaN(this.spinnerAngle)) {
+                console.log('spinner nan');
+                this.spinnerAngle = 0;
+            }
 
             rotationQuat.multiplyInPlace(Quaternion.RotationAxis(this.axis, this.spinnerAngle));
         }
