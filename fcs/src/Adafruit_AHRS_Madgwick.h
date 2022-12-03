@@ -41,6 +41,7 @@ private:
 public:
   Adafruit_Madgwick();
   Adafruit_Madgwick(float gain);
+  virtual ~Adafruit_Madgwick() { }
   void begin(float sampleFrequency) { invSampleFreq = 1.0f / sampleFrequency; }
   void update(float gx, float gy, float gz, float ax, float ay, float az,
               float mx, float my, float mz);

@@ -31,7 +31,7 @@ $ cmake --build . -j4
 # Running
 
 ```
-$ ./fdm <script_file> [<output_file> [<output_file>...]] <options>
+$ ./fdm <script_file> [<output_file> [<output_file> ...]] <options>
 e.g.
-$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sim_end=-1
 ```

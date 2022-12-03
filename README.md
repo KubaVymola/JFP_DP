@@ -15,6 +15,13 @@ This directory contains an interface to JSBSim FDM. It provides a way to start t
 simulation, a way to hook a flight control system to the simulated vehicle, and a way to
 stream the simulation data into a visualizer over websocket.
 
+## graph-viz
+
+```
+source ./venv/bin/activate
+python j-viz.py quad-config.xml ../../assets/aircraft/quad/data_output/quad_out.csv [--running <seconds>]
+```
+
 ## visualizer
 
 This program is a 3d visualizer intended to run in a browser to display real-time data.
@@ -24,13 +31,21 @@ This program is a 3d visualizer intended to run in a browser to display real-tim
 ```
 assets/
     aircraft/
+        3d/
+            <aircraft-name>.obj
+            ...
+        data_output/
+            <aircraft-name>_out.xml
+            ...
+        output_def/
+            <aircraft-name>_out_def.xml
+            ...
         <aircraft-name>.xml
-        <!-- <aircraft-name>_fcs.xml -->
-        <!-- <aircraft-name>_viz.xml -->
-        <aircraft-name>.obj
         <aircraft-name>_init_001.xml
+        ...
     engine/
         <engine-name>.xml
+        <properller-name>.xml
     script/
         <aircraft-name>_001.xml
         <aircraft-name>_002.xml

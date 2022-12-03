@@ -18,8 +18,8 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
     void *lib = dlopen(sim_config.sitl_path.c_str(), RTLD_NOW);
 
     if (lib == nullptr) {
-        printf("lib not found\n");
-        return;
+        printf("SITL lib file not found\n");
+        exit(1);
     }
 
     init_fcs =      (init_func)dlsym(lib, "init");
