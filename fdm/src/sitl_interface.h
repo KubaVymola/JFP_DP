@@ -12,9 +12,9 @@
 using json = nlohmann::json;
 
 typedef void (*init_func)(json *);
-typedef void (*data_to_fcs_func)(double *);
+typedef void (*data_to_fcs_func)(float *);
 typedef void (*loop_func)(void);
-typedef void (*data_from_fcs_func)(double *);
+typedef void (*data_from_fcs_func)(float *);
 
 
 class SITLInterface : public ISimClient {

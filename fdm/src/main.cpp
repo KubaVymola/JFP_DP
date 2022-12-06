@@ -16,6 +16,7 @@
 
 #include "jsbsim_interface.h"
 #include "sitl_interface.h"
+#include "hitl_interface.h"
 #include "sim_config.h"
 #include "sim_events.h"
 
@@ -98,6 +99,7 @@ int main(int argc, char **argv) {
     SimEvents sim_events;
     JSBSimInterface jsbsim_interface;
     SITLInterface sitl_interface;
+    HITLInterface hitl_interface;
     
     std::thread push_thread;
     std::thread server_thread;
@@ -115,6 +117,10 @@ int main(int argc, char **argv) {
         sitl_interface.sitl_init(sim_config, &sim_data);
         sim_events.register_client("sim:before_iter", &sitl_interface);
         sim_events.register_client("sim:after_iter",  &sitl_interface);
+    }
+
+    if (!sim_config.hitl_path.empty()) {
+        hitl_interface.hitl_init(sim_config, &sim_data, &continue_running);
     }
 
     printf("initialized\n");
@@ -212,6 +218,9 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         } else if (keyword == "--sitl_div") {
             sim_config.sitl_div = atoi(value.c_str());
             
+        } else if (keyword == "--hitl") {
+            sim_config.hitl_path = value;
+            
         } else if (keyword == "--set") {
             std::string prop_name = value.substr(0, value.find("="));
             std::string propValueString = value.substr(value.find("=") + 1);
@@ -280,6 +289,7 @@ void print_help() {
     printf("  <output_file>  relative path to a file the specifies the output format\n");
     printf("  --sitl=<path>  relative path to the dynamic library with SITL FCS\n");
     printf("  --sitl_div=<value>  divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n");
+    printf("  --hitl=<path>  path to the device with HITL firmware running\n");
     printf("  --ws=<port>  start a websocket server on a given port\n");
     printf("  --root_dir=<dir>  root path for JSBSim assets (aircraft, script, engine; default '.')\n");
     printf("  --sim_rate=<hertz>  how many iterations will the simulation do in a second\n");

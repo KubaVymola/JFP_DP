@@ -54,36 +54,32 @@ BIN = $(CP) -O binary -S
 # ==== END BINARIES ====
 
 # ==== FLAGS ====
+CPU = 
+MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
+
+INCLUDES = -Isrc
 DEFS = 
+
 AS_DEFS = $(DEFS)
 C_DEFS = $(DEFS)
 CXX_DEFS = $(DEFS)
 
-
-CPU = 
-MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
-INCLUDES = -Isrc
-CFLAGS += $(MCU) $(DEFS) $(INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
-
-
-# ASM_DEFS =
-# ASM_INCLUDES = 
-# ASFLAGS = $(MCU) $(ASM_DEFS) $(ASM_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
+ASFLAGS = $(AS_DEFS) $(INCLUDES) $(OPT) -Wall
+CFLAGS = $(C_DEFS) $(INCLUDES) $(OPT) -Wall
+CXXFLAGS = $(CXX_DEFS) $(INCLUDES) $(OPT) -Wall -std=c++11
 
 ifeq ($(DEBUG),1)
 CFLAGS += -g -gdwarf-2
+CXXFLAGS += -g -gdwarf-2
 endif
-
-CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
 # ==== END FLAGS ====
 
 
 # ==== LD FLAGS ====
 
-LIBS = -lc -lm -lnosys
-LIBDIR = 
-LDFLAGS = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+LIBS = -lc -lm
+LDFLAGS = $(LIBS)
 
 # ==== END LD FLAGS ====
 
@@ -92,7 +88,12 @@ LDFLAGS = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(
 ####################################################################################################
 ifeq ($(OUTPUT_TYPE),MCU)
 PREFIX = arm-none-eabi-
-
+ASFLAGS += $(MCU) -fdata-sections -ffunction-sections -MMD -MP -MF"$(@:%.o=%.d)"
+CFLAGS += $(MCU) -fdata-sections -ffunction-sections -MMD -MP -MF"$(@:%.o=%.d)" -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst))
+CXXFLAGS += $(MCU) -fdata-sections -ffunction-sections -MMD -MP -MF"$(@:%.o=%.d)" -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst))
+LIBS += -lnosys
+OPT = -Og
+LDFLAGS = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 DEFS += -DMCU
 endif
 
@@ -167,7 +168,8 @@ endif
 
 
 
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+# all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+all: sitl
 
 
 
@@ -186,13 +188,13 @@ vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
 
 $(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR) 
-	$(CXX) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
-	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
-	$(AS) -c $(CFLAGS) $< -o $@
+	$(AS) -c $(ASFLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
@@ -207,20 +209,31 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir $@		
 
-flash: $(BUILD_DIR)/$(TARGET).bin
-	openocd -f debug.cfg -c "program ./$(BUILD_DIR)/$(TARGET).bin 0x8000000 reset exit"
-
-
 # ==== END BUILD TARGETS ====
 
-
-#######################################
-# clean up
-#######################################
 clean:
 	-rm -fR $(BUILD_DIR)
-  
-#######################################
-# dependencies
-#######################################
+
 -include $(wildcard $(BUILD_DIR)/*.d)
+
+
+
+####################################################################################################
+# TARGETS
+####################################################################################################
+
+# ==== SITL ====
+sitl: DEFS += -DSITL
+sitl: $(OBJECTS)
+	$(CXX) -shared -o $(BUILD_DIR)/libfcs.so $(CXXFLAGS) $(OBJECTS)
+
+# ==== HITL ====
+hitl: DEFS += -DHITL
+hitl: mcu
+
+# ==== NORMAL MCU FW ====
+mcu: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+
+# ==== UPLOAD TO MCU ====
+flash: $(BUILD_DIR)/$(TARGET).bin
+	openocd -f debug.cfg -c "program $(BUILD_DIR)/$(TARGET).bin 0x8000000 reset exit"

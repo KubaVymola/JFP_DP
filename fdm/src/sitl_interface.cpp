@@ -68,24 +68,24 @@ void SITLInterface::handle_event(const std::string& event_name, json *sim_data) 
     if (event_name == "sim:before_iter") {
         
         if (iter_num % sitl_div == 0) {
-            double data[to_jsbsim_properties.size()];
+            float data[to_jsbsim_properties.size()];
             
             data_from_fcs(data);
 
             int i = 0;
             for (const std::string& from_fcs_property : to_jsbsim_properties) {
-                (*sim_data)[from_fcs_property] = data[i++];
+                (*sim_data)[from_fcs_property] = (double)data[i++];
             }
         }
     }
 
     if (event_name == "sim:after_iter") {
         if (iter_num % sitl_div == 0) {
-            double data[from_jsbsim_properties.size()];
+            float data[from_jsbsim_properties.size()];
 
             int i = 0;
             for (const std::string& to_fcs_property : from_jsbsim_properties) {
-                data[i++] = sim_data->value<double>(to_fcs_property, 0.0);
+                data[i++] = (float)sim_data->value<double>(to_fcs_property, 0.0);
             }
             
             data_to_fcs(data);

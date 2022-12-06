@@ -5,6 +5,7 @@ struct sim_config_t {
     std::string root_dir;
     std::string script_path;
     std::string sitl_path;
+    std::string hitl_path;
     std::string craft_config_path;
 
     std::vector<std::string> log_outputs;
