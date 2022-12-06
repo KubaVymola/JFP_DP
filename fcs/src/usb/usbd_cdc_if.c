@@ -22,7 +22,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+extern char receive_data[64];
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -261,6 +261,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+
+  uint32_t max_data = *Len;
+  if (63 < max_data) max_data = 63;
+
+  memset(receive_data, '\0', sizeof(receive_data));
+  memcpy(receive_data, Buf, max_data);
+  receive_data[max_data] = '\0';
+
   return (USBD_OK);
   /* USER CODE END 6 */
 }

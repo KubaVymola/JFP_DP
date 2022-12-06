@@ -43,7 +43,7 @@
   */
 #define CDC_IN_EP                                   0x81U  /* EP1 for data IN */
 #define CDC_OUT_EP                                  0x01U  /* EP1 for data OUT */
-#define CDC_CMD_EP                                  0x82U  /* EP2 for CDC commands */
+#define CDC_CMD_EP                                  0x84U  /* EP2 for CDC commands */
 
 #ifndef CDC_HS_BINTERVAL
   #define CDC_HS_BINTERVAL                          0x10U
@@ -59,6 +59,7 @@
 #define CDC_CMD_PACKET_SIZE                         8U  /* Control Endpoint Packet size */
 
 #define USB_CDC_CONFIG_DESC_SIZ                     67U
+#define USB_CDC_CONFIG_DESC_SIZ_CUSTOM              95U
 #define CDC_DATA_HS_IN_PACKET_SIZE                  CDC_DATA_HS_MAX_PACKET_SIZE
 #define CDC_DATA_HS_OUT_PACKET_SIZE                 CDC_DATA_HS_MAX_PACKET_SIZE
 
