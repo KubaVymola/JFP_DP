@@ -1,5 +1,10 @@
 #include <algorithm>
 
+// either MCU, MCU + HITL, or SITL will be defined
+// #define MCU
+// #define HITL
+// #define SITL
+
 #ifdef MCU
 
 #include "main.h"
@@ -9,12 +14,33 @@
 
 #include "Adafruit_AHRS_Madgwick.h"
 
-char receive_data[64];
+#ifdef HITL
+
+/**
+ * Data from sim to MCU (usually sensor data and time)
+ */
+float hitl_data_in[20];
+
+/**
+ * Data from MCU to sim (usually engine and servo commands)
+ */
+float hitl_data_out[20];
+
+uint8_t hitl_data_rdy;
+
+#endif
+
+#define PACKET_HEADER_SIZE   6 /* 1B (channel) 1B (0x55) 2B (size) 2B (offset) */
+#define PACKET_FOOTER_SIZE   1 /* 1B (0x00) */
+
+char cmd_string[256];
+
+extern "C" void process_packet_from_usb(uint8_t* Buf, int len);
+extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size);
+extern "C" int round_down_to_multiple(int number, int multiple);
 
 int main(void) {
     Adafruit_Madgwick fusion_madgwick;
-
-    receive_data[0] = '\0';
 
     HAL_Init();
 
@@ -24,6 +50,28 @@ int main(void) {
     MX_USB_DEVICE_Init();
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
+
+    hitl_data_in[0] = 0.0f;
+    hitl_data_in[1] = 0.0f;
+    hitl_data_in[2] = 0.0f;
+    hitl_data_in[3] = 0.0f;
+    hitl_data_in[4] = 0.0f;
+    hitl_data_in[5] = 0.0f;
+    hitl_data_in[6] = 0.0f;
+    hitl_data_in[7] = 0.0f;
+    hitl_data_in[8] = 0.0f;
+    hitl_data_in[9] = 0.0f;
+    hitl_data_in[10] = 0.0f;
+    hitl_data_in[11] = 0.0f;
+    hitl_data_in[12] = 0.0f;
+    hitl_data_in[13] = 0.0f;
+    hitl_data_in[14] = 0.0f;
+    hitl_data_in[15] = 0.0f;
+    hitl_data_in[16] = 0.0f;
+    hitl_data_in[17] = 0.0f;
+    hitl_data_in[18] = 0.0f;
+    hitl_data_in[19] = 0.0f;
+    hitl_data_rdy = 0;
     
     while (1) {
         // ==== MCU CODE ====
@@ -58,12 +106,137 @@ int main(void) {
         // Config file ?
         // ==== END SITL CODE ====
 
+        
+        // if (hitl_data_rdy > 0) {
+        //     hitl_data_rdy = 0;
+        // }
+        
+        __disable_irq();
+        hitl_data_out[0] = hitl_data_in[0] + 0.0f;
+        hitl_data_out[1] = hitl_data_in[1] + 1.0f;
+        hitl_data_out[2] = hitl_data_in[2] + 2.0f;
+        hitl_data_out[3] = hitl_data_in[3] + 3.0f;
+        hitl_data_out[4] = hitl_data_in[4] + 4.0f;
+        hitl_data_out[5] = hitl_data_in[5] + 5.0f;
+        hitl_data_out[6] = hitl_data_in[6] + 6.0f;
+        hitl_data_out[7] = hitl_data_in[7] + 7.0f;
+        hitl_data_out[8] = hitl_data_in[8] + 8.0f;
+        hitl_data_out[9] = hitl_data_in[9] + 9.0f;
+        hitl_data_out[10] = hitl_data_in[10] + 10.0f;
+        hitl_data_out[11] = hitl_data_in[11] + 11.0f;
+        hitl_data_out[12] = hitl_data_in[12] + 12.0f;
+        hitl_data_out[13] = hitl_data_in[13] + 13.0f;
+        hitl_data_out[14] = hitl_data_in[14] + 14.0f;
+        hitl_data_out[15] = hitl_data_in[15] + 15.0f;
+        hitl_data_out[16] = hitl_data_in[16] + 16.0f;
+        hitl_data_out[17] = hitl_data_in[17] + 17.0f;
+        hitl_data_out[18] = hitl_data_in[18] + 18.0f;
+        hitl_data_out[19] = hitl_data_in[19] + 19.0f;
+        __enable_irq();
 
-        CDC_Transmit_FS((uint8_t *)receive_data, strlen(receive_data));
+        send_data_over_usb_packets(0x02, hitl_data_out, sizeof(hitl_data_out), sizeof(float));
 
-        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+        const char *hello = "Hello world";
+        send_data_over_usb_packets(0x00, (void *)hello, strlen(hello), 1);
 
-        HAL_Delay(100);
+
+        HAL_Delay(1000);
+    }
+}
+
+
+
+/**
+ * Send data up to 64 - HEADER_SIZE - FOOTER_SIZE bytes. Currently can send only one packet.
+ * TODO allow longer data to be sent via splitting the data into n-byte packets (n will be parameter)
+ * 
+ * @param channel_number 0: commands, 1: telemetry, 2: HITL data
+ * @param data pointer to the data
+ * @param data_size how many bytes of data to send
+ * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
+*/
+void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size) {
+    HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+    
+    uint16_t current_offset = 0;
+    uint16_t maximum_data_in_packet = round_down_to_multiple(64 - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
+
+    uint8_t to_send[64];
+    to_send[0] = channel_number;
+    to_send[1] = 0x55;
+
+    while (current_offset < data_size) {
+        uint16_t remaining_size = data_size - current_offset;
+        uint16_t to_send_size = MIN(remaining_size, maximum_data_in_packet);
+
+        to_send[2] = LOBYTE(to_send_size);
+        to_send[3] = HIBYTE(to_send_size);
+        to_send[4] = LOBYTE(current_offset);
+        to_send[5] = HIBYTE(current_offset);
+
+        memcpy(to_send + PACKET_HEADER_SIZE, (uint8_t *)data + current_offset, to_send_size);
+
+        to_send[PACKET_HEADER_SIZE + to_send_size] = '\0';
+
+        while (CDC_Transmit_FS(to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE) == USBD_BUSY);
+
+        current_offset += to_send_size;
+    }
+}
+
+
+void process_packet_from_usb(uint8_t* Buf, int len) {
+    uint8_t *current_data = Buf;
+
+    /**
+     * There must be at least PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE left in the buffer
+     * in order for the packet to be valid
+    */
+    while (current_data - Buf + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE <= len) {
+        uint8_t channel_number  =  current_data[0];
+        uint16_t data_size      = (current_data[3] << 8) | current_data[2];
+        uint16_t data_offset    = (current_data[5] << 8) | current_data[4];
+
+        /**
+         * Incomplete packet received
+         */
+        if (current_data - Buf + PACKET_HEADER_SIZE + data_size + PACKET_FOOTER_SIZE > len) break;
+
+        /**
+         * Invalid packet received (no 0 at the end)
+         */
+        if (channel_number > 0x02
+        || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
+        || current_data[1] != 0x55
+        || data_size > 64
+        || data_offset > 512) {
+            current_data++;
+            continue;
+        }
+        
+
+        /**
+         * Cmd data in
+         */
+        if (channel_number == 0x00) {
+
+        }
+
+        /**
+         * There is no data in on channel 1 (it is for telemetry output)
+         */
+
+    #ifdef HITL
+        /**
+         * HITL data in
+         */
+        if (channel_number == 0x02) {
+            memcpy((uint8_t *)hitl_data_in + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
+            hitl_data_rdy = 1;
+        }
+    #endif
+
+        current_data += PACKET_HEADER_SIZE + data_size + PACKET_FOOTER_SIZE;
     }
 }
 
@@ -151,7 +324,7 @@ extern "C" void init(/* json *sim_data */) {
     printf("Hello from FCS\n");
 
     pid_init(alt_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
-    pid_init(yaw_pid,    0.011, 0.02, 0.0013,   0.15, -0.2, 0.2);
+    pid_init(yaw_pid,    0.011, 0.02,  0.0013,   0.15, -0.2, 0.2);
     pid_init(x_body_pid, 4,     0.1,   6,        0.15, -10,  10);  // Output is used as roll  setpoint
     pid_init(y_body_pid, 4,     0.1,   6,        0.15, -10,  10);  // Output is used as pitch setpoint
     pid_init(roll_pid,   0.002, 0,     0.0005,   0.15, -0.1, 0.1);
@@ -343,4 +516,8 @@ const float get_x_body(const float yaw_rad, const float x_world, const float y_w
 
 const float get_y_body(const float yaw_rad, const float x_world, const float y_world) {
     return x_world * -sin(-yaw_rad) + y_world * cos(-yaw_rad);
+}
+
+int round_down_to_multiple(int number, int multiple) {
+    return number - number % multiple;
 }

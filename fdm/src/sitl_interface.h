@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "nlohmann/json.hpp"
+#include "tinyxml2.h"
 
 #include "sim_config.h"
 #include "i_sim_client.h"

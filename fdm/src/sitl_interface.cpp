@@ -2,10 +2,6 @@
 
 #include <unistd.h>
 #include <dlfcn.h>
-#include <mutex>
-
-#include "nlohmann/json.hpp"
-#include "tinyxml2.h"
 
 using json = nlohmann::json;
 

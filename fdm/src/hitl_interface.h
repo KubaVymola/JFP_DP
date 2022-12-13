@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "nlohmann/json.hpp"
+#include "tinyxml2.h"
 
 #include "sim_config.h"
 #include "i_sim_client.h"
@@ -21,8 +22,7 @@ public:
     HITLInterface() { }
     ~HITLInterface() { close(hitl_device); }
     void hitl_init(sim_config_t& sim_config,
-                   json *sim_data,
-                   bool *continue_running);
+                   json *sim_data);
                 
     void parse_xml_config(sim_config_t& sim_config);
 

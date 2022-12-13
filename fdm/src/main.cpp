@@ -120,7 +120,9 @@ int main(int argc, char **argv) {
     }
 
     if (!sim_config.hitl_path.empty()) {
-        hitl_interface.hitl_init(sim_config, &sim_data, &continue_running);
+        hitl_interface.hitl_init(sim_config, &sim_data);
+        sim_events.register_client("sim:before_iter", &hitl_interface);
+        sim_events.register_client("sim:after_iter",  &hitl_interface);
     }
 
     printf("initialized\n");
