@@ -37,7 +37,6 @@ C_SOURCES =
 CXX_SOURCES = \
 src/main.cpp \
 src/Adafruit_AHRS_Madgwick.cpp
-# src/MadgwickAHRS.cpp
 
 ASM_SOURCES = 
 
@@ -113,7 +112,8 @@ src/usb/usbd_ioreq.c \
 src/usb/usbd_cdc.c \
 src/hal/st/config.c \
 src/hal/st/gpio.c \
-src/hal/st/i2c.c
+src/hal/st/i2c.c \
+src/hal/st/tim.c
 INCLUDES += -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
 DEFS += -DUSE_HAL_DRIVER -DVENDOR_ST
 endif

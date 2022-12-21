@@ -15,8 +15,10 @@
 
 #ifdef MCU
 #include "main.h"
-#include "gpio.h"
+#include "i2c.h"
+#include "tim.h"
 #include "usb_device.h"
+#include "gpio.h"
 #include "usbd_cdc_if.h"
 #endif // MCU
 
@@ -105,6 +107,7 @@ int round_down_to_multiple(int number, int multiple);
 #ifdef MCU
 extern "C" void process_packet_from_usb(uint8_t* Buf, int len);
 extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size);
+extern "C" void SystemClock_Config(void);
 #endif // MCU
 
 #ifdef MCU
@@ -116,12 +119,44 @@ int main(void) {
 
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
+    MX_TIM9_Init();
+    MX_TIM10_Init();
+    MX_TIM11_Init();
 
-    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
     init();
 
+    HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+
+    htim9.Instance->CCR1 = 1000;
+    htim9.Instance->CCR2 = 1000;
+    htim10.Instance->CCR1 = 1000;
+    htim11.Instance->CCR1 = 1000;
+
+    HAL_Delay(3000);
+
     while (1) {
+
+        // htim9.Instance->CCR1 = 1100;
+        // htim9.Instance->CCR2 = 1100;
+        // htim10.Instance->CCR1 = 1100;
+        // htim11.Instance->CCR1 = 1100;
+        
+        // HAL_Delay(2000);
+
+        // htim9.Instance->CCR1 = 1200;
+        // htim9.Instance->CCR2 = 1200;
+        // htim10.Instance->CCR1 = 1200;
+        // htim11.Instance->CCR1 = 1200;
+
+        // HAL_Delay(2000);
+
+        // continue;
+        
         // ==== MCU CODE ====
         // Time the main loop (100 Hz / 500 Hz / 1000 Hz)
         // Read sensors (possibly using DMA)
@@ -153,14 +188,17 @@ int main(void) {
         // Commands ?
         // Config file ?
         // ==== END SITL CODE ====
-
-        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
         
     #ifdef HITL
         __disable_irq();
         data_from_jsbsim(from_jsbsim);
         __enable_irq();
     #endif // HITL
+
+        htim9.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
+        htim9.Instance->CCR2 = engine_1_cmd_norm * 1000.0f + 1000.0f;
+        htim10.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
+        htim11.Instance->CCR1 = engine_2_cmd_norm * 1000.0f + 1000.0f;
 
         loop();
 
@@ -178,6 +216,8 @@ int main(void) {
         send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1);
 
         HAL_Delay(20);
+
+        HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
     }
 }
 
