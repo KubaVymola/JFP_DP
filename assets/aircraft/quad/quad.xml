@@ -27,6 +27,7 @@
 
     <!-- ==== JFP required nodes follow ==== -->
 
+    <!-- TODO separate control data (over websocket) and visualization data and add CLI option to enable/disable user ctrl via ws -->
     <ws>
         <to_jsbsim>
             <property> user-control/channel-1 </property>

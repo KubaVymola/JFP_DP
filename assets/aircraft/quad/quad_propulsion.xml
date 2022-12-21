@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <propulsion>
+    <!-- TODO engine order match betaflight -->
     <!-- Front right -->
     <engine file="Simple_quad_engine">
         <thruster file="Quad_prop">

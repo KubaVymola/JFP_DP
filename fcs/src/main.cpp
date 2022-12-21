@@ -1,47 +1,115 @@
-#include <algorithm>
-
 // either MCU, MCU + HITL, or SITL will be defined
 // #define MCU
 // #define HITL
 // #define SITL
 
-#ifdef MCU
+#include "pid.h"
+#include "Adafruit_AHRS_Madgwick.h"
+#include "Adafruit_AHRS_NXPFusion.h"
 
+#ifdef SITL
+#include <stdio.h>
+#include <unistd.h>
+#include <math.h>
+#endif // SITL
+
+#ifdef MCU
 #include "main.h"
 #include "gpio.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#endif // MCU
 
-#include "Adafruit_AHRS_Madgwick.h"
+#ifndef M_PI
+#define M_PI		        3.14159265358979323846
+#endif // M_PI
 
-#ifdef HITL
+#define DEG_TO_GEO_M        6378000 * M_PI / 180
+#define DEG_TO_RAD          M_PI / 180
+#define RAD_TO_DEG          180 / M_PI
 
-/**
- * Data from sim to MCU (usually sensor data and time)
- */
-float hitl_data_in[20];
+#ifndef MAX
+#define MAX(x,y)            ((x)>(y)?(x):(y))
+#endif // MAX
 
-/**
- * Data from MCU to sim (usually engine and servo commands)
- */
-float hitl_data_out[20];
+#ifndef MIN
+#define MIN(x,y)            ((x)<(y)?(x):(y))
+#endif // MIN
 
-uint8_t hitl_data_rdy;
+#ifdef MCU
+#define PACKET_HEADER_SIZE  6 /* 1B (channel) 1B (0x55) 2B (size) 2B (offset) */
+#define PACKET_FOOTER_SIZE  1 /* 1B (0x00) */
+#endif // MCU
 
-#endif
-
-#define PACKET_HEADER_SIZE   6 /* 1B (channel) 1B (0x55) 2B (size) 2B (offset) */
-#define PACKET_FOOTER_SIZE   1 /* 1B (0x00) */
 
 char cmd_string[256];
 
+#ifdef HITL
+float from_jsbsim[22] = { 0 };
+float to_jsbsim[7] = { 0 };
+#endif // HITL
+
+const float rest_time = 5.0;
+
+Adafruit_Madgwick sensor_fusion;
+
+pid_state_t alt_pid;
+pid_state_t yaw_pid;
+pid_state_t x_body_pid;
+pid_state_t y_body_pid;
+pid_state_t roll_pid;
+pid_state_t pitch_pid;
+
+float time_sec;
+float prev_time_sec;
+float x_world_measure_m;
+float y_world_measure_m;
+float ax, ay, az, gx, gy, gz, mx, my, mz;
+float ch_1, ch_2, ch_3, ch_4;
+float pressure_pa;
+
+float alt_real;
+float yaw_real;
+float pitch_real;
+float roll_real;
+
+float yaw_est;
+float pitch_est;
+float roll_est;
+
+float engine_0_cmd_norm;
+float engine_1_cmd_norm;
+float engine_2_cmd_norm;
+float engine_3_cmd_norm;
+
+
+
+
+/**
+ * Function declarations
+ */
+extern "C" void init(/* json *sim_data */);
+extern "C" void data_from_jsbsim(float *data);
+extern "C" void data_to_jsbsim(float *data);
+extern "C" void loop(void);
+const float engine_mixer(const int engine_id,
+                          const float throttle_cmd,
+                          const float yaw_cmd,
+                          const float pitch_cmd,
+                          const float roll_cmd);
+const float mixer_to_cmd(const float mixer_output);
+const float get_x_body(const float yaw_rad, const float x_world, const float y_world);
+const float get_y_body(const float yaw_rad, const float x_world, const float y_world);
+int round_down_to_multiple(int number, int multiple);
+
+#ifdef MCU
 extern "C" void process_packet_from_usb(uint8_t* Buf, int len);
 extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size);
-extern "C" int round_down_to_multiple(int number, int multiple);
+#endif // MCU
+
+#ifdef MCU
 
 int main(void) {
-    Adafruit_Madgwick fusion_madgwick;
-
     HAL_Init();
 
     SystemClock_Config();
@@ -51,28 +119,8 @@ int main(void) {
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
 
-    hitl_data_in[0] = 0.0f;
-    hitl_data_in[1] = 0.0f;
-    hitl_data_in[2] = 0.0f;
-    hitl_data_in[3] = 0.0f;
-    hitl_data_in[4] = 0.0f;
-    hitl_data_in[5] = 0.0f;
-    hitl_data_in[6] = 0.0f;
-    hitl_data_in[7] = 0.0f;
-    hitl_data_in[8] = 0.0f;
-    hitl_data_in[9] = 0.0f;
-    hitl_data_in[10] = 0.0f;
-    hitl_data_in[11] = 0.0f;
-    hitl_data_in[12] = 0.0f;
-    hitl_data_in[13] = 0.0f;
-    hitl_data_in[14] = 0.0f;
-    hitl_data_in[15] = 0.0f;
-    hitl_data_in[16] = 0.0f;
-    hitl_data_in[17] = 0.0f;
-    hitl_data_in[18] = 0.0f;
-    hitl_data_in[19] = 0.0f;
-    hitl_data_rdy = 0;
-    
+    init();
+
     while (1) {
         // ==== MCU CODE ====
         // Time the main loop (100 Hz / 500 Hz / 1000 Hz)
@@ -106,44 +154,32 @@ int main(void) {
         // Config file ?
         // ==== END SITL CODE ====
 
+        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
         
-        // if (hitl_data_rdy > 0) {
-        //     hitl_data_rdy = 0;
-        // }
-        
+    #ifdef HITL
         __disable_irq();
-        hitl_data_out[0] = hitl_data_in[0] + 0.0f;
-        hitl_data_out[1] = hitl_data_in[1] + 1.0f;
-        hitl_data_out[2] = hitl_data_in[2] + 2.0f;
-        hitl_data_out[3] = hitl_data_in[3] + 3.0f;
-        hitl_data_out[4] = hitl_data_in[4] + 4.0f;
-        hitl_data_out[5] = hitl_data_in[5] + 5.0f;
-        hitl_data_out[6] = hitl_data_in[6] + 6.0f;
-        hitl_data_out[7] = hitl_data_in[7] + 7.0f;
-        hitl_data_out[8] = hitl_data_in[8] + 8.0f;
-        hitl_data_out[9] = hitl_data_in[9] + 9.0f;
-        hitl_data_out[10] = hitl_data_in[10] + 10.0f;
-        hitl_data_out[11] = hitl_data_in[11] + 11.0f;
-        hitl_data_out[12] = hitl_data_in[12] + 12.0f;
-        hitl_data_out[13] = hitl_data_in[13] + 13.0f;
-        hitl_data_out[14] = hitl_data_in[14] + 14.0f;
-        hitl_data_out[15] = hitl_data_in[15] + 15.0f;
-        hitl_data_out[16] = hitl_data_in[16] + 16.0f;
-        hitl_data_out[17] = hitl_data_in[17] + 17.0f;
-        hitl_data_out[18] = hitl_data_in[18] + 18.0f;
-        hitl_data_out[19] = hitl_data_in[19] + 19.0f;
+        data_from_jsbsim(from_jsbsim);
         __enable_irq();
+    #endif // HITL
 
-        send_data_over_usb_packets(0x02, hitl_data_out, sizeof(hitl_data_out), sizeof(float));
+        loop();
 
-        const char *hello = "Hello world";
-        send_data_over_usb_packets(0x00, (void *)hello, strlen(hello), 1);
+        data_to_jsbsim(to_jsbsim);
+        send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float));
 
+        char buf[128];
+        sprintf(buf, "ax %d, ay %d, az %d, gx %d, gy %d, gz %d\n",
+            (int)(ax * 1000),
+            (int)(ay * 1000),
+            (int)(az * 1000),
+            (int)(gx * RAD_TO_DEG * 1000),
+            (int)(gy * RAD_TO_DEG * 1000),
+            (int)(gz * RAD_TO_DEG * 1000));
+        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1);
 
-        HAL_Delay(1000);
+        HAL_Delay(20);
     }
 }
-
 
 
 /**
@@ -156,7 +192,7 @@ int main(void) {
  * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
 */
 void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size) {
-    HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+    // HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     
     uint16_t current_offset = 0;
     uint16_t maximum_data_in_packet = round_down_to_multiple(64 - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
@@ -215,6 +251,10 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
         }
         
 
+
+        // TODO add callback function to process data along with the channel
+        // TODO move these USB packet functions outside of the project to share it with FDM
+
         /**
          * Cmd data in
          */
@@ -231,8 +271,7 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
          * HITL data in
          */
         if (channel_number == 0x02) {
-            memcpy((uint8_t *)hitl_data_in + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
-            hitl_data_rdy = 1;
+            memcpy((uint8_t *)from_jsbsim + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
         }
     #endif
 
@@ -240,88 +279,14 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
     }
 }
 
-#endif
-
-
-
-/**
- * ============================= OLD CODE ==========================================================
- */
-
-#ifdef SITL
-
-#include <stdio.h>
-#include <unistd.h>
-#include <math.h>
-
-#include "pid.h"
-#include "Adafruit_AHRS_Madgwick.h"
-#include "Adafruit_AHRS_NXPFusion.h"
-
-#define DEG_TO_GEO_M        6378000 * M_PI / 180
-#define DEG_TO_RAD          M_PI / 180
-#define RAD_TO_DEG          180 / M_PI
-
-const float rest_time = 5.0;
-
-// using json = nlohmann::json;
-// json local_sim_data = {};
-
-pid_state_t alt_pid;
-pid_state_t yaw_pid;
-pid_state_t x_body_pid;
-pid_state_t y_body_pid;
-pid_state_t roll_pid;
-pid_state_t pitch_pid;
-
-float time_sec;
-float prev_time_sec;
-float x_world_measure_m;
-float y_world_measure_m;
-float ax, ay, az, gx, gy, gz, mx, my, mz;
-float ch_1, ch_2, ch_3, ch_4;
-float pressure_pa;
-
-float alt_real;
-float yaw_real;
-float pitch_real;
-float roll_real;
-
-float yaw_est;
-float pitch_est;
-float roll_est;
-
-// Adafruit_NXPSensorFusion sensor_fusion;
-Adafruit_Madgwick sensor_fusion;
-
-float engine_0_cmd_norm;
-float engine_1_cmd_norm;
-float engine_2_cmd_norm;
-float engine_3_cmd_norm;
-
-/**
- * ==== FORWARD DECLARATIONS ====
- */
-extern "C" void init(/* json *sim_data */);
-extern "C" void data_to_fcs(float *data);
-extern "C" void data_from_fcs(float *data);
-extern "C" void loop(void);
-const float engine_mixer(const int engine_id,
-                          const float throttle_cmd,
-                          const float yaw_cmd,
-                          const float pitch_cmd,
-                          const float roll_cmd);
-const float mixer_to_cmd(const float mixer_output);
-const float get_x_body(const float yaw_rad, const float x_world, const float y_world);
-const float get_y_body(const float yaw_rad, const float x_world, const float y_world);
-
-/**
- * ==== END FORWARD DECLARATIONS ====
- */
+#endif // MCU
 
 
 extern "C" void init(/* json *sim_data */) {
+
+#ifdef SITL
     printf("Hello from FCS\n");
+#endif
 
     pid_init(alt_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
     pid_init(yaw_pid,    0.011, 0.02,  0.0013,   0.15, -0.2, 0.2);
@@ -337,10 +302,10 @@ extern "C" void init(/* json *sim_data */) {
     engine_2_cmd_norm = 0.0;
     engine_3_cmd_norm = 0.0;
 
-    sensor_fusion.begin(250.0);
+    sensor_fusion.begin(50.0);
 }
 
-extern "C" void data_to_fcs(float *data) {
+extern "C" void data_from_jsbsim(float *data) {
     time_sec            = data[0];                  // simulation/sim-time-sec
 
     x_world_measure_m   = data[1] * DEG_TO_GEO_M;   // ext/longitude-deg
@@ -351,13 +316,16 @@ extern "C" void data_to_fcs(float *data) {
     pitch_real          = data[5];                  // attitude/theta-deg
     roll_real           = data[6];                  // attitude/phi-deg
 
-    ax                  = data[7];                  // sensor/imu/accelX-g
-    ay                  = data[8];                  // sensor/imu/accelY-g
-    az                  = data[9];                  // sensor/imu/accelZ-g
+    /**
+     * Accelerometer adjusted from JSBSim local frame to expected sensor frame
+     */
+    ay                  =  data[7];                 // sensor/imu/accelX-g
+    ax                  =  data[8];                 // sensor/imu/accelY-g
+    az                  = -data[9];                 // sensor/imu/accelZ-g
 
-    gx                  = data[10];                 // sensor/imu/gyroX-rps
-    gy                  = data[11];                 // sensor/imu/gyroY-rps
-    gz                  = data[12];                 // sensor/imu/gyroZ-rps
+    gy                  =  data[10];                // sensor/imu/gyroX-rps
+    gx                  =  data[11];                // sensor/imu/gyroY-rps
+    gz                  = -data[12];                // sensor/imu/gyroZ-rps
 
     mx                  = data[13];                 // sensor/imu/magX-uT
     my                  = data[14];                 // sensor/imu/magY-uT
@@ -371,7 +339,7 @@ extern "C" void data_to_fcs(float *data) {
     if (prev_time_sec < 0) prev_time_sec = time_sec;
 }
 
-extern "C" void data_from_fcs(float *data) {
+extern "C" void data_to_jsbsim(float *data) {
     data[0] = engine_0_cmd_norm;
     data[1] = engine_1_cmd_norm;
     data[2] = engine_2_cmd_norm;
@@ -389,7 +357,9 @@ extern "C" void loop(void) {
     /**
      * Estimate attitude
      */
-    sensor_fusion.update(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az, 0, 0, 0);
+    // sensor_fusion.updateIMU(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az);
+    
+    sensor_fusion.update(gy * RAD_TO_DEG, gx * RAD_TO_DEG, -gz * RAD_TO_DEG, -ay, -ax, az, 0, 0, 0);
     roll_est    = sensor_fusion.getRoll();
     pitch_est   = sensor_fusion.getPitch();
     yaw_est     = sensor_fusion.getYaw() - 180.0;
@@ -462,22 +432,7 @@ extern "C" void loop(void) {
     // engine_2_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
     // engine_3_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
 
-    /**
-     * ==== Attitude estimation ====
-     */
-
-    // MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az, deltaT);
-
-    // roll_est   = atan2(q2 * q3 + q0 * q1, 1 / 2 - (q1 * q1 + q2 * q2));
-    // pitch_est = asin(-2 * (q1 * q3 - q0 * q2));
-    // yaw_est   = atan2(q1 * q2 + q0 * q3, 1 / 2 - (q2 * q2 + q3 * q3));
-
-    // roll_est   = roll_est   / M_PI * 180.0;
-    // pitch_est = pitch_est / M_PI * 180.0;
-    // yaw_est   = yaw_est   / M_PI * 180.0;
 }
-
-#endif
 
 /**
  * @param engine_id Engine id from 1 to 4
@@ -507,7 +462,7 @@ const float engine_mixer(const int engine_id,
 }
 
 const float mixer_to_cmd(const float mixer_output) {
-    return std::max(0.0, std::min(1.0, (const double)mixer_output));
+    return MAX(0.0, MIN(1.0, (const double)mixer_output));
 }
 
 const float get_x_body(const float yaw_rad, const float x_world, const float y_world) {

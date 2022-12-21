@@ -37,6 +37,7 @@ C_SOURCES =
 CXX_SOURCES = \
 src/main.cpp \
 src/Adafruit_AHRS_Madgwick.cpp
+# src/MadgwickAHRS.cpp
 
 ASM_SOURCES = 
 

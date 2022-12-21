@@ -35,9 +35,9 @@ private:
     std::vector<std::string> to_jsbsim_properties;
 
     init_func init_fcs;
-    data_to_fcs_func data_to_fcs;
+    data_to_fcs_func data_from_jsbsim;
     loop_func loop_fcs;
-    data_from_fcs_func data_from_fcs;
+    data_from_fcs_func data_to_jsbsim;
 };
 
 #endif

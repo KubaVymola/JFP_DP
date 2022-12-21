@@ -19,9 +19,9 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
     }
 
     init_fcs =      (init_func)dlsym(lib, "init");
-    data_to_fcs =   (data_to_fcs_func)dlsym(lib, "data_to_fcs");
+    data_from_jsbsim =   (data_to_fcs_func)dlsym(lib, "data_from_jsbsim");
     loop_fcs =      (loop_func)dlsym(lib, "loop");
-    data_from_fcs = (data_from_fcs_func)dlsym(lib, "data_from_fcs");
+    data_to_jsbsim = (data_from_fcs_func)dlsym(lib, "data_to_jsbsim");
 
     parse_xml_config(sim_config);
 
@@ -66,7 +66,7 @@ void SITLInterface::handle_event(const std::string& event_name, json *sim_data) 
         if (iter_num % sitl_div == 0) {
             float data[to_jsbsim_properties.size()];
             
-            data_from_fcs(data);
+            data_to_jsbsim(data);
 
             int i = 0;
             for (const std::string& from_fcs_property : to_jsbsim_properties) {
@@ -84,7 +84,7 @@ void SITLInterface::handle_event(const std::string& event_name, json *sim_data) 
                 data[i++] = (float)sim_data->value<double>(to_fcs_property, 0.0);
             }
             
-            data_to_fcs(data);
+            data_from_jsbsim(data);
             loop_fcs();
         }
 

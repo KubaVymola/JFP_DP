@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #endif
 
+#include "timer.h"
 
 #define LOBYTE(x)  ((uint8_t)(x & 0x00FFU))
 #define HIBYTE(x)  ((uint8_t)((x & 0xFF00U) >> 8U))
@@ -16,13 +17,11 @@
 #define PACKET_HEADER_SIZE   6 /* 1B (channel) 1B (0x55) 2B (size) 2B (offset) */
 #define PACKET_FOOTER_SIZE   1 /* 1B (0x00) */
 
-float ch2_data[20];
-
-int round_down_to_multiple(int number, int multiple) {
+int HITLInterface::round_down_to_multiple(int number, int multiple) {
     return number - number % multiple;
 }
 
-void send_data_usb(int serial_port, int channel_number, void *data, uint16_t data_size, int item_size, int buffer_size) {
+void HITLInterface::send_data_usb(int serial_port, int channel_number, void *data, uint16_t data_size, int item_size, int buffer_size) {
     uint16_t current_offset = 0;
     uint16_t maximum_data_in_packet = round_down_to_multiple(buffer_size - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
     
@@ -47,30 +46,26 @@ void send_data_usb(int serial_port, int channel_number, void *data, uint16_t dat
         to_send[PACKET_HEADER_SIZE + to_send_size] = '\0';
 
         int num_bytes = write(serial_port, to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE);
-
-        if (num_bytes <= 0) {
-            printf("Error or zero write\n");
-            return;
-        }
-
-        printf("Sent %d bytes with offset %d\n", to_send_size, current_offset);
+        tcdrain(serial_port);
+        
+        // {
+        //     Timer timer;
+        //     tcdrain(serial_port);
+        // }
 
         current_offset += to_send_size;
     }
 }
 
-void receive_data_usb(int serial_port) {
+void HITLInterface::receive_data_usb(int serial_port, json *sim_data) {
     char buf[1024];
-
     int len = read(serial_port, buf, sizeof(buf));
-
-    printf("Read %d bytes\n", len);
 
     /**
      * n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
      */
     if (len < 0) {
-        printf("Error reading: %s\n", strerror(errno));
+        // printf("Error reading: %s\n", strerror(errno));
         return;
     }
 
@@ -90,8 +85,8 @@ void receive_data_usb(int serial_port) {
          * Invalid packet received
          */
         if (channel_number > 0x02
-        || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || current_data[1] != 0x55
+        || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || data_size > 64
         || data_offset > 512) {
             current_data++;
@@ -106,31 +101,16 @@ void receive_data_usb(int serial_port) {
             printf("\n");
         }
 
+        /**
+         * Receive data to sim_data
+         */
         if (channel_number == 0x02) {
-            memcpy((uint8_t *)ch2_data + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
-
-            printf("%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
-                ch2_data[0],
-                ch2_data[1],
-                ch2_data[2],
-                ch2_data[3],
-                ch2_data[4],
-                ch2_data[5],
-                ch2_data[6],
-                ch2_data[7],
-                ch2_data[8],
-                ch2_data[9],
-                ch2_data[10],
-                ch2_data[11],
-                ch2_data[12],
-                ch2_data[13],
-                ch2_data[14],
-                ch2_data[15],
-                ch2_data[16],
-                ch2_data[17],
-                ch2_data[18],
-                ch2_data[19]
-            );
+            float *new_data = (float *)(current_data + PACKET_HEADER_SIZE);
+            int data_items_offset = data_offset / sizeof(float);
+            
+            for (int i = 0; i < data_size / sizeof(float); ++i) {
+                (*sim_data)[to_jsbsim_properties[i + data_items_offset]] = new_data[i];
+            }
         }
 
 
@@ -150,11 +130,10 @@ void HITLInterface::hitl_init(sim_config_t &sim_config,
     hitl_device = open(sim_config.hitl_path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
 
     /**
-     * TODO dont remove non blocking mode (or add polling for pollin on the file descriptor)
-     * Remove non-blocking mode from fd after opening
+     * // Remove non-blocking mode from fd after opening
      */
-    int flag = fcntl(hitl_device, F_GETFL);
-    fcntl(hitl_device, F_SETFL, flag & ~O_NONBLOCK);
+    // int flag = fcntl(hitl_device, F_GETFL);
+    // fcntl(hitl_device, F_SETFL, flag & ~O_NONBLOCK);
 
     // Create new termios struct, we call it 'tty' for convention
     struct termios tty;
@@ -185,12 +164,14 @@ void HITLInterface::hitl_init(sim_config_t &sim_config,
     // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
     // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
 
-    tty.c_cc[VTIME] = 10;  // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
-    tty.c_cc[VMIN] = 0;
+    // tty.c_cc[VTIME] = 10;  // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+    // tty.c_cc[VMIN] = 0;
 
     // Set in/out baud rate to be 115200
     cfsetispeed(&tty, B115200);
     cfsetospeed(&tty, B115200);
+
+    // cfmakeraw(&tty);
 
     // Save tty settings, also checking for error
     if (tcsetattr(hitl_device, TCSANOW, &tty) != 0) {
@@ -200,7 +181,8 @@ void HITLInterface::hitl_init(sim_config_t &sim_config,
     
 #ifdef __linux__
     /**
-     * ? Reduce USB latency from 16 ms to about 2 ms
+     * ? On linux reduce USB latency from 16 ms to about 2 ms
+     * https://www.projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/
      */
     struct serial_struct serinfo;
     ioctl(hitl_device, TIOCGSERIAL, &serinfo);
@@ -242,7 +224,8 @@ void HITLInterface::parse_xml_config(sim_config_t &sim_config) {
 
 void HITLInterface::handle_event(const std::string &event_name, json *sim_data) {
     if (event_name == "sim:before_iter") {
-        receive_data_usb(hitl_device);
+        // Non-blocking call, might receive nothing - that's OK
+        receive_data_usb(hitl_device, sim_data);
     }
 
     if (event_name == "sim:after_iter") {
@@ -251,7 +234,10 @@ void HITLInterface::handle_event(const std::string &event_name, json *sim_data) 
         int i = 0;
         for (const std::string& to_fcs_property : from_jsbsim_properties) {
             data[i++] = (float)sim_data->value<double>(to_fcs_property, 0.0);
+            // printf("%s: %f\n", to_fcs_property.c_str(), sim_data->value<double>(to_fcs_property, 0.0));
         }
+        
+        // printf("items: %d, size: %d\n", from_jsbsim_properties.size(), sizeof(data));
         
         send_data_usb(hitl_device, 0x02, data, sizeof(data), sizeof(float), 64);
     }

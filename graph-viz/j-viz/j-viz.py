@@ -5,6 +5,9 @@ from matplotlib.animation import FuncAnimation
 from functools import partial
 import signal
 import xml.etree.ElementTree as ET
+import scienceplots
+
+plt.style.use(['science', 'no-latex'])
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -106,8 +109,9 @@ def parse_config(file_name: str):
             for x in child.findall('data'):
                 new_data_property = x.text.strip()
                 data_properties.append(new_data_property)
-                lns.append(axs[pos_x][pos_y].plot([], [], label=new_data_property)[0])
+                lns.append(axs[pos_x][pos_y].plot([], [], label='/'.join(new_data_property.split('/')[3:]), linewidth=1.5)[0])
 
+            axs[pos_x][pos_y].grid(True, color = 'gray', linestyle = '--', linewidth = 0.5)
             axs[pos_x][pos_y].legend()
 
     return fig, axs

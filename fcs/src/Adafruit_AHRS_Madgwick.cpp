@@ -25,8 +25,8 @@
 //-------------------------------------------------------------------------------------------
 // Definitions
 
-#define sampleFreqDef 250.0f // sample frequency in Hz
-#define betaDef 0.05f         // 2 * proportional gain
+#define sampleFreqDef 50.0f // sample frequency in Hz
+#define betaDef 0.03f         // 2 * proportional gain
 
 //============================================================================================
 // Functions
@@ -281,14 +281,18 @@ void Adafruit_Madgwick::updateIMU(float gx, float gy, float gz, float ax,
 // See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
 
 float Adafruit_Madgwick::invSqrt(float x) {
-  float halfx = 0.5f * x;
-  float y = x;
-  long i = *(long *)&y;
-  i = 0x5f3759df - (i >> 1);
-  y = *(float *)&i;
-  y = y * (1.5f - (halfx * y * y));
-  y = y * (1.5f - (halfx * y * y));
-  return y;
+  // float halfx = 0.5f * x;
+  // float y = x;
+  // long i = *(long *)&y;
+  // i = 0x5f3759df - (i >> 1);
+  // y = *(float *)&i;
+  // y = y * (1.5f - (halfx * y * y));
+  // y = y * (1.5f - (halfx * y * y));
+
+  // return y;
+
+  return 1 / sqrtf(x);
+  
 }
 
 //-------------------------------------------------------------------------------------------

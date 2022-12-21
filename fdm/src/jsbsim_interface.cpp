@@ -54,6 +54,7 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     XMLElement *root_elem = craft_doc.FirstChildElement("fdm_config");
     
     // TODO avoid duplicit properties defined in either direction
+    // TODO only add respective properties to the list if given interface is used (e.g. if there is no SITL/HITL, don't add properties from fcs_interface)
     
     /**
      * Get properties for the 3d visualizer
