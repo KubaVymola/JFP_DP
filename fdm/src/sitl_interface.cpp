@@ -18,10 +18,10 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
         exit(1);
     }
 
-    init_fcs =      (init_func)dlsym(lib, "init");
-    data_from_jsbsim =   (data_to_fcs_func)dlsym(lib, "data_from_jsbsim");
-    loop_fcs =      (loop_func)dlsym(lib, "loop");
-    data_to_jsbsim = (data_from_fcs_func)dlsym(lib, "data_to_jsbsim");
+    init_fcs            = (init_func)dlsym(lib, "init");
+    data_from_jsbsim    = (data_to_fcs_func)dlsym(lib, "data_from_jsbsim");
+    loop_fcs            = (loop_func)dlsym(lib, "loop");
+    data_to_jsbsim      = (data_from_fcs_func)dlsym(lib, "data_to_jsbsim");
 
     parse_xml_config(sim_config);
 

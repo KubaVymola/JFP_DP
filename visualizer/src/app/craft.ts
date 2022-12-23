@@ -57,7 +57,7 @@ class Craft {
         this.rootEntity = createEntity('craftEntity', scene, camera);
         
         /**
-         * TODO document the following and provide settings
+         * TODO provide settings for the following
          * ! The craft, after loading, should have the nose to +x, up to -z and left -y
          * To achieve this, do the following in blender:
          * 1. The craft has fwd pointing to -x, left is to -y, and bottom to -z

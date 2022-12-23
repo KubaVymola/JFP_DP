@@ -83,34 +83,9 @@
         
         <file>3d/quad.obj</file>
         <node mesh="quad_body_quad.001">
-            <node mesh="front_right_prop_quad.004">
-                <spinner_property> propulsion/engine/propeller-rpm  </spinner_property>
-                <prop_sense_property> propulsion/engine/propeller-sense </prop_sense_property>
-                <pivot>
-                    <x> -0.068 </x>
-                    <y>  0.09  </y>
-                    <z>  0.0   </z>
-                </pivot>
-                <axis>
-                    <x> 0.0 </x>
-                    <y> 0.0 </y>
-                    <z> 1.0 </z>
-                </axis>
-            </node>
-            <node>
-                <position>
-                    <x> -0.07 </x>
-                    <y>  0.09 </y>
-                    <z> -0.01 </z>
-                </position>
-                <thrust_property> propulsion/engine/thrust-lbs </thrust_property>
-                <engine_yaw_property> propulsion/engine/yaw-angle-rad </engine_yaw_property>
-                <engine_pitch_property> propulsion/engine/pitch-angle-rad </engine_pitch_property>
-            </node>
-
             <node mesh="aft_right_prop_quad.002">
-                <spinner_property> propulsion/engine[3]/propeller-rpm </spinner_property>
-                <prop_sense_property> propulsion/engine[3]/propeller-sense </prop_sense_property>
+                <spinner_property> propulsion/engine/propeller-rpm </spinner_property>
+                <prop_sense_property> propulsion/engine/propeller-sense </prop_sense_property>
                 <pivot>
                     <x> 0.065 </x>
                     <y> 0.09  </y>
@@ -128,17 +103,17 @@
                     <y>  0.09 </y>
                     <z> -0.01 </z>
                 </position>
-                <thrust_property> propulsion/engine[3]/thrust-lbs </thrust_property>
-                <engine_pitch_property> propulsion/engine[3]/pitch-angle-rad </engine_pitch_property>
-                <engine_yaw_property> propulsion/engine[3]/yaw-angle-rad </engine_yaw_property>
+                <thrust_property> propulsion/engine/thrust-lbs </thrust_property>
+                <engine_pitch_property> propulsion/engine/pitch-angle-rad </engine_pitch_property>
+                <engine_yaw_property> propulsion/engine/yaw-angle-rad </engine_yaw_property>
             </node>
             
-            <node mesh="front_left_prop_quad.003">
-                <spinner_property> propulsion/engine[2]/propeller-rpm </spinner_property>
-                <prop_sense_property> propulsion/engine[2]/propeller-sense </prop_sense_property>
+            <node mesh="front_right_prop_quad.004">
+                <spinner_property> propulsion/engine[1]/propeller-rpm  </spinner_property>
+                <prop_sense_property> propulsion/engine[1]/propeller-sense </prop_sense_property>
                 <pivot>
-                    <x> -0.065 </x>
-                    <y> -0.09  </y>
+                    <x> -0.068 </x>
+                    <y>  0.09  </y>
                     <z>  0.0   </z>
                 </pivot>
                 <axis>
@@ -150,17 +125,17 @@
             <node>
                 <position>
                     <x> -0.07 </x>
-                    <y> -0.09 </y>
+                    <y>  0.09 </y>
                     <z> -0.01 </z>
                 </position>
-                <thrust_property> propulsion/engine[2]/thrust-lbs </thrust_property>
-                <engine_pitch_property> propulsion/engine[2]/pitch-angle-rad </engine_pitch_property>
-                <engine_yaw_property> propulsion/engine[2]/yaw-angle-rad </engine_yaw_property>
+                <thrust_property> propulsion/engine[1]/thrust-lbs </thrust_property>
+                <engine_yaw_property> propulsion/engine[1]/yaw-angle-rad </engine_yaw_property>
+                <engine_pitch_property> propulsion/engine[1]/pitch-angle-rad </engine_pitch_property>
             </node>
-            
+
             <node mesh="aft_left_prop_quad">
-                <spinner_property> propulsion/engine[1]/propeller-rpm  </spinner_property>
-                <prop_sense_property> propulsion/engine[1]/propeller-sense </prop_sense_property>
+                <spinner_property> propulsion/engine[2]/propeller-rpm  </spinner_property>
+                <prop_sense_property> propulsion/engine[2]/propeller-sense </prop_sense_property>
                 <pivot>
                     <x>  0.065 </x>
                     <y> -0.09  </y>
@@ -178,9 +153,34 @@
                     <y> -0.09 </y>
                     <z> -0.01 </z>
                 </position>
-                <thrust_property> propulsion/engine[1]/thrust-lbs </thrust_property>
-                <engine_pitch_property> propulsion/engine[1]/pitch-angle-rad </engine_pitch_property>
-                <engine_yaw_property> propulsion/engine[1]/yaw-angle-rad </engine_yaw_property>
+                <thrust_property> propulsion/engine[2]/thrust-lbs </thrust_property>
+                <engine_pitch_property> propulsion/engine[2]/pitch-angle-rad </engine_pitch_property>
+                <engine_yaw_property> propulsion/engine[2]/yaw-angle-rad </engine_yaw_property>
+            </node>
+            
+            <node mesh="front_left_prop_quad.003">
+                <spinner_property> propulsion/engine[3]/propeller-rpm </spinner_property>
+                <prop_sense_property> propulsion/engine[3]/propeller-sense </prop_sense_property>
+                <pivot>
+                    <x> -0.065 </x>
+                    <y> -0.09  </y>
+                    <z>  0.0   </z>
+                </pivot>
+                <axis>
+                    <x> 0.0 </x>
+                    <y> 0.0 </y>
+                    <z> 1.0 </z>
+                </axis>
+            </node>
+            <node>
+                <position>
+                    <x> -0.07 </x>
+                    <y> -0.09 </y>
+                    <z> -0.01 </z>
+                </position>
+                <thrust_property> propulsion/engine[3]/thrust-lbs </thrust_property>
+                <engine_pitch_property> propulsion/engine[3]/pitch-angle-rad </engine_pitch_property>
+                <engine_yaw_property> propulsion/engine[3]/yaw-angle-rad </engine_yaw_property>
             </node>
 
             <!-- <node name="left_ailer">

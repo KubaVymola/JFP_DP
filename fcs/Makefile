@@ -25,7 +25,7 @@ OUTPUT_TYPE = MCU
 endif
 
 ifeq ($(TARGET),)
-OUTPUT_TYPE = SITL
+OUTPUT_TYPE = CPU
 endif
 
 # ==== END TARGET SETTINGS ====
@@ -97,6 +97,10 @@ LDFLAGS = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(
 DEFS += -DMCU
 endif
 
+ifeq ($(OUTPUT_TYPE),CPU)
+DEFS += -DCPU
+endif
+
 ####################################################################################################
 # VENDOR SETTINGS
 ####################################################################################################
@@ -113,8 +117,11 @@ src/usb/usbd_cdc.c \
 src/hal/st/config.c \
 src/hal/st/gpio.c \
 src/hal/st/i2c.c \
-src/hal/st/tim.c
-INCLUDES += -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
+src/hal/st/tim.c \
+src/hal/st/usart.c
+CXX_SOURCES += \
+src/drivers/bmi160.cpp
+INCLUDES += -Isrc/drivers -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
 DEFS += -DUSE_HAL_DRIVER -DVENDOR_ST
 endif
 
@@ -146,7 +153,8 @@ src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_cortex.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_exti.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_tim.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_tim_ex.c \
-src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_i2c.c
+src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_i2c.c \
+src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_uart.c
 INCLUDES += \
 -Isrc/hal/st/stm32l1/cmsis \
 -Isrc/hal/st/stm32l1/core \
@@ -221,6 +229,14 @@ clean:
 
 ####################################################################################################
 # TARGETS
+#
+# sitl target defines -DSITL. TARGET from CLI should not be set -> that will also define -DCPU
+# htil target defines -DHITL. TARGET should be set in the CLI -> that will define -DMCU
+# indep target defines -DINDEP. TARGET should be set in the CLI -> that will define -DMCU
+#
+# flash target should always follow either hitl, or indep target
+#
+# if changing from CPU to MCU or vice versa always include clean target before sitl, hitl, or indep
 ####################################################################################################
 
 # ==== SITL ====
@@ -230,10 +246,11 @@ sitl: $(OBJECTS)
 
 # ==== HITL ====
 hitl: DEFS += -DHITL
-hitl: mcu
+hitl: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 # ==== NORMAL MCU FW ====
-mcu: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+indep: DEFS += -DINDEP
+indep: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 # ==== UPLOAD TO MCU ====
 flash: $(BUILD_DIR)/$(TARGET).bin

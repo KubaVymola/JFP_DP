@@ -1,7 +1,13 @@
-// either MCU, MCU + HITL, or SITL will be defined
-// #define MCU
-// #define HITL
-// #define SITL
+// either INDEP, HITL, or SITL will be defined
+// either MCU or CPU will be defined
+
+// // #define MCU
+// // #define HITL
+// // #define SITL
+
+/**
+ * ==== INCLUDES ====
+ */
 
 #include "pid.h"
 #include "Adafruit_AHRS_Madgwick.h"
@@ -17,10 +23,21 @@
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
+#include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
 #include "usbd_cdc_if.h"
+#include "bmi160.h"
 #endif // MCU
+
+/**
+ * ==== END INCLUDES ====
+ */
+
+
+/**
+ * ==== DEFINES ====
+ */
 
 #ifndef M_PI
 #define M_PI		        3.14159265358979323846
@@ -43,13 +60,16 @@
 #define PACKET_FOOTER_SIZE  1 /* 1B (0x00) */
 #endif // MCU
 
+/**
+ * ==== END DEFINES ====
+ */
+
+
+/**
+ * ==== VARIABLES ====
+ */
 
 char cmd_string[256];
-
-#ifdef HITL
-float from_jsbsim[22] = { 0 };
-float to_jsbsim[7] = { 0 };
-#endif // HITL
 
 const float rest_time = 5.0;
 
@@ -84,12 +104,24 @@ float engine_1_cmd_norm;
 float engine_2_cmd_norm;
 float engine_3_cmd_norm;
 
+#ifdef HITL
+float from_jsbsim[22] = { 0 };
+float to_jsbsim[7] = { 0 };
+#endif // HITL
 
+#ifdef MCU
+bmi160 himu;
+#endif // MCU
+
+/**
+ * ==== END VARIABLES ====
+ */
 
 
 /**
- * Function declarations
+ * ==== FUNCTION DECLARATIONS ====
  */
+
 extern "C" void init(/* json *sim_data */);
 extern "C" void data_from_jsbsim(float *data);
 extern "C" void data_to_jsbsim(float *data);
@@ -110,6 +142,11 @@ extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, u
 extern "C" void SystemClock_Config(void);
 #endif // MCU
 
+/**
+ * ==== END FUNCTION DECLARATIONS ====
+ */
+
+
 #ifdef MCU
 
 int main(void) {
@@ -118,28 +155,75 @@ int main(void) {
     SystemClock_Config();
 
     MX_GPIO_Init();
+    MX_I2C1_Init();
     MX_USB_DEVICE_Init();
     MX_TIM9_Init();
     MX_TIM10_Init();
     MX_TIM11_Init();
+    MX_USART1_UART_Init();
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
     init();
 
+    bmi160_init(&himu, &hi2c1, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
+
+    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
 
+    htim10.Instance->CCR1 = 1000;
     htim9.Instance->CCR1 = 1000;
     htim9.Instance->CCR2 = 1000;
-    htim10.Instance->CCR1 = 1000;
     htim11.Instance->CCR1 = 1000;
 
     HAL_Delay(3000);
 
     while (1) {
+    
+        // if (bmi160_get_data_rdy(&himu)) {
+
+        //     char bmi_buf[128];
+
+        //     bmi160_update_acc_gyro_data(&himu);
+        //     sprintf(bmi_buf, "acc: %d %d %d gyro: %d %d %d\r\n",
+        //         (int16_t)himu.acc_raw[0],
+        //         (int16_t)himu.acc_raw[1],
+        //         (int16_t)himu.acc_raw[2],
+        //         (int16_t)himu.gyro_raw[0],
+        //         (int16_t)himu.gyro_raw[1],
+        //         (int16_t)himu.gyro_raw[2]
+        //     );
+
+        //     CDC_Transmit_FS((uint8_t *)bmi_buf, strlen(bmi_buf));
+
+        //     // send_data_over_usb_packets(1, bmi_buf, sizeof(bmi_buf), 1);
+
+
+        // }
+
+        // HAL_Delay(1000);
+        // HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+        
+        // continue;
+
+        /**
+         * RC RX test (with SBUS)
+         */
+        
+        // uint8_t receiver_data[25] = { 0 };
+        // HAL_UART_Receive(&huart1, receiver_data, 25, 1000);
+
+        // char usb_data[128];
+        // sprintf(usb_data, "header: %x %x %x %x %x\r\n", receiver_data[0], receiver_data[1], receiver_data[2], receiver_data[3], receiver_data[4]);
+        // CDC_Transmit_FS((uint8_t *)usb_data, strlen(usb_data));
+
+        // continue;
+
+        /**
+         * Motor control
+         */
 
         // htim9.Instance->CCR1 = 1100;
         // htim9.Instance->CCR2 = 1100;
@@ -189,21 +273,23 @@ int main(void) {
         // Config file ?
         // ==== END SITL CODE ====
         
-    #ifdef HITL
+        #ifdef HITL
         __disable_irq();
         data_from_jsbsim(from_jsbsim);
         __enable_irq();
-    #endif // HITL
+        #endif // HITL
 
-        htim9.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
-        htim9.Instance->CCR2 = engine_1_cmd_norm * 1000.0f + 1000.0f;
-        htim10.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
-        htim11.Instance->CCR1 = engine_2_cmd_norm * 1000.0f + 1000.0f;
+        htim10.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
+        htim9.Instance->CCR1 = engine_1_cmd_norm * 1000.0f + 1000.0f;
+        htim9.Instance->CCR2 = engine_2_cmd_norm * 1000.0f + 1000.0f;
+        htim11.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
 
         loop();
 
+        #ifdef HITL
         data_to_jsbsim(to_jsbsim);
         send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float));
+        #endif // HITL
 
         char buf[128];
         sprintf(buf, "ax %d, ay %d, az %d, gx %d, gy %d, gz %d\n",
@@ -306,14 +392,14 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
          * There is no data in on channel 1 (it is for telemetry output)
          */
 
-    #ifdef HITL
+        #ifdef HITL
         /**
          * HITL data in
          */
         if (channel_number == 0x02) {
             memcpy((uint8_t *)from_jsbsim + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
         }
-    #endif
+        #endif
 
         current_data += PACKET_HEADER_SIZE + data_size + PACKET_FOOTER_SIZE;
     }
@@ -326,7 +412,7 @@ extern "C" void init(/* json *sim_data */) {
 
 #ifdef SITL
     printf("Hello from FCS\n");
-#endif
+#endif // SITL
 
     pid_init(alt_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
     pid_init(yaw_pid,    0.011, 0.02,  0.0013,   0.15, -0.2, 0.2);
@@ -419,7 +505,7 @@ extern "C" void loop(void) {
      * ==== Yaw ====
      */
     float yaw_sp = 2;
-    if (time_sec > rest_time + 5) yaw_sp = 20;
+    if (time_sec > rest_time + 5) yaw_sp = 80;
     if (yaw_sp - yaw_used >  180) yaw_used += 360;
     if (yaw_sp - yaw_used < -180) yaw_used -= 360;
 
@@ -475,7 +561,7 @@ extern "C" void loop(void) {
 }
 
 /**
- * @param engine_id Engine id from 1 to 4
+ * @param engine_id Engine id from 0 to 3
  */
 const float engine_mixer(const int engine_id,
                          const float throttle_cmd,
@@ -483,19 +569,19 @@ const float engine_mixer(const int engine_id,
                          const float pitch_cmd,
                          const float roll_cmd) {
     if (engine_id == 0) {
-        return throttle_cmd + yaw_cmd + pitch_cmd - roll_cmd;
+        return throttle_cmd - yaw_cmd - pitch_cmd - roll_cmd;
     }
 
     if (engine_id == 1) {
-        return throttle_cmd + yaw_cmd - pitch_cmd + roll_cmd;
+        return throttle_cmd + yaw_cmd + pitch_cmd - roll_cmd;
     }
 
     if (engine_id == 2) {
-        return throttle_cmd - yaw_cmd + pitch_cmd + roll_cmd;
+        return throttle_cmd + yaw_cmd - pitch_cmd + roll_cmd;
     }
 
     if (engine_id == 3) {
-        return throttle_cmd - yaw_cmd - pitch_cmd - roll_cmd;
+        return throttle_cmd - yaw_cmd + pitch_cmd + roll_cmd;
     }
 
     return 0;
