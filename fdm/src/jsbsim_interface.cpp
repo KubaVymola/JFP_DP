@@ -53,72 +53,78 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     craft_doc.LoadFile(sim_config.craft_config_path.c_str());
     XMLElement *root_elem = craft_doc.FirstChildElement("fdm_config");
     
-    // TODO avoid duplicit properties defined in either direction
-    // TODO only add respective properties to the list if given interface is used (e.g. if there is no SITL/HITL, don't add properties from fcs_interface)
+    // TODO allow default values for all properties
     
     /**
      * Get properties for the 3d visualizer
      */
-    XMLElement *ws_elem = root_elem->FirstChildElement("ws");
-    XMLElement *ws_from_jsb_elem = ws_elem->FirstChildElement("from_jsbsim");
-    XMLElement *ws_from_jsb_prop_elem = ws_from_jsb_elem->FirstChildElement("property");
+    if (sim_config.ws_port != 0) {
 
-    for (; 
-           ws_from_jsb_prop_elem != nullptr;
-           ws_from_jsb_prop_elem = ws_from_jsb_prop_elem->NextSiblingElement("property")) {
-        std::string from_jsbsim_property(ws_from_jsb_prop_elem->GetText());
+        XMLElement *ws_elem = root_elem->FirstChildElement("ws");
+        
+        XMLElement *ws_from_jsb_elem = ws_elem->FirstChildElement("from_jsbsim");
+        XMLElement *ws_from_jsb_prop_elem = ws_from_jsb_elem->FirstChildElement("property");
 
-        properties_from_jsbsim.push_back(from_jsbsim_property);
-        (*sim_data)[from_jsbsim_property] = 0.0;
+        for (; 
+            ws_from_jsb_prop_elem != nullptr;
+            ws_from_jsb_prop_elem = ws_from_jsb_prop_elem->NextSiblingElement("property")) {
+            std::string from_jsbsim_property(ws_from_jsb_prop_elem->GetText());
+
+            properties_from_jsbsim.push_back(from_jsbsim_property);
+            (*sim_data)[from_jsbsim_property] = 0.0;
+        }
+
+        XMLElement *ws_to_jsb_elem = ws_elem->FirstChildElement("to_jsbsim");
+        XMLElement *ws_to_jsb_prop_elem = ws_to_jsb_elem->FirstChildElement("property");
+
+        for (;
+            ws_to_jsb_prop_elem != nullptr;
+            ws_to_jsb_prop_elem = ws_to_jsb_prop_elem->NextSiblingElement("property")) {
+            std::string to_jsbsim_property(ws_to_jsb_prop_elem->GetText());
+
+            properties_to_jsbsim.push_back(to_jsbsim_property);
+            (*sim_data)[to_jsbsim_property] = 0.0;
+        }
     }
 
-    XMLElement *ws_to_jsb_elem = ws_elem->FirstChildElement("to_jsbsim");
-    XMLElement *ws_to_jsb_prop_elem = ws_to_jsb_elem->FirstChildElement("property");
-
-    for (;
-           ws_to_jsb_prop_elem != nullptr;
-           ws_to_jsb_prop_elem = ws_to_jsb_prop_elem->NextSiblingElement("property")) {
-        std::string to_jsbsim_property(ws_to_jsb_prop_elem->GetText());
-
-        properties_to_jsbsim.push_back(to_jsbsim_property);
-        (*sim_data)[to_jsbsim_property] = 0.0;
-    }
 
     /**
      * Get properties for FCS interface
      */
-    XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
-    
-    /**
-     * Data from FCS into sim_data into JSBSim
-    */
-    XMLElement *fcs_to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
-    XMLElement *fcs_to_jsb_prop_elem = fcs_to_jsb_elem->FirstChildElement("property");
+    if (!sim_config.sitl_path.empty() || !sim_config.hitl_path.empty()) {
 
-    for (; fcs_to_jsb_prop_elem != nullptr; fcs_to_jsb_prop_elem = fcs_to_jsb_prop_elem->NextSiblingElement("property")) {
-        std::string to_jsbsim_property(fcs_to_jsb_prop_elem->GetText());
+        XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
+        
+        XMLElement *fcs_to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
+        XMLElement *fcs_to_jsb_prop_elem = fcs_to_jsb_elem->FirstChildElement("property");
 
-        properties_to_jsbsim.push_back(to_jsbsim_property);
-        (*sim_data)[to_jsbsim_property] = 0.0;
+        for (; fcs_to_jsb_prop_elem != nullptr; fcs_to_jsb_prop_elem = fcs_to_jsb_prop_elem->NextSiblingElement("property")) {
+            std::string to_jsbsim_property(fcs_to_jsb_prop_elem->GetText());
 
-        // ? Default JSBSim data is supplied to FDMExec later (because now FDMExec is null)
+            properties_to_jsbsim.push_back(to_jsbsim_property);
+            (*sim_data)[to_jsbsim_property] = 0.0;
+
+            // ? Default JSBSim data is supplied to FDMExec later (because now FDMExec is now null)
+        }
+
+        XMLElement *fcs_from_jsb_elem   = fcs_elem->FirstChildElement("from_jsbsim");
+        XMLElement *fcs_from_jsb_prop_elem = fcs_from_jsb_elem->FirstChildElement("property");
+
+        for (; fcs_from_jsb_prop_elem != nullptr; fcs_from_jsb_prop_elem = fcs_from_jsb_prop_elem->NextSiblingElement("property")) {
+            std::string from_jsbsim_property(fcs_from_jsb_prop_elem->GetText());
+
+            properties_from_jsbsim.push_back(from_jsbsim_property);
+            (*sim_data)[from_jsbsim_property] = 0.0;
+        }
     }
 
-    /**
-     * Data from JSBSim into FCS
-     */
-    XMLElement *fcs_from_jsb_elem   = fcs_elem->FirstChildElement("from_jsbsim");
-    XMLElement *fcs_from_jsb_prop_elem = fcs_from_jsb_elem->FirstChildElement("property");
 
-    for (; fcs_from_jsb_prop_elem != nullptr; fcs_from_jsb_prop_elem = fcs_from_jsb_prop_elem->NextSiblingElement("property")) {
-        std::string from_jsbsim_property(fcs_from_jsb_prop_elem->GetText());
+    std::sort(properties_from_jsbsim.begin(), properties_from_jsbsim.end());
+    properties_from_jsbsim.erase(std::unique(properties_from_jsbsim.begin(), properties_from_jsbsim.end()), properties_from_jsbsim.end());
 
-        properties_from_jsbsim.push_back(from_jsbsim_property);
-        (*sim_data)[from_jsbsim_property] = 0.0;
-    }
+    std::sort(properties_to_jsbsim.begin(), properties_to_jsbsim.end());
+    properties_to_jsbsim.erase(std::unique(properties_to_jsbsim.begin(), properties_to_jsbsim.end()), properties_to_jsbsim.end());
     
-    // TODO allow default values for all properties
-    // TODO make all entries in the properties_from_jsbsim and properties_to_jsbsim unique
 }
 
 void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
@@ -218,12 +224,12 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
     /**
      * Load output directives file[s], if given
      */
-    for (unsigned int i=0; i < sim_config.log_outputs.size(); i++) {
-        SGPath logOutput = SGPath::fromLocal8Bit(sim_config.log_outputs[i].c_str());
+    for (unsigned int i=0; i < sim_config.jsbsim_outputs.size(); i++) {
+        SGPath logOutput = SGPath::fromLocal8Bit(sim_config.jsbsim_outputs[i].c_str());
         
         if (!logOutput.isNull()) {
             if (!FDMExec->SetOutputDirectives(logOutput)) {
-                std::cout << "Output directives not properly set in file " << sim_config.log_outputs[i] << std::endl;
+                std::cout << "Output directives not properly set in file " << sim_config.jsbsim_outputs[i] << std::endl;
             }
         }
     }

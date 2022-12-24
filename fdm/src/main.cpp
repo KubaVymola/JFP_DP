@@ -27,6 +27,7 @@ using json = nlohmann::json;
  */
 
 void parse_cli_options(sim_config_t& sim_config, int argc, char **argv);
+void check_valid_options(sim_config_t& sim_config);
 void get_craft_config_path(sim_config_t& sim_config);
 void print_help();
 
@@ -91,9 +92,12 @@ int main(int argc, char **argv) {
     sim_config.root_dir = ".";
     sim_config.ws_port = 0;
 
+    sim_config.sitl_path = "";
+    sim_config.hitl_path = "";
     sim_config.sitl_div = 1;
 
     parse_cli_options(sim_config, argc, argv);
+    check_valid_options(sim_config);
     
     signal(SIGINT, sighandler);
 
@@ -224,6 +228,9 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
             
         } else if (keyword == "--hitl") {
             sim_config.hitl_path = value;
+        
+        } else if (keyword == "--log_def") {
+            sim_config.log_output_def = value;
             
         } else if (keyword == "--set") {
             std::string prop_name = value.substr(0, value.find("="));
@@ -238,7 +245,7 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
                 sim_config.script_path = keyword;
             
             } else {
-                sim_config.log_outputs.push_back(keyword);
+                sim_config.jsbsim_outputs.push_back(keyword);
             }
 
             ++position_arg;
@@ -255,6 +262,10 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         print_help();
         exit(1);
     }
+}
+
+void check_valid_options(sim_config_t& sim_config) {
+    
 }
 
 void get_craft_config_path(sim_config_t& sim_config) {
@@ -285,29 +296,31 @@ void get_craft_config_path(sim_config_t& sim_config) {
 }
 
 void print_help() {
-    printf("\n");
-    printf("Usage: fdm <script_file> [<output_file> [<output_file>...]] <options>\n");
-    printf("\n");
-    printf("options:\n");
-    printf("  <script_file>  relative path to the main script\n");
-    printf("  <output_file>  relative path to a file the specifies the output format\n");
-    printf("  --sitl=<path>  relative path to the dynamic library with SITL FCS\n");
-    printf("  --sitl_div=<value>  divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n");
-    printf("  --hitl=<path>  path to the device with HITL firmware running\n");
-    printf("  --ws=<port>  start a websocket server on a given port\n");
-    printf("  --root_dir=<dir>  root path for JSBSim assets (aircraft, script, engine; default '.')\n");
-    printf("  --sim_rate=<hertz>  how many iterations will the simulation do in a second\n");
-    printf("  --sim_end=<seconds>  how long the simulation will run (0 for endless, default is 60)\n");
-    printf("  --set=<property=value>  set property to given value\n");
-    printf("  --realtime  the simulation will run in real time (default)\n");
-    printf("  --batch  the simulation will run as fast as possible\n");
-    printf("  --print_props  print all properties before running\n");
-    printf("  --version  print version and exit\n");
-    printf("  --help  print help and exit\n");
-    printf("\n");
-    printf("notes:\n");
-    printf("  script, aircraft and engine paths are relative to the root directory (CWD by default)\n");
-    printf("  output definitions and FCS paths are always relative to CWD");
-    printf("\n");
+    printf(
+        "\n"
+        "Usage: fdm <script_file> [<output_file> [<output_file>...]] <options>\n"
+        "\n"
+        "options:\n"
+        "  <script_file>  relative path to the main script\n"
+        "  <output_file>  relative path to a file the specifies the output format\n"
+        "  --sitl=<path>  relative path to the dynamic library with SITL FCS\n"
+        "  --sitl_div=<value>  divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n"
+        "  --hitl=<path>  path to the device with HITL firmware running\n"
+        "  --ws=<port>  start a websocket server on a given port\n"
+        "  --root_dir=<dir>  root path for JSBSim assets (aircraft, script, engine; default '.')\n"
+        "  --sim_rate=<hertz>  how many iterations will the simulation do in a second\n"
+        "  --sim_end=<seconds>  how long the simulation will run (0 for endless, default is 60)\n"
+        "  --set=<property=value>  set property to given value\n"
+        "  --realtime  the simulation will run in real time (default)\n"
+        "  --batch  the simulation will run as fast as possible\n"
+        "  --print_props  print all properties before running\n"
+        "  --version  print version and exit\n"
+        "  --help  print help and exit\n"
+        "\n"
+        "notes:\n"
+        "  script, aircraft and engine paths are relative to the root directory (CWD by default)\n"
+        "  output definitions and FCS paths are always relative to CWD"
+        "\n"
+    );
 }
 

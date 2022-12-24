@@ -7,8 +7,9 @@ struct sim_config_t {
     std::string sitl_path;
     std::string hitl_path;
     std::string craft_config_path;
+    std::string log_output_def;
 
-    std::vector<std::string> log_outputs;
+    std::vector<std::string> jsbsim_outputs;
     std::vector<std::string> command_line_properties;
     std::vector<double> command_line_property_values;
 

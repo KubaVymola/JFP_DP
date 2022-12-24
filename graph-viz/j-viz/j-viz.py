@@ -39,7 +39,6 @@ def main():
     parse_header(file)
     fig, axs = parse_config(args.config_file)
     
-
     ani = FuncAnimation(
         fig,
         update_plot,
@@ -114,7 +113,10 @@ def parse_config(file_name: str):
                 axs[pos_x][pos_y].set_title(child.attrib['title'])
             
             for x in child.findall('data'):
-                # data_indices.append(int(x.attrib['col']))
+                item_name = x.text.strip()
+
+                if item_name not in header_items: continue
+
                 data_indices.append(header_items.index(x.text.strip()))
                 lns.append(axs[pos_x][pos_y].plot([], [], label=x.text.strip(), linewidth=1.5)[0])
 

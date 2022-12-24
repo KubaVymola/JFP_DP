@@ -202,7 +202,7 @@
 
     <fcs_interface>
         <!-- Sends binary data taken from sim_data JSON in the given order into the FCS -->
-        <!-- (each value is 64-bit double) -->
+        <!-- (each value is 32-bit float) -->
 
         <!-- Retrieve properties from FCS (from sim_data JSON) back into JSBSim -->
         <to_jsbsim>
