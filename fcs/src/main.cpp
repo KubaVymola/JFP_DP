@@ -138,7 +138,7 @@ int round_down_to_multiple(int number, int multiple);
 
 #ifdef MCU
 extern "C" void process_packet_from_usb(uint8_t* Buf, int len);
-extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size);
+extern "C" void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size, uint16_t buffer_size);
 extern "C" void SystemClock_Config(void);
 #endif // MCU
 
@@ -288,7 +288,7 @@ int main(void) {
 
         #ifdef HITL
         data_to_jsbsim(to_jsbsim);
-        send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float));
+        send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float), 64);
         #endif // HITL
 
         char buf[128];
@@ -299,7 +299,7 @@ int main(void) {
             (int)(gx * RAD_TO_DEG * 1000),
             (int)(gy * RAD_TO_DEG * 1000),
             (int)(gz * RAD_TO_DEG * 1000));
-        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1);
+        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
 
         HAL_Delay(20);
 
@@ -310,20 +310,19 @@ int main(void) {
 
 /**
  * Send data up to 64 - HEADER_SIZE - FOOTER_SIZE bytes. Currently can send only one packet.
- * TODO allow longer data to be sent via splitting the data into n-byte packets (n will be parameter)
  * 
  * @param channel_number 0: commands, 1: telemetry, 2: HITL data
  * @param data pointer to the data
  * @param data_size how many bytes of data to send
  * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
 */
-void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size) {
+void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size, uint16_t buffer_size) {
     // HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     
     uint16_t current_offset = 0;
-    uint16_t maximum_data_in_packet = round_down_to_multiple(64 - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
+    uint16_t maximum_data_in_packet = round_down_to_multiple(buffer_size - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
 
-    uint8_t to_send[64];
+    uint8_t to_send[buffer_size];
     to_send[0] = channel_number;
     to_send[1] = 0x55;
 

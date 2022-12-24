@@ -51,8 +51,8 @@
     </plot>
 
     <plot pos_x="3" pos_y="1" range_from="-30" range_to="30" title="Estimated attitude" ylabel="Angle [deg]">
-        <data> /fdm/jsbsim/fcs/psi-est </data>
-        <data> /fdm/jsbsim/fcs/theta-est </data>
-        <data> /fdm/jsbsim/fcs/phi-est </data>
+        <data>/fdm/jsbsim/fcs/psi-est</data>
+        <data>/fdm/jsbsim/fcs/theta-est</data>
+        <data>/fdm/jsbsim/fcs/phi-est</data>
     </plot>
 </timeseries>

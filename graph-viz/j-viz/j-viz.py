@@ -1,5 +1,6 @@
 import argparse
 from typing import TextIO
+import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from functools import partial
@@ -19,12 +20,14 @@ data = []
 # Highest time value
 current_time = 0
 # 1d array that contains the first line of the log
-data_header = []
+# data_header = []
 running = 0
 
-time_property = 'Time'
-# 1d array that contains property name for each line artist
-data_properties = []
+time_prop_name = 'Time'
+time_prop_col = 0
+# 1d array that contains data index for each line artist
+header_items = []
+data_indices = []
 
 def main():
     global running
@@ -32,11 +35,10 @@ def main():
     args = parse_cli_args()
     running = int(args.running)
 
+    file = open(args.input_file, 'r')
+    parse_header(file)
     fig, axs = parse_config(args.config_file)
     
-    file = open(args.input_file, 'r')
-    
-    parse_data_header(file)
 
     ani = FuncAnimation(
         fig,
@@ -57,8 +59,15 @@ def parse_cli_args():
 
     return parser.parse_args()
 
+def parse_header(file):
+    global header_items, time_prop_col, data_indices
+    
+    header = file.readline()
+    header_items = header.split(',')
+
+
 def parse_config(file_name: str):
-    global lns, data_properties, time_property, running
+    global lns, header_items, data_indices, time_prop_name, time_prop_col, running
     
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -75,7 +84,8 @@ def parse_config(file_name: str):
 
     for child in root:
         if child.tag == 'time':
-            time_property = child.text.strip()
+            time_prop_name = child.text.strip()
+            time_prop_col = header_items.index(time_prop_name)
             time_range_from = float(child.attrib['range_from'])
             time_range_to   = float(child.attrib['range_to'])
 
@@ -83,10 +93,6 @@ def parse_config(file_name: str):
     if running > 0:
         time_range_from = -running
         time_range_to = 0
-
-    print(running)
-    print(time_range_from)
-    print(time_range_to)
 
 
     for child in root:
@@ -101,29 +107,24 @@ def parse_config(file_name: str):
             axs[pos_x][pos_y].set_ylim(data_range_from, data_range_to)
             
             axs[pos_x][pos_y].set_xlabel('Time [s]')
+
             if child.attrib['ylabel']:
                 axs[pos_x][pos_y].set_ylabel(child.attrib['ylabel'])
             if child.attrib['title']:
                 axs[pos_x][pos_y].set_title(child.attrib['title'])
             
             for x in child.findall('data'):
-                new_data_property = x.text.strip()
-                data_properties.append(new_data_property)
-                lns.append(axs[pos_x][pos_y].plot([], [], label='/'.join(new_data_property.split('/')[3:]), linewidth=1.5)[0])
+                # data_indices.append(int(x.attrib['col']))
+                data_indices.append(header_items.index(x.text.strip()))
+                lns.append(axs[pos_x][pos_y].plot([], [], label=x.text.strip(), linewidth=1.5)[0])
 
             axs[pos_x][pos_y].grid(True, color = 'gray', linestyle = '--', linewidth = 0.5)
             axs[pos_x][pos_y].legend()
 
     return fig, axs
 
-def parse_data_header(file: TextIO):
-    global data_header
-    
-    file.seek(0)
-    data_header = [x.strip() for x in file.readline().split(',')]
-    
 def follow_file(file):
-    global new_data, data, data_properties, current_time, running
+    global new_data, data, data_indices, current_time, running, time_prop_col
     
     file_reset = False
     
@@ -142,36 +143,35 @@ def follow_file(file):
                 file.readline()
 
             yield True
+            time.sleep(0.005)
             continue
-        
-        new_data = True
-        line_data = line.split(',')
         
         if file_reset:
             data = []
             current_time = 0
             file_reset = False
+        
+        new_data = True
+        line_data = line.split(',')
 
         data.append([float(x) for x in line_data])
-        current_time = float(line_data[data_header.index(time_property)])
+        current_time = float(line_data[time_prop_col])
 
         if running > 0:
-            data = [line for line in data if line[data_header.index(time_property)] - current_time > -running]
+            data = [line for line in data if line[time_prop_col] - current_time > -running]
 
 
 def update_plot(frame):
-    global new_data, data, data_header, time_property, data_properties, lns, running
+    global new_data, data, time_prop_col, data_indices, lns, running
 
     if new_data:
-        x_data = [x[data_header.index(time_property)] for x in data]
+        x_data = [line[time_prop_col] for line in data]
 
         if running > 0:
             x_data = [x - current_time for x in x_data]
 
-        for i, data_property in enumerate(data_properties):
-            index = data_header.index(data_property)
-            y_data = [y[index] for y in data]
-
+        for i, data_index in enumerate(data_indices):
+            y_data = [line[data_index] if data_index < len(line) else 0 for line in data]
             lns[i].set_data(x_data, y_data)
         
         new_data = False

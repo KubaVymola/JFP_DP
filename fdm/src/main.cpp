@@ -56,8 +56,10 @@ void push_thread_func(websocket_server* server_instance) {
         
         /**
          * Sending message outside of a sim_data_lock to avoid deadlock
-         * TODO find better solution
          */
+
+        // std::cout << sim_data_cpy.dump(4);
+
         server_instance->send_message(sim_data_cpy.dump());
         
         usleep(1'000'000.0 / 60);
