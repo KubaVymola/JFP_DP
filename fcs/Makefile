@@ -123,6 +123,7 @@ CXX_SOURCES += \
 src/drivers/bmi160.cpp
 INCLUDES += -Isrc/drivers -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
 DEFS += -DUSE_HAL_DRIVER -DVENDOR_ST
+LDFLAGS += -u _printf_float
 endif
 
 
@@ -236,7 +237,7 @@ clean:
 #
 # flash target should always follow either hitl, or indep target
 #
-# if changing from CPU to MCU or vice versa always include clean target before sitl, hitl, or indep
+# if changing build type (e.g. from sitl to hitl, or from hitl to indep) always run clean target first
 ####################################################################################################
 
 # ==== SITL ====

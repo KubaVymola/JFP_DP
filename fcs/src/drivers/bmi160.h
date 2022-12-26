@@ -107,10 +107,8 @@ struct bmi160 {
     I2C_HandleTypeDef *hi2c;
     uint8_t address;
 
-    uint16_t acc_raw[3];
-    uint16_t gyro_raw[3];
-
-    uint8_t is_data_scaled;
+    int16_t acc_raw[3];
+    int16_t gyro_raw[3];
 
     float acc_x;
     float acc_y;

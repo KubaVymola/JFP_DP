@@ -1,24 +1,28 @@
+# Dependencies
+
+- gcc-arm-none-eabi
+
 # Building
 
-## Make for MCU
+### Make independent firmware to control a vehicle
 
 ```
-$ make [clean] mcu [flash] TARGET=<mcu-name>
+$ make [clean] indep [flash] TARGET=<target>
 ```
 
 
-## Make for MCU with HITL
+### Make HITL firmware to control simulated vehicle from MCU via serial interface
 
 ```
-$ make [clean] hitl [flash] TARGET=<mcu-name>
+$ make [clean] hitl [flash] TARGET=<target>
 ```
 
-## Make dynamic library for SITL
+### Make SITL shared library to control simulated vehicle via software interface
 
 ```
 $ make [clean] sitl
 ```
 
-## MCU names
+# Supported TARGETs
 
 - STM32L151

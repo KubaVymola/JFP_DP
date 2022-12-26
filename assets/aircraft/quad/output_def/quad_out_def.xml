@@ -1,53 +1,46 @@
 <?xml version="1.0"?>
-<output name="aircraft/quad/data_output/quad_out.csv" type="CSV" rate="250">
-    <!-- ? These property names are taken from JSBSim and are different from what is available via websocket -->
-
-    <!-- Time has id 0 -->
+<output path="aircraft/quad/data_output/quad_out.csv" >
+    <!-- ? This output definition allows logging of ext/* properties, unlike JSBSim logging -->
+    <!-- This file is used to save telemetry from JSBSim, (SITL), HITL and INDEP -->
+    <!-- This file is used to replay telemetry from log -->
+    <!-- The data is taken from the state in sim_data JSON -->
     
-    <!-- 1 -->
-    <property> position/h-agl-ft </property>
+    <property>simulation/sim-time-sec</property>
     
-    <!-- 2,3 -->
-    <property> position/long-gc-deg </property>
-    <property> position/lat-gc-deg </property>
+    <property>ext/altitude-m</property>
     
-    <!-- 4,5,6 -->
-    <property> attitude/psi-deg </property>
-    <property> attitude/theta-deg </property>
-    <property> attitude/phi-deg </property>
+    <property>ext/longitude-deg</property>
+    <property>ext/latitude-deg</property>
     
-    <!-- 7,8,9 -->
-    <property> sensor/imu/accelX-g </property>
-    <property> sensor/imu/accelY-g </property>
-    <property> sensor/imu/accelZ-g </property>
-
-    <!-- 10,11,12 -->
-    <property> sensor/imu/gyroX-rps </property>
-    <property> sensor/imu/gyroY-rps </property>
-    <property> sensor/imu/gyroZ-rps </property>
-
-    <!-- 13,14,15 -->
-    <property> sensor/imu/magX-uT </property>
-    <property> sensor/imu/magY-uT </property>
-    <property> sensor/imu/magZ-uT </property>
-
-    <!-- 16,17,18 -->
-    <property> fcs/psi-est </property>
-    <property> fcs/theta-est </property>
-    <property> fcs/phi-est </property>
+    <property>attitude/psi-deg</property>
+    <property>attitude/theta-deg</property>
+    <property>attitude/phi-deg</property>
     
-    <!-- 19,20,21,22 -->
-    <property> fcs/throttle-cmd-norm[0] </property>
-    <property> fcs/throttle-cmd-norm[1] </property>
-    <property> fcs/throttle-cmd-norm[2] </property>
-    <property> fcs/throttle-cmd-norm[3] </property>
+    <property>sensor/imu/accelX-g </property>
+    <property>sensor/imu/accelY-g </property>
+    <property>sensor/imu/accelZ-g </property>
 
-    <!-- 23,24,25,26 -->
-    <property> user-control/channel-1 </property>
-    <property> user-control/channel-2 </property>
-    <property> user-control/channel-3 </property>
-    <property> user-control/channel-4 </property>
+    <property>sensor/imu/gyroX-rps</property>
+    <property>sensor/imu/gyroY-rps</property>
+    <property>sensor/imu/gyroZ-rps</property>
 
-    <!-- 27 -->
-    <property> sensor/baro/presStatic-Pa </property>
+    <property>sensor/imu/magX-uT</property>
+    <property>sensor/imu/magY-uT</property>
+    <property>sensor/imu/magZ-uT</property>
+
+    <property>fcs/psi-est</property>
+    <property>fcs/theta-est</property>
+    <property>fcs/phi-est</property>
+    
+    <property>fcs/throttle-cmd-norm[0]</property>
+    <property>fcs/throttle-cmd-norm[1]</property>
+    <property>fcs/throttle-cmd-norm[2]</property>
+    <property>fcs/throttle-cmd-norm[3]</property>
+
+    <property>user-control/channel-1</property>
+    <property>user-control/channel-2</property>
+    <property>user-control/channel-3</property>
+    <property>user-control/channel-4</property>
+
+    <property>sensor/baro/presStatic-Pa</property>
 </output>

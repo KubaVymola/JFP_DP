@@ -95,6 +95,7 @@ float yaw_real;
 float pitch_real;
 float roll_real;
 
+float qw, qx, qy, qz;
 float yaw_est;
 float pitch_est;
 float roll_est;
@@ -181,12 +182,15 @@ int main(void) {
     HAL_Delay(3000);
 
     while (1) {
-    
-        // if (bmi160_get_data_rdy(&himu)) {
+        
+        #ifdef INDEP
+        if (bmi160_get_data_rdy(&himu)) {
+            bmi160_update_acc_gyro_data(&himu);
+        }
+        #endif
 
         //     char bmi_buf[128];
 
-        //     bmi160_update_acc_gyro_data(&himu);
         //     sprintf(bmi_buf, "acc: %d %d %d gyro: %d %d %d\r\n",
         //         (int16_t)himu.acc_raw[0],
         //         (int16_t)himu.acc_raw[1],
@@ -201,7 +205,6 @@ int main(void) {
         //     // send_data_over_usb_packets(1, bmi_buf, sizeof(bmi_buf), 1);
 
 
-        // }
 
         // HAL_Delay(1000);
         // HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
@@ -279,6 +282,16 @@ int main(void) {
         __enable_irq();
         #endif // HITL
 
+        #ifdef INDEP
+        time_sec = HAL_GetTick() / 1000.0f;
+        ax = himu.acc_x;
+        ay = himu.acc_y;
+        az = himu.acc_z;
+        gx = himu.gyro_x * DEG_TO_RAD;
+        gy = himu.gyro_y * DEG_TO_RAD;
+        gz = himu.gyro_z * DEG_TO_RAD;
+        #endif
+
         htim10.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR1 = engine_1_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR2 = engine_2_cmd_norm * 1000.0f + 1000.0f;
@@ -291,15 +304,48 @@ int main(void) {
         send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float), 64);
         #endif // HITL
 
+        /**
+         * Simple debug output
+         */
         char buf[128];
-        sprintf(buf, "ax %d, ay %d, az %d, gx %d, gy %d, gz %d\n",
-            (int)(ax * 1000),
-            (int)(ay * 1000),
-            (int)(az * 1000),
-            (int)(gx * RAD_TO_DEG * 1000),
-            (int)(gy * RAD_TO_DEG * 1000),
-            (int)(gz * RAD_TO_DEG * 1000));
-        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+        // sprintf(buf, "ax %d, ay %d, az %d, gx %d, gy %d, gz %d\n",
+        //     (int)(ax * 1000),
+        //     (int)(ay * 1000),
+        //     (int)(az * 1000),
+        //     (int)(gx * RAD_TO_DEG * 1000),
+        //     (int)(gy * RAD_TO_DEG * 1000),
+        //     (int)(gz * RAD_TO_DEG * 1000));
+        // send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+
+
+
+        /**
+         * Rotate quaternion that's send via telemetry by -90 deg in pitch to correctly visualize
+         * the vehicle in 3D
+        */
+        float ret_x =  0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
+        float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
+        float ret_z =  0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
+        float ret_w = -0 * qx - -0.7071067811865475 * qy - 0 * qz + 0.7071067811865476 * qw;
+
+
+        /**
+         * Telemetry output
+         */
+        sprintf(buf, "%f," "%f,%f,%f," "%f,%f,%f," "%f,%f,%f,%f," "%f\n",
+            time_sec,
+            himu.acc_x,
+            himu.acc_y,
+            himu.acc_z,
+            yaw_est,
+            pitch_est,
+            roll_est,
+            ret_w,
+            ret_x,
+            ret_y,
+            ret_z,
+            0.3);
+        send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
 
         HAL_Delay(20);
 
@@ -485,6 +531,7 @@ extern "C" void loop(void) {
     // sensor_fusion.updateIMU(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az);
     
     sensor_fusion.update(gy * RAD_TO_DEG, gx * RAD_TO_DEG, -gz * RAD_TO_DEG, -ay, -ax, az, 0, 0, 0);
+    sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
     roll_est    = sensor_fusion.getRoll();
     pitch_est   = sensor_fusion.getPitch();
     yaw_est     = sensor_fusion.getYaw() - 180.0;

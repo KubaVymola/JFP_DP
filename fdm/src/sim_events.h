@@ -1,6 +1,9 @@
 #ifndef SIMEVENTS_H
 #define SIMEVENTS_H
 
+#define EVENT_SIM_BEFORE_ITER       "sim:before_iter"
+#define EVENT_SIM_AFTER_ITER        "sim:after_iter"
+
 #include <string>
 #include <vector>
 #include <map>

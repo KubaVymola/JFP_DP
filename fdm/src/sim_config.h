@@ -5,9 +5,11 @@ struct sim_config_t {
     std::string root_dir;
     std::string script_path;
     std::string sitl_path;
-    std::string hitl_path;
+    std::string serial_path;
     std::string craft_config_path;
+
     std::string log_output_def;
+    std::string save_telemetry_path;
 
     std::vector<std::string> jsbsim_outputs;
     std::vector<std::string> command_line_properties;
@@ -16,6 +18,8 @@ struct sim_config_t {
     bool realtime;   // realtime == !batch
     bool print_all_properties;
     bool override_sim_rate;
+    bool use_hitl;
+    bool rt_telem;
 
     double simulation_rate;
     double end_time;

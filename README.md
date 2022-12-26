@@ -7,7 +7,7 @@ a vehicle.
 
 ## fcs
 
-This directory is where the source code for a flight control sytem is.
+This is where the source code for a flight control sytem is.
 
 ## fdm
 
@@ -15,16 +15,13 @@ This directory contains an interface to JSBSim FDM. It provides a way to start t
 simulation, a way to hook a flight control system to the simulated vehicle, and a way to
 stream the simulation data into a visualizer over websocket.
 
-## graph-viz
+## j-viz
 
-```
-source ./venv/bin/activate
-python j-viz.py quad-config.xml ../../assets/aircraft/quad/data_output/quad_out.csv [--running <seconds>]
-```
+Small python script for real-time or static visualization of telemetry in a form of time series.
 
 ## visualizer
 
-This program is a 3d visualizer intended to run in a browser to display real-time data.
+This program is a 3d visualizer intended to display real-time data in 3D using websocket interface.
 
 # Required files
 

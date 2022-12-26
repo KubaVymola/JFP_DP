@@ -257,6 +257,27 @@
             <property> user-control/channel-3 </property>
             <property> user-control/channel-4 </property>
         </from_jsbsim>
+
+        <telemetry>
+            <property> telem/simulation/sim-time-sec </property>
+
+            <property> telem/sensor/imu/accelX-mg </property>
+            <property> telem/sensor/imu/accelY-mg </property>
+            <property> telem/sensor/imu/accelZ-mg </property>
+
+            <property> telem/yaw </property>
+            <property> telem/pitch </property>
+            <property> telem/roll </property>
+
+            <!-- mapping attribute is used when JSBSim is not running -->
+            <!-- Given properties get mapped to sim_data based on the mapping attribute value -->
+            <property mapping="ext/ecef-q-1"> telem/ecef-q-1 </property>
+            <property mapping="ext/ecef-q-2"> telem/ecef-q-2 </property>
+            <property mapping="ext/ecef-q-3"> telem/ecef-q-3 </property>
+            <property mapping="ext/ecef-q-4"> telem/ecef-q-4 </property>
+
+            <property mapping="ext/altitude-m"> telem/alt-m </property>
+        </telemetry>
     </fcs_interface>
     
 </fdm_config>

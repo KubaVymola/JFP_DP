@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -17,26 +19,39 @@
 
 using json = nlohmann::json;
 
-class HITLInterface : public ISimClient {
+class SerialInterface : public ISimClient {
 public:
-    HITLInterface() { }
-    ~HITLInterface() { close(hitl_device); }
-    void hitl_init(sim_config_t& sim_config,
-                   json *sim_data);
+    SerialInterface() { }
+    ~SerialInterface() { close(serial_device); }
+    void serial_init(sim_config_t& sim_config,
+                     json *sim_data);
                 
     void parse_xml_config(sim_config_t& sim_config);
 
     virtual void handle_event(const std::string& event_name, json *sim_data);
 
 private:
+    void process_new_telem_line(json *sim_data);
     int round_down_to_multiple(int number, int multiple);
     void send_data_usb(int serial_port, int channel_number, void *data, uint16_t data_size, int item_size, int buffer_size);
     void receive_data_usb(int serial_port, json *sim_data);
 
-    int hitl_device;
+    int serial_device;
+
+    char new_telem_line[4096];
+    int new_telem_line_ptr;
+
+    bool use_hitl;
+    bool use_rt_telem;
+    bool use_replay_telem;
+
+    std::ofstream save_telemetry_file;
 
     std::vector<std::string> from_jsbsim_properties;
     std::vector<std::string> to_jsbsim_properties;
+    std::vector<std::string> telemetry_properties;
+    
+    std::map<int, std::string> telemetry_mapping;
 };
 
 #endif

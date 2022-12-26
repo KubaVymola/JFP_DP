@@ -41,7 +41,10 @@ void JSBSimInterface::init(sim_config_t& sim_config,
                            json *sim_data) {
 
     parse_xml_config(sim_config, sim_data);
-    jsbsim_init(sim_config, sim_data);
+
+    if (!sim_config.rt_telem) {
+        jsbsim_init(sim_config, sim_data);
+    }
 }
 
 void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
@@ -91,11 +94,11 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     /**
      * Get properties for FCS interface
      */
-    if (!sim_config.sitl_path.empty() || !sim_config.hitl_path.empty()) {
+    if (!sim_config.sitl_path.empty() || sim_config.use_hitl) {
 
         XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
         
-        XMLElement *fcs_to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
+        XMLElement *fcs_to_jsb_elem      = fcs_elem->FirstChildElement("to_jsbsim");
         XMLElement *fcs_to_jsb_prop_elem = fcs_to_jsb_elem->FirstChildElement("property");
 
         for (; fcs_to_jsb_prop_elem != nullptr; fcs_to_jsb_prop_elem = fcs_to_jsb_prop_elem->NextSiblingElement("property")) {
@@ -107,7 +110,7 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
             // ? Default JSBSim data is supplied to FDMExec later (because now FDMExec is now null)
         }
 
-        XMLElement *fcs_from_jsb_elem   = fcs_elem->FirstChildElement("from_jsbsim");
+        XMLElement *fcs_from_jsb_elem      = fcs_elem->FirstChildElement("from_jsbsim");
         XMLElement *fcs_from_jsb_prop_elem = fcs_from_jsb_elem->FirstChildElement("property");
 
         for (; fcs_from_jsb_prop_elem != nullptr; fcs_from_jsb_prop_elem = fcs_from_jsb_prop_elem->NextSiblingElement("property")) {
@@ -115,6 +118,21 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
 
             properties_from_jsbsim.push_back(from_jsbsim_property);
             (*sim_data)[from_jsbsim_property] = 0.0;
+        }
+    }
+
+
+    if (!sim_config.log_output_def.empty()) {
+        SGPath log_output_def_path = SGPath(sim_config.root_dir)/sim_config.log_output_def;
+        
+        XMLDocument out_log_doc(true, COLLAPSE_WHITESPACE);
+        out_log_doc.LoadFile(log_output_def_path.c_str());
+
+        XMLElement *root_out_elem = out_log_doc.FirstChildElement("output");
+        XMLElement *property_out_elem = root_out_elem->FirstChildElement("property");
+
+        for (; property_out_elem != nullptr; property_out_elem = property_out_elem->NextSiblingElement("property")) {
+            properties_from_jsbsim.push_back(property_out_elem->GetText());
         }
     }
 
@@ -254,7 +272,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
      */
     update_sim_data(sim_data);
     
-    std::cout << "data" << sim_data->dump(4) << std::endl;
+    std::cout << "sim_data" << sim_data->dump(4) << std::endl;
 
     FDMExec->PrintSimulationConfiguration();
     FDMExec->GetPropagate()->DumpState();
@@ -365,7 +383,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
         /**
          * Update JSBSim internal state from sim_data after the sim:before_iter event
          */
-        sim_events.notify_all("sim:before_iter", sim_data);
+        sim_events.notify_all(EVENT_SIM_BEFORE_ITER, sim_data);
         update_sim_properties(sim_data);
     }
     
@@ -378,7 +396,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
          * Update sim_data from JSBSim internal state before the sim:after_iter event
          */
         update_sim_data(sim_data);
-        sim_events.notify_all("sim:after_iter", sim_data);
+        sim_events.notify_all(EVENT_SIM_AFTER_ITER, sim_data);
     }
 
     return l_result;
@@ -386,7 +404,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
 
 void JSBSimInterface::update_sim_properties(json *sim_data) {
     /**
-     * Take data from FCS (stored in sim_data JSON) and use them to update JSBSim
+     * Take data from FCS and ws (user ctrl) stored in sim_data JSON and use them to update JSBSim
      */
 
     for (const std::string& to_jsbsim_prop : properties_to_jsbsim) {
@@ -431,36 +449,4 @@ void JSBSimInterface::update_sim_data(json *sim_data) {
     for (const std::string& to_sim_data_prop : properties_from_jsbsim) {
         (*sim_data)[to_sim_data_prop] = FDMExec->GetPropertyValue(to_sim_data_prop.c_str());
     }
-    
-    /**
-     * ==== User control ====
-     */
-
-    // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0);
-    // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0);
-    // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0);
-    // FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0);
-
-    // auto pressed_keys = (*sim_data)["keys"];
-
-    // if (std::find(pressed_keys.begin(), pressed_keys.end(), "Shift") != pressed_keys.end()) {
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0.3);
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0.3);
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0.3);
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0.3);
-    // }
-
-    // if (std::find(pressed_keys.begin(), pressed_keys.end(), "w") != pressed_keys.end()) {
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[0]", 0.2);
-    // }
-    // if (std::find(pressed_keys.begin(), pressed_keys.end(), "s") != pressed_keys.end()) {
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[1]", 0.2);
-    // }
-
-    // if (std::find(pressed_keys.begin(), pressed_keys.end(), "a") != pressed_keys.end()) {
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[2]", 0.2);
-    // }
-    // if (std::find(pressed_keys.begin(), pressed_keys.end(), "d") != pressed_keys.end()) {
-    //     FDMExec->SetPropertyValue("fcs/throttle-cmd-norm[3]", 0.2);
-    // }
 }

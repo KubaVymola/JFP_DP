@@ -3,7 +3,7 @@
 * C++11
 * CMake
 
-## MacOS
+### MacOS
 
 * asio (needed instead of boost if compiling websocketpp from source with ASIO_STANDALONE in main.cpp)
     * brew install asio
@@ -12,7 +12,7 @@
 * websocketpp
     * brew install websocketpp
 
-## Ubuntu
+### Ubuntu
 
 * asio
     * apt install libasio-dev
@@ -32,6 +32,26 @@ $ cmake --build . -j4
 
 ```
 $ ./fdm <script_file> [<output_file> [<output_file> ...]] <options>
-e.g.
-$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sim_end=-1
+```
+
+### SITL example
+
+```
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --sitl_div=5 --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sim_end=-1
+```
+
+### HITL example
+
+```
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem1747313034341 --hitl --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1
+```
+
+### Real-time telemetry visualization
+
+```
+./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem1747313034341 --rt_telem --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1
+```
+
+```
+python j-viz.py quad_config_telem.xml ../../assets/aircraft/quad/data_output/quad_telem.csv --running 10
 ```

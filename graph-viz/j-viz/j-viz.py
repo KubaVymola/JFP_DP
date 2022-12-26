@@ -62,7 +62,7 @@ def parse_header(file):
     global header_items, time_prop_col, data_indices
     
     header = file.readline()
-    header_items = header.split(',')
+    header_items = [x.strip() for x in header.split(',')]
 
 
 def parse_config(file_name: str):

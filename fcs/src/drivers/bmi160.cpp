@@ -69,7 +69,7 @@ uint8_t bmi160_test_chip_id(struct bmi160 *hbmi160) {
 void bmi160_config_accel(struct bmi160 *hbmi160, uint8_t accel_rate, uint8_t accel_range) {
     {
         // Config accel output data rate (ODR) and bandwidth parameter (BWP)
-        uint8_t buf[1] = { accel_rate | BMI160_ACC_BWP_NORMAL };
+        uint8_t buf[1] = { (uint8_t)(accel_rate | BMI160_ACC_BWP_NORMAL) };
         HAL_I2C_Mem_Write(hbmi160->hi2c, hbmi160->address, BMI160_ACC_CONF_ADDRESS, I2C_MEMADD_SIZE_8BIT, buf, 1, BMI160_DEFAULT_TIMEOUT);
     }
 
@@ -93,7 +93,7 @@ void bmi160_config_accel(struct bmi160 *hbmi160, uint8_t accel_rate, uint8_t acc
 void bmi160_config_gyro(struct bmi160 *hbmi160, uint8_t gyro_rate, uint8_t gyro_range) {
     {
         // Config gyro output data rate (ODR) and bandwidth parameter (BWP)
-        uint8_t buf[1] = { gyro_rate | BMI160_GYRO_BWP_NORMAL };
+        uint8_t buf[1] = { (uint8_t)(gyro_rate | BMI160_GYRO_BWP_NORMAL) };
         HAL_I2C_Mem_Write(hbmi160->hi2c, hbmi160->address, BMI160_GYRO_CONF_ADDRESS, I2C_MEMADD_SIZE_8BIT, buf, 1, BMI160_DEFAULT_TIMEOUT);
     }
 
@@ -140,9 +140,9 @@ void bmi160_update_acc_gyro_data(struct bmi160 *hbmi160) {
     hbmi160->gyro_y = hbmi160->gyro_raw[1] / hbmi160->gyro_divide_factor;
     hbmi160->gyro_z = hbmi160->gyro_raw[2] / hbmi160->gyro_divide_factor;
 
-    hbmi160->acc_x = hbmi160->acc_raw[0] / hbmi160->accel_divide_factor;
-    hbmi160->acc_y = hbmi160->acc_raw[1] / hbmi160->accel_divide_factor;
-    hbmi160->acc_z = hbmi160->acc_raw[2] / hbmi160->accel_divide_factor;
+    hbmi160->acc_x = (hbmi160->acc_raw[0]) / hbmi160->accel_divide_factor;
+    hbmi160->acc_y = (hbmi160->acc_raw[1]) / hbmi160->accel_divide_factor;
+    hbmi160->acc_z = (hbmi160->acc_raw[2]) / hbmi160->accel_divide_factor;
 }
 
 float bmi160_get_temp_data(struct bmi160 *hbmi160) {

@@ -32,7 +32,7 @@ public:
                     bool *continue_running,
                     json *sim_data,
                     std::mutex& sim_data_lock,
-                    SimEvents &sim_events);
+                    SimEvents& sim_events);
                     
     bool handle_iter(json *sim_data,
                     std::mutex& sim_data_lock,

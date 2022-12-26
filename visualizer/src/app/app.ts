@@ -160,6 +160,8 @@ class App {
 
                 this._ws.onmessage = (event) => {
                     const parsedData = JSON.parse(event.data);
+
+                    console.log(parsedData);
                     this._craft.update(parsedData, this._camera);
 
                     const data = this._craft.getGamepadData();

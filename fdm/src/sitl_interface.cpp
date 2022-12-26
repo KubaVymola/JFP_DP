@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
+#include "sim_events.h"
+
 using json = nlohmann::json;
 
 void SITLInterface::sitl_init(sim_config_t& sim_config,
@@ -61,7 +63,7 @@ void SITLInterface::parse_xml_config(sim_config_t& sim_config) {
 }
 
 void SITLInterface::handle_event(const std::string& event_name, json *sim_data) {
-    if (event_name == "sim:before_iter") {
+    if (event_name == EVENT_SIM_BEFORE_ITER) {
         
         if (iter_num % sitl_div == 0) {
             float data[to_jsbsim_properties.size()];
@@ -75,7 +77,7 @@ void SITLInterface::handle_event(const std::string& event_name, json *sim_data) 
         }
     }
 
-    if (event_name == "sim:after_iter") {
+    if (event_name == EVENT_SIM_AFTER_ITER) {
         if (iter_num % sitl_div == 0) {
             float data[from_jsbsim_properties.size()];
 

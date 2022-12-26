@@ -15,8 +15,10 @@
 #include "tinyxml2.h"
 
 #include "jsbsim_interface.h"
+#include "realtime_loop.h"
+#include "state_logger.h"
 #include "sitl_interface.h"
-#include "hitl_interface.h"
+#include "serial_interface.h"
 #include "sim_config.h"
 #include "sim_events.h"
 
@@ -93,19 +95,26 @@ int main(int argc, char **argv) {
     sim_config.ws_port = 0;
 
     sim_config.sitl_path = "";
-    sim_config.hitl_path = "";
     sim_config.sitl_div = 1;
+    sim_config.serial_path = "";
+    sim_config.use_hitl = false;
+
+    sim_config.log_output_def = "";
+    sim_config.save_telemetry_path = "";
+    sim_config.rt_telem = false;
 
     parse_cli_options(sim_config, argc, argv);
     check_valid_options(sim_config);
-    
+
     signal(SIGINT, sighandler);
 
     websocket_server server_instance;
     SimEvents sim_events;
     JSBSimInterface jsbsim_interface;
+    RealtimeLoop realtime_loop;
+    StateLogger state_logger;
     SITLInterface sitl_interface;
-    HITLInterface hitl_interface;
+    SerialInterface serial_interface;
     
     std::thread push_thread;
     std::thread server_thread;
@@ -119,16 +128,21 @@ int main(int argc, char **argv) {
 
     printf("Init done\n");
 
-    if (!sim_config.sitl_path.empty()) {
-        sitl_interface.sitl_init(sim_config, &sim_data);
-        sim_events.register_client("sim:before_iter", &sitl_interface);
-        sim_events.register_client("sim:after_iter",  &sitl_interface);
+    if (!sim_config.log_output_def.empty()) {
+        state_logger.init(sim_config);
+        sim_events.register_client(EVENT_SIM_AFTER_ITER, &state_logger);
     }
 
-    if (!sim_config.hitl_path.empty()) {
-        hitl_interface.hitl_init(sim_config, &sim_data);
-        sim_events.register_client("sim:before_iter", &hitl_interface);
-        sim_events.register_client("sim:after_iter",  &hitl_interface);
+    if (!sim_config.sitl_path.empty()) {
+        sitl_interface.sitl_init(sim_config, &sim_data);
+        sim_events.register_client(EVENT_SIM_BEFORE_ITER, &sitl_interface);
+        sim_events.register_client(EVENT_SIM_AFTER_ITER,  &sitl_interface);
+    }
+
+    if (!sim_config.serial_path.empty()) {
+        serial_interface.serial_init(sim_config, &sim_data);
+        sim_events.register_client(EVENT_SIM_BEFORE_ITER, &serial_interface);
+        sim_events.register_client(EVENT_SIM_AFTER_ITER,  &serial_interface);
     }
 
     printf("initialized\n");
@@ -136,13 +150,22 @@ int main(int argc, char **argv) {
     /**
      * Run
      */
-    sim_thread = std::thread(&JSBSimInterface::jsbsim_iter,
-                             &jsbsim_interface,
-                             std::ref(sim_config),
-                             &continue_running,
-                             &sim_data,
-                             std::ref(sim_data_lock),
-                             std::ref(sim_events));
+    if (!sim_config.rt_telem) {
+        sim_thread = std::thread(&JSBSimInterface::jsbsim_iter,
+                                 &jsbsim_interface,
+                                 std::ref(sim_config),
+                                 &continue_running,
+                                 &sim_data,
+                                 std::ref(sim_data_lock),
+                                 std::ref(sim_events));
+    } else {
+        sim_thread = std::thread(&RealtimeLoop::realtime_iter,
+                                 &realtime_loop,
+                                 &continue_running,
+                                 &sim_data,
+                                 std::ref(sim_data_lock),
+                                 std::ref(sim_events));
+    }
 
     printf("sim running\n");
 
@@ -226,11 +249,20 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         } else if (keyword == "--sitl_div") {
             sim_config.sitl_div = atoi(value.c_str());
             
-        } else if (keyword == "--hitl") {
-            sim_config.hitl_path = value;
+        } else if (keyword == "--serial") {
+            sim_config.serial_path = value;
         
-        } else if (keyword == "--log_def") {
-            sim_config.log_output_def = value;
+        } else if (keyword == "--hitl") {
+            sim_config.use_hitl = true;
+            
+        } else if (keyword == "--save_telem") {
+            sim_config.save_telemetry_path = value;
+            
+        } else if (keyword == "--rt_telem") {
+            sim_config.rt_telem = true;
+            
+        } else if (keyword == "--jsbsim_output") {
+            sim_config.jsbsim_outputs.push_back(value);
             
         } else if (keyword == "--set") {
             std::string prop_name = value.substr(0, value.find("="));
@@ -244,8 +276,8 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
             if (position_arg == 0) {
                 sim_config.script_path = keyword;
             
-            } else {
-                sim_config.jsbsim_outputs.push_back(keyword);
+            } else if (position_arg == 1) {
+                sim_config.log_output_def = keyword;
             }
 
             ++position_arg;
@@ -265,7 +297,17 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
 }
 
 void check_valid_options(sim_config_t& sim_config) {
-    
+    if (!sim_config.serial_path.empty() && !sim_config.sitl_path.empty()) {
+        printf("\nERR: Cannot use serial device when running as SITL\n");
+        print_help();
+        exit(1);
+    }
+
+    if (sim_config.serial_path.empty() && sim_config.use_hitl) {
+        printf("\nERR: Cannot run as HITL without specifying the serial device\n");
+        print_help();
+        exit(1);
+    }
 }
 
 void get_craft_config_path(sim_config_t& sim_config) {
@@ -298,24 +340,28 @@ void get_craft_config_path(sim_config_t& sim_config) {
 void print_help() {
     printf(
         "\n"
-        "Usage: fdm <script_file> [<output_file> [<output_file>...]] <options>\n"
+        "Usage: fdm <script_file> [<output_file>] <options>\n"
         "\n"
         "options:\n"
-        "  <script_file>  relative path to the main script\n"
-        "  <output_file>  relative path to a file the specifies the output format\n"
-        "  --sitl=<path>  relative path to the dynamic library with SITL FCS\n"
-        "  --sitl_div=<value>  divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n"
-        "  --hitl=<path>  path to the device with HITL firmware running\n"
-        "  --ws=<port>  start a websocket server on a given port\n"
-        "  --root_dir=<dir>  root path for JSBSim assets (aircraft, script, engine; default '.')\n"
-        "  --sim_rate=<hertz>  how many iterations will the simulation do in a second\n"
-        "  --sim_end=<seconds>  how long the simulation will run (0 for endless, default is 60)\n"
-        "  --set=<property=value>  set property to given value\n"
-        "  --realtime  the simulation will run in real time (default)\n"
-        "  --batch  the simulation will run as fast as possible\n"
-        "  --print_props  print all properties before running\n"
-        "  --version  print version and exit\n"
-        "  --help  print help and exit\n"
+        "  <script_file>            relative path to the main script\n"
+        "  <output_file>            relative path to a file the specifies the output format\n"
+        "  --sitl=<path>            relative path to the dynamic library with SITL FCS\n"
+        "  --sitl_div=<value>       divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n"
+        "  --serial=<path>          path to the serial port that sends channel packets\n"
+        "  --hitl                   allow the serial device to run as HITL"
+        "  --save_telem=<path>      specify path where the telemetry from the serial device will get saved\n"
+        "  --rt_telem               do not run JSBSim, only log telemetry in real time\n"
+        "  --ws=<port>              start a websocket server on a given port\n"
+        "  --root_dir=<dir>         root path for JSBSim assets (aircraft, script, engine; default '.')\n"
+        "  --sim_rate=<hertz>       how many iterations will the simulation do in a second\n"
+        "  --sim_end=<seconds>      how long the simulation will run (0 for endless, default is 60)\n"
+        "  --jsbsim_output=<path>   path to JSBSim output definition (legacy)\n"
+        "  --set=<property=value>   set property to given value\n"
+        "  --realtime               the simulation will run in real time (default)\n"
+        "  --batch                  the simulation will run as fast as possible\n"
+        "  --print_props            print all properties before running\n"
+        "  --version                print version and exit\n"
+        "  --help                   print help and exit\n"
         "\n"
         "notes:\n"
         "  script, aircraft and engine paths are relative to the root directory (CWD by default)\n"
