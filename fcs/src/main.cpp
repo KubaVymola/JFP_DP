@@ -21,6 +21,7 @@
 
 #ifdef MCU
 #include "main.h"
+#include "dma.h"
 #include "i2c.h"
 #include "tim.h"
 #include "usart.h"
@@ -111,6 +112,10 @@ float to_jsbsim[7] = { 0 };
 #endif // HITL
 
 #ifdef MCU
+uint8_t sbus[25];
+volatile uint8_t sbus_index;
+int16_t servo_channels[8] = { 0 };
+
 bmi160 himu;
 #endif // MCU
 
@@ -150,12 +155,51 @@ extern "C" void SystemClock_Config(void);
 
 #ifdef MCU
 
+typedef struct sbus_channels_s {
+    unsigned int chan0 : 11;
+    unsigned int chan1 : 11;
+    unsigned int chan2 : 11;
+    unsigned int chan3 : 11;
+    unsigned int chan4 : 11;
+    unsigned int chan5 : 11;
+    unsigned int chan6 : 11;
+    unsigned int chan7 : 11;
+    unsigned int chan8 : 11;
+    unsigned int chan9 : 11;
+    unsigned int chan10 : 11;
+    unsigned int chan11 : 11;
+    unsigned int chan12 : 11;
+    unsigned int chan13 : 11;
+    unsigned int chan14 : 11;
+    unsigned int chan15 : 11;
+} __attribute__((__packed__)) sbus_channels_t;
+
+sbus_channels_t sbus_channels;
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart == &huart1) {
+
+        if (sbus_index == 0 && sbus[0] != 0x0F) {
+            HAL_UART_Receive_IT(&huart1, sbus, 1);
+            return;
+        }
+
+        sbus_index++;
+        sbus_index %= 25;
+
+        HAL_UART_Receive_IT(&huart1, sbus + sbus_index, 1);
+
+    }
+
+}
+
 int main(void) {
     HAL_Init();
 
     SystemClock_Config();
 
     MX_GPIO_Init();
+    MX_DMA_Init();
     MX_I2C1_Init();
     MX_USB_DEVICE_Init();
     MX_TIM9_Init();
@@ -168,6 +212,9 @@ int main(void) {
     init();
 
     bmi160_init(&himu, &hi2c1, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
+
+    sbus_index = 0;
+    HAL_UART_Receive_IT(&huart1, sbus, 1);
 
     HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
@@ -182,47 +229,63 @@ int main(void) {
     HAL_Delay(3000);
 
     while (1) {
-        
-        #ifdef INDEP
-        if (bmi160_get_data_rdy(&himu)) {
-            bmi160_update_acc_gyro_data(&himu);
-        }
-        #endif
-
-        //     char bmi_buf[128];
-
-        //     sprintf(bmi_buf, "acc: %d %d %d gyro: %d %d %d\r\n",
-        //         (int16_t)himu.acc_raw[0],
-        //         (int16_t)himu.acc_raw[1],
-        //         (int16_t)himu.acc_raw[2],
-        //         (int16_t)himu.gyro_raw[0],
-        //         (int16_t)himu.gyro_raw[1],
-        //         (int16_t)himu.gyro_raw[2]
-        //     );
-
-        //     CDC_Transmit_FS((uint8_t *)bmi_buf, strlen(bmi_buf));
-
-        //     // send_data_over_usb_packets(1, bmi_buf, sizeof(bmi_buf), 1);
-
-
-
-        // HAL_Delay(1000);
-        // HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
-        
-        // continue;
 
         /**
          * RC RX test (with SBUS)
          */
+
         
-        // uint8_t receiver_data[25] = { 0 };
-        // HAL_UART_Receive(&huart1, receiver_data, 25, 1000);
+        /**
+         * Parse SBUS packet
+         */
+        
+        char usb_data[256];
+        servo_channels[0] = ((sbus[1]      | sbus[2] << 8)                 & 0x07FF);
+        servo_channels[1] = ((sbus[2] >> 3 | sbus[3] << 5)                 & 0x07FF);
+        servo_channels[2] = ((sbus[3] >> 6 | sbus[4] << 2 | sbus[5] << 10) & 0x07FF);
+        servo_channels[3] = ((sbus[5] >> 1 | sbus[6] << 7)                 & 0x07FF);   
+        
+        sprintf(usb_data, "%d\t%d\t%d\t%d\r\n", servo_channels[0], servo_channels[1], servo_channels[2], servo_channels[3]);
+        
+        // __disable_irq();
+        // sprintf(usb_data, "%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x\r\n",
+        //     sbus[0],
+        //     sbus[1],
+        //     sbus[2],
+        //     sbus[3],
+        //     sbus[4],
+        //     sbus[5],
+        //     sbus[6],
+        //     sbus[7],
+        //     sbus[8],
+        //     sbus[9],
+        //     sbus[10],
+        //     sbus[11],
+        //     sbus[12],
+        //     sbus[13],
+        //     sbus[14],
+        //     sbus[15],
+        //     sbus[16],
+        //     sbus[17],
+        //     sbus[18],
+        //     sbus[19],
+        //     sbus[20],
+        //     sbus[21],
+        //     sbus[22],
+        //     sbus[23],
+        //     sbus[24]
+        // );
+        // __enable_irq();
+        
+        CDC_Transmit_FS((uint8_t *)usb_data, strlen(usb_data));
+        HAL_Delay(20);
 
-        // char usb_data[128];
-        // sprintf(usb_data, "header: %x %x %x %x %x\r\n", receiver_data[0], receiver_data[1], receiver_data[2], receiver_data[3], receiver_data[4]);
-        // CDC_Transmit_FS((uint8_t *)usb_data, strlen(usb_data));
+        continue;
 
-        // continue;
+
+
+        
+
 
         /**
          * Motor control
@@ -275,6 +338,7 @@ int main(void) {
         // Commands ?
         // Config file ?
         // ==== END SITL CODE ====
+
         
         #ifdef HITL
         __disable_irq();
@@ -283,6 +347,10 @@ int main(void) {
         #endif // HITL
 
         #ifdef INDEP
+        if (bmi160_get_data_rdy(&himu)) {
+            bmi160_update_acc_gyro_data(&himu);
+        }
+        
         time_sec = HAL_GetTick() / 1000.0f;
         ax = himu.acc_x;
         ay = himu.acc_y;
@@ -292,12 +360,15 @@ int main(void) {
         gz = himu.gyro_z * DEG_TO_RAD;
         #endif
 
+
         htim10.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR1 = engine_1_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR2 = engine_2_cmd_norm * 1000.0f + 1000.0f;
         htim11.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
 
         loop();
+
+
 
         #ifdef HITL
         data_to_jsbsim(to_jsbsim);
@@ -308,14 +379,14 @@ int main(void) {
          * Simple debug output
          */
         char buf[128];
-        // sprintf(buf, "ax %d, ay %d, az %d, gx %d, gy %d, gz %d\n",
-        //     (int)(ax * 1000),
-        //     (int)(ay * 1000),
-        //     (int)(az * 1000),
-        //     (int)(gx * RAD_TO_DEG * 1000),
-        //     (int)(gy * RAD_TO_DEG * 1000),
-        //     (int)(gz * RAD_TO_DEG * 1000));
-        // send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+        sprintf(buf, "ax %f, ay %f, az %f, gx %f, gy %f, gz %f\n",
+            himu.acc_x,
+            himu.acc_y,
+            himu.acc_z,
+            himu.gyro_x,
+            himu.gyro_y,
+            himu.gyro_z);
+        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
 
 
 
@@ -530,7 +601,7 @@ extern "C" void loop(void) {
      */
     // sensor_fusion.updateIMU(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az);
     
-    sensor_fusion.update(gy * RAD_TO_DEG, gx * RAD_TO_DEG, -gz * RAD_TO_DEG, -ay, -ax, az, 0, 0, 0);
+    sensor_fusion.updateIMU(gy * RAD_TO_DEG, gx * RAD_TO_DEG, -gz * RAD_TO_DEG, -ay, -ax, az);
     sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
     roll_est    = sensor_fusion.getRoll();
     pitch_est   = sensor_fusion.getPitch();

@@ -156,7 +156,7 @@ def follow_file(file):
         new_data = True
         line_data = line.split(',')
 
-        data.append([float(x) for x in line_data])
+        data.append([float(x or 0) for x in line_data])
         current_time = float(line_data[time_prop_col])
 
         if running > 0:

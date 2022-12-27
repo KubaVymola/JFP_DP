@@ -116,6 +116,7 @@ src/usb/usbd_ioreq.c \
 src/usb/usbd_cdc.c \
 src/hal/st/config.c \
 src/hal/st/gpio.c \
+src/hal/st/dma.c \
 src/hal/st/i2c.c \
 src/hal/st/tim.c \
 src/hal/st/usart.c
