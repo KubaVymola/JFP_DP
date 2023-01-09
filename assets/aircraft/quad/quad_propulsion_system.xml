@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+
+<!-- <system name="Throttle mapping"> -->
+    <!-- <channel name="Throttle pos delay"> -->
+        <!-- <summer name="fcs/throttle-pos-norm[0]"> -->
+            <!-- <input>fcs/throttle-cmd-norm[0]</input> -->
+            <!-- <output>fcs/throttle-pos-norm[0]</output> -->
+            <!-- <clipto> -->
+                <!-- <min>0</min> -->
+                <!-- <max>0</max> -->
+            <!-- </clipto> -->
+        <!-- </summer> -->
+    <!-- </channel> -->
+<!-- </system> -->
+
+<!-- <flight_control name="Quad throttle functions"> -->
+    <!-- <channel name="Throttle pos delay" execrate="1"> -->
+        <!-- <sensor name="Throttle pos 0 delay"> -->
+            <!-- <input>fcs/throttle-pos-norm</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <output>fcs/throttle-pos-norm-tmp</output> -->
+        <!-- </sensor> -->
+        
+        <!-- <sensor name="Throttle pos 1 delay"> -->
+            <!-- <input>fcs/throttle-pos-norm[1]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <output>fcs/throttle-pos-norm-tmp[1]</output> -->
+        <!-- </sensor> -->
+        <!-- <sensor name="Throttle pos 2 delay"> -->
+            <!-- <input>fcs/throttle-pos-norm[2]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <output>fcs/throttle-pos-norm-tmp[2]</output> -->
+        <!-- </sensor> -->
+        <!-- <sensor name="Throttle pos 3 delay"> -->
+            <!-- <input>fcs/throttle-pos-norm[3]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <output>fcs/throttle-pos-norm-tmp[3]</output> -->
+            <!-- </sensor> -->
+        <!-- </channel> -->
+
+
+    <!-- <channel name="Throttle cmd mapping"> -->
+        <!-- <sensor name="Throttle cmd 0 mapping"> -->
+            <!-- <input>fcs/throttle-pos-norm-tmp</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <output>fcs/throttle-cmd-norm</output> -->
+        <!-- </sensor> -->
+
+        <!-- <sensor name="Throttle cmd 1 mapping"> -->
+            <!-- <input>fcs/throttle-pos-norm-tmp[1]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.05</noise> -->
+            <!-- <output>fcs/throttle-cmd-norm[1]</output> -->
+        <!-- </sensor> -->
+        <!-- <sensor name="Throttle cmd 2 mapping"> -->
+            <!-- <input>fcs/throttle-pos-norm-tmp[2]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.05</noise> -->
+            <!-- <output>fcs/throttle-cmd-norm[2]</output> -->
+        <!-- </sensor> -->
+        <!-- <sensor name="Throttle cmd 3 mapping"> -->
+            <!-- <input>fcs/throttle-pos-norm-tmp[3]</input> -->
+            <!-- <gain>1</gain> -->
+            <!-- <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.05</noise> -->
+            <!-- <output>fcs/throttle-cmd-norm[3]</output> -->
+        <!-- </sensor> -->
+    <!-- </channel> -->
+<!-- </flight_control> -->

@@ -121,7 +121,8 @@ src/hal/st/i2c.c \
 src/hal/st/tim.c \
 src/hal/st/usart.c
 CXX_SOURCES += \
-src/drivers/bmi160.cpp
+src/drivers/bmi160.cpp \
+src/drivers/hp203b.cpp
 INCLUDES += -Isrc/drivers -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
 DEFS += -DUSE_HAL_DRIVER -DVENDOR_ST
 LDFLAGS += -u _printf_float

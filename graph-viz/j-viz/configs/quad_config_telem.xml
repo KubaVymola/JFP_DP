@@ -15,4 +15,11 @@
         <data>telem/roll</data>
     </plot>
 
+    <plot pos_x="2" pos_y="0" range_from="0" range_to="1" title="Control" ylabel="[norm]">
+        <data>telem/channel-0</data>
+        <data>telem/channel-1</data>
+        <data>telem/channel-2</data>
+        <data>telem/channel-3</data>
+    </plot>
+
 </timeseries>

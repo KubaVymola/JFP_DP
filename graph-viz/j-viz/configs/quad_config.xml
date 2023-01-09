@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<timeseries grid_x="5" grid_y="2">
+<timeseries grid_x="5" grid_y="3">
     <time range_from="0" range_to="60">simulation/sim-time-sec</time>
     
-    <plot pos_x="0" pos_y="0" range_from="0" range_to="2" title="Altitude" ylabel="Alt [m]">
+    <plot pos_x="0" pos_y="0" range_from="-0.5" range_to="15" title="Altitude" ylabel="Alt [m]">
         <data>ext/altitude-m</data>
     </plot>
 
@@ -18,41 +18,60 @@
         <data>attitude/phi-deg</data>
     </plot>
 
-    <plot pos_x="3" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]">
+    <plot pos_x="3" pos_y="0" range_from="-30" range_to="30" title="Estimated attitude" ylabel="Angle [deg]">
+        <data>fcs/psi-est</data>
+        <data>fcs/theta-est</data>
+        <data>fcs/phi-est</data>
+    </plot>
+
+    <plot pos_x="4" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]">
         <data>fcs/throttle-cmd-norm[0]</data>
         <data>fcs/throttle-cmd-norm[1]</data>
         <data>fcs/throttle-cmd-norm[2]</data>
         <data>fcs/throttle-cmd-norm[3]</data>
     </plot>
 
-    <plot pos_x="4" pos_y="0" range_from="0" range_to="1" title="User control" ylabel="[norm]">
+    <plot pos_x="0" pos_y="1" range_from="-0.5" range_to="15" title="Estimated altitude" ylabel="[m]">
+        <data>fcs/alt-est-m</data>
+    </plot>
+
+    <plot pos_x="1" pos_y="1" range_from="101200" range_to="101400" title="Pressure" ylabel="[Pa]">
+        <data>sensor/baro/presStatic-Pa</data>
+    </plot>
+
+    <plot pos_x="2" pos_y="1" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
+        <data>sensor/imu/accelX-g</data>
+        <data>sensor/imu/accelY-g</data>
+        <data>sensor/imu/accelZ-g</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="1" range_from="-3" range_to="3" title="Rotation" ylabel="[rps]">
+        <data>sensor/imu/gyroX-rps</data>
+        <data>sensor/imu/gyroY-rps</data>
+        <data>sensor/imu/gyroZ-rps</data>
+    </plot>
+
+    <plot pos_x="4" pos_y="1" range_from="-40" range_to="40" title="Magnetic flux" ylabel="[uT]">
+        <data>sensor/imu/magX-uT</data>
+        <data>sensor/imu/magY-uT</data>
+        <data>sensor/imu/magZ-uT</data>
+    </plot>
+
+    <plot pos_x="0" pos_y="2" range_from="0" range_to="1" title="User control" ylabel="[norm]">
         <data>user-control/channel-1</data>
         <data>user-control/channel-2</data>
         <data>user-control/channel-3</data>
         <data>user-control/channel-4</data>
     </plot>
 
-    <plot pos_x="0" pos_y="1" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
-        <data>sensor/imu/accelX-g</data>
-        <data>sensor/imu/accelY-g</data>
-        <data>sensor/imu/accelZ-g</data>
+    <plot pos_x="1" pos_y="2" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]">
+        <data>fcs/lin-acc-y</data>
+        <data>fcs/lin-acc-x</data>
+        <data>fcs/lin-acc-z</data>
     </plot>
 
-    <plot pos_x="1" pos_y="1" range_from="-3" range_to="3" title="Rotation" ylabel="[rps]">
-        <data>sensor/imu/gyroX-rps</data>
-        <data>sensor/imu/gyroY-rps</data>
-        <data>sensor/imu/gyroZ-rps</data>
+    <plot pos_x="2" pos_y="2" range_from="-20" range_to="20" title="Vertical speed est" ylabel="[m/s]">
+        <data>fcs/alt-rate-est</data>
     </plot>
-
-    <plot pos_x="2" pos_y="1" range_from="-40" range_to="40" title="Magnetic flux" ylabel="[uT]">
-        <data>sensor/imu/magX-uT</data>
-        <data>sensor/imu/magY-uT</data>
-        <data>sensor/imu/magZ-uT</data>
-    </plot>
-
-    <plot pos_x="3" pos_y="1" range_from="-30" range_to="30" title="Estimated attitude" ylabel="Angle [deg]">
-        <data>fcs/psi-est</data>
-        <data>fcs/theta-est</data>
-        <data>fcs/phi-est</data>
-    </plot>
+    
 </timeseries>

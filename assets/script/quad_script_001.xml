@@ -10,8 +10,10 @@
         
         <property> simulation/notify-time-trigger </property>
         
-        <!-- <property value="0.4"> fcs/throttle-cmd-norm[2] </property> -->
-        <!-- <property value="0.4"> fcs/throttle-cmd-norm[0] </property> -->
+        <!-- <property value="0.6"> fcs/throttle-cmd-norm[0] </property> -->
+        <!-- <property value="0.6"> fcs/throttle-cmd-norm[1] </property> -->
+        <!-- <property value="0.6"> fcs/throttle-cmd-norm[2] </property> -->
+        <!-- <property value="0.6"> fcs/throttle-cmd-norm[3] </property> -->
 
         <!-- <property value="1"> forces/hold-down </property> -->
         

@@ -43,4 +43,11 @@
     <property>user-control/channel-4</property>
 
     <property>sensor/baro/presStatic-Pa</property>
+
+    <property>fcs/alt-est-m</property>
+    <property>fcs/alt-rate-est</property>
+
+    <property>fcs/lin-acc-x</property>
+    <property>fcs/lin-acc-y</property>
+    <property>fcs/lin-acc-z</property>
 </output>

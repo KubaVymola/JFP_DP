@@ -10,6 +10,8 @@
  */
 
 #include "pid.h"
+#include "quaternion.h"
+#include "complementary_filter.h"
 #include "Adafruit_AHRS_Madgwick.h"
 #include "Adafruit_AHRS_NXPFusion.h"
 
@@ -29,6 +31,7 @@
 #include "gpio.h"
 #include "usbd_cdc_if.h"
 #include "bmi160.h"
+#include "hp203b.h"
 #endif // MCU
 
 /**
@@ -47,6 +50,19 @@
 #define DEG_TO_GEO_M        6378000 * M_PI / 180
 #define DEG_TO_RAD          M_PI / 180
 #define RAD_TO_DEG          180 / M_PI
+
+#define HEADING_MODE_SP         1  /* Heading is held at a fixed value */
+#define HEADING_MODE_RATE       2  /* Heading is controlled with rate of change */
+
+#define VERTICAL_MODE_SP        1  /* Altitude is held at a fixed value */
+#define VERTICAL_MODE_RATE      2  /* Altitude is controlled with rate of change */
+#define VERTICAL_MODE_DIRECT    3  /* Direct mapping of throttle pos to the engines */
+
+#define LATERAL_MODE_FIXED_POS  1  /* Position is held at a fixed value */
+#define LATERAL_MODE_RATE       2  /* Pitch and roll controls the angular velocity of the craft (freestyle mode) */
+#define LATERAL_MODE_ANGLE      3  /* Pitch and roll controls the angle of the craft */
+
+#define NUM_CTRL_CHANNELS       8
 
 #ifndef MAX
 #define MAX(x,y)            ((x)>(y)?(x):(y))
@@ -76,20 +92,31 @@ const float rest_time = 5.0;
 
 Adafruit_Madgwick sensor_fusion;
 
-pid_state_t alt_pid;
+pid_state_t throttle_pid;
 pid_state_t yaw_pid;
+pid_state_t yaw_rate_pid;
 pid_state_t x_body_pid;
 pid_state_t y_body_pid;
 pid_state_t roll_pid;
 pid_state_t pitch_pid;
+
+uint8_t heading_mode = HEADING_MODE_RATE;
+uint8_t vertical_mode = VERTICAL_MODE_RATE;
+uint8_t lateral_mode = LATERAL_MODE_ANGLE;
 
 float time_sec;
 float prev_time_sec;
 float x_world_measure_m;
 float y_world_measure_m;
 float ax, ay, az, gx, gy, gz, mx, my, mz;
-float ch_1, ch_2, ch_3, ch_4;
+
 float pressure_pa;
+float alt_est_m;
+float alt_rate_est;
+
+// ? FCS channels indexed from 0, RC transmitter indexed from 1
+// 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
+float ctrl_channels[NUM_CTRL_CHANNELS] = { 0 };
 
 float alt_real;
 float yaw_real;
@@ -97,9 +124,17 @@ float pitch_real;
 float roll_real;
 
 float qw, qx, qy, qz;
+float lin_acc_x, lin_acc_y, lin_acc_z;
+
 float yaw_est;
 float pitch_est;
 float roll_est;
+float yaw_used_prev;
+float pitch_used_prev;
+float roll_used_prev;
+float yaw_rate;
+float roll_rate;
+float pitch_rate;
 
 float engine_0_cmd_norm;
 float engine_1_cmd_norm;
@@ -108,15 +143,16 @@ float engine_3_cmd_norm;
 
 #ifdef HITL
 float from_jsbsim[22] = { 0 };
-float to_jsbsim[7] = { 0 };
+float to_jsbsim[12] = { 0 };
 #endif // HITL
 
 #ifdef MCU
-uint8_t sbus[25];
-volatile uint8_t sbus_index;
-int16_t servo_channels[8] = { 0 };
+bmi160_t himu;
 
-bmi160 himu;
+int8_t current_channel;
+int32_t last_captured_value;
+uint32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
+
 #endif // MCU
 
 /**
@@ -155,42 +191,37 @@ extern "C" void SystemClock_Config(void);
 
 #ifdef MCU
 
-typedef struct sbus_channels_s {
-    unsigned int chan0 : 11;
-    unsigned int chan1 : 11;
-    unsigned int chan2 : 11;
-    unsigned int chan3 : 11;
-    unsigned int chan4 : 11;
-    unsigned int chan5 : 11;
-    unsigned int chan6 : 11;
-    unsigned int chan7 : 11;
-    unsigned int chan8 : 11;
-    unsigned int chan9 : 11;
-    unsigned int chan10 : 11;
-    unsigned int chan11 : 11;
-    unsigned int chan12 : 11;
-    unsigned int chan13 : 11;
-    unsigned int chan14 : 11;
-    unsigned int chan15 : 11;
-} __attribute__((__packed__)) sbus_channels_t;
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
+    
+    /**
+     * Input capture PPM (pin PB8)
+     */
+    if (htim != &htim4) return;
 
-sbus_channels_t sbus_channels;
+    int32_t current_captured_value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart == &huart1) {
-
-        if (sbus_index == 0 && sbus[0] != 0x0F) {
-            HAL_UART_Receive_IT(&huart1, sbus, 1);
-            return;
-        }
-
-        sbus_index++;
-        sbus_index %= 25;
-
-        HAL_UART_Receive_IT(&huart1, sbus + sbus_index, 1);
-
+    if (last_captured_value == -1) {
+        last_captured_value = current_captured_value;
+        return;
     }
 
+    int32_t difference = current_captured_value > last_captured_value
+                       ? current_captured_value - last_captured_value
+                       : 0xFFFF - last_captured_value + current_captured_value;
+
+    last_captured_value = current_captured_value;
+
+    if (difference > 5000) {
+        current_channel = 0;
+        return;
+    }
+
+    if (current_channel < 0) return;
+    if (current_channel >= NUM_CTRL_CHANNELS) return;
+
+    ppm_us[current_channel] = difference;
+    ctrl_channels[current_channel] = (difference - 1000) / 1000.0f;
+    current_channel++;
 }
 
 int main(void) {
@@ -199,23 +230,27 @@ int main(void) {
     SystemClock_Config();
 
     MX_GPIO_Init();
-    MX_DMA_Init();
     MX_I2C1_Init();
     MX_USB_DEVICE_Init();
+    MX_TIM4_Init();
     MX_TIM9_Init();
     MX_TIM10_Init();
     MX_TIM11_Init();
-    MX_USART1_UART_Init();
+    // MX_DMA_Init();
+    // MX_USART1_UART_Init();
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
-    init();
+    current_channel = -1;
+    last_captured_value = -1;
 
     bmi160_init(&himu, &hi2c1, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
 
-    sbus_index = 0;
-    HAL_UART_Receive_IT(&huart1, sbus, 1);
+    hp203b_setup(&hi2c1);
 
+    init();
+
+    HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
@@ -229,83 +264,22 @@ int main(void) {
     HAL_Delay(3000);
 
     while (1) {
-
-        /**
-         * RC RX test (with SBUS)
-         */
-
         
-        /**
-         * Parse SBUS packet
-         */
-        
-        char usb_data[256];
-        servo_channels[0] = ((sbus[1]      | sbus[2] << 8)                 & 0x07FF);
-        servo_channels[1] = ((sbus[2] >> 3 | sbus[3] << 5)                 & 0x07FF);
-        servo_channels[2] = ((sbus[3] >> 6 | sbus[4] << 2 | sbus[5] << 10) & 0x07FF);
-        servo_channels[3] = ((sbus[5] >> 1 | sbus[6] << 7)                 & 0x07FF);   
-        
-        sprintf(usb_data, "%d\t%d\t%d\t%d\r\n", servo_channels[0], servo_channels[1], servo_channels[2], servo_channels[3]);
-        
-        // __disable_irq();
-        // sprintf(usb_data, "%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x\r\n",
-        //     sbus[0],
-        //     sbus[1],
-        //     sbus[2],
-        //     sbus[3],
-        //     sbus[4],
-        //     sbus[5],
-        //     sbus[6],
-        //     sbus[7],
-        //     sbus[8],
-        //     sbus[9],
-        //     sbus[10],
-        //     sbus[11],
-        //     sbus[12],
-        //     sbus[13],
-        //     sbus[14],
-        //     sbus[15],
-        //     sbus[16],
-        //     sbus[17],
-        //     sbus[18],
-        //     sbus[19],
-        //     sbus[20],
-        //     sbus[21],
-        //     sbus[22],
-        //     sbus[23],
-        //     sbus[24]
-        // );
-        // __enable_irq();
-        
-        CDC_Transmit_FS((uint8_t *)usb_data, strlen(usb_data));
-        HAL_Delay(20);
+        // {
+        //     // uint8_t hp203_status = hp203b_test(&hi2c1);
+        //     float pressure = hp203b_get_pressure(&hi2c1);
 
-        continue;
+        //     char buf[128];
+        //     sprintf(buf, "pressure: %f\r\n", pressure);
+        //     CDC_Transmit_FS((uint8_t *)buf, strlen(buf));
+
+        //     HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+        //     HAL_Delay(1000);
+
+        //     continue;
+        // }
 
 
-
-        
-
-
-        /**
-         * Motor control
-         */
-
-        // htim9.Instance->CCR1 = 1100;
-        // htim9.Instance->CCR2 = 1100;
-        // htim10.Instance->CCR1 = 1100;
-        // htim11.Instance->CCR1 = 1100;
-        
-        // HAL_Delay(2000);
-
-        // htim9.Instance->CCR1 = 1200;
-        // htim9.Instance->CCR2 = 1200;
-        // htim10.Instance->CCR1 = 1200;
-        // htim11.Instance->CCR1 = 1200;
-
-        // HAL_Delay(2000);
-
-        // continue;
         
         // ==== MCU CODE ====
         // Time the main loop (100 Hz / 500 Hz / 1000 Hz)
@@ -360,15 +334,12 @@ int main(void) {
         gz = himu.gyro_z * DEG_TO_RAD;
         #endif
 
+        loop();
 
         htim10.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR1 = engine_1_cmd_norm * 1000.0f + 1000.0f;
         htim9.Instance->CCR2 = engine_2_cmd_norm * 1000.0f + 1000.0f;
         htim11.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
-
-        loop();
-
-
 
         #ifdef HITL
         data_to_jsbsim(to_jsbsim);
@@ -378,14 +349,8 @@ int main(void) {
         /**
          * Simple debug output
          */
-        char buf[128];
-        sprintf(buf, "ax %f, ay %f, az %f, gx %f, gy %f, gz %f\n",
-            himu.acc_x,
-            himu.acc_y,
-            himu.acc_z,
-            himu.gyro_x,
-            himu.gyro_y,
-            himu.gyro_z);
+        char buf[256];
+        sprintf(buf, "%f\r\n", alt_rate_est);
         send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
 
 
@@ -403,8 +368,12 @@ int main(void) {
         /**
          * Telemetry output
          */
-        sprintf(buf, "%f," "%f,%f,%f," "%f,%f,%f," "%f,%f,%f,%f," "%f\n",
+        sprintf(buf, "%f," "%f,%f,%f,%f," "%f,%f,%f," "%f,%f,%f," "%f,%f,%f,%f," "%f\n",
             time_sec,
+            ctrl_channels[0],
+            ctrl_channels[1],
+            ctrl_channels[2],
+            ctrl_channels[3],
             himu.acc_x,
             himu.acc_y,
             himu.acc_z,
@@ -420,7 +389,7 @@ int main(void) {
 
         HAL_Delay(20);
 
-        HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     }
 }
 
@@ -530,14 +499,21 @@ extern "C" void init(/* json *sim_data */) {
     printf("Hello from FCS\n");
 #endif // SITL
 
-    pid_init(alt_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
-    pid_init(yaw_pid,    0.011, 0.02,  0.0013,   0.15, -0.2, 0.2);
-    pid_init(x_body_pid, 4,     0.1,   6,        0.15, -10,  10);  // Output is used as roll  setpoint
-    pid_init(y_body_pid, 4,     0.1,   6,        0.15, -10,  10);  // Output is used as pitch setpoint
-    pid_init(roll_pid,   0.002, 0,     0.0005,   0.15, -0.1, 0.1);
-    pid_init(pitch_pid,  0.002, 0,     0.0005,   0.15, -0.1, 0.1);
+    pid_init(throttle_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
+    
+    pid_init(yaw_pid,         0.011, 0.02,  0.0013,   0.15, -0.2, 0.2);
+    pid_init(yaw_rate_pid,    0.008, 0.0,   0.0005,   0.15, -0.2, 0.2);
+    
+    pid_init(x_body_pid,      4,     0.1,   6,        0.15, -10,  10);  // Output is used as roll  setpoint
+    pid_init(y_body_pid,      4,     0.1,   6,        0.15, -10,  10);  // Output is used as pitch setpoint
+
+    pid_init(roll_pid,        0.002, 0,     0.0005,   0.15, -0.2, 0.2);
+    pid_init(pitch_pid,       0.002, 0,     0.0005,   0.15, -0.2, 0.2);
 
     prev_time_sec = -1;
+
+    alt_est_m = 0.0f;
+    alt_rate_est = 0.0f;
 
     engine_0_cmd_norm = 0.0;
     engine_1_cmd_norm = 0.0;
@@ -546,6 +522,7 @@ extern "C" void init(/* json *sim_data */) {
 
     sensor_fusion.begin(50.0);
 }
+
 
 extern "C" void data_from_jsbsim(float *data) {
     time_sec            = data[0];                  // simulation/sim-time-sec
@@ -561,22 +538,32 @@ extern "C" void data_from_jsbsim(float *data) {
     /**
      * Accelerometer adjusted from JSBSim local frame to expected sensor frame
      */
-    ay                  =  data[7];                 // sensor/imu/accelX-g
-    ax                  =  data[8];                 // sensor/imu/accelY-g
+    ax                  = -data[7];                 // sensor/imu/accelX-g
+    ay                  =  data[8];                 // sensor/imu/accelY-g
     az                  = -data[9];                 // sensor/imu/accelZ-g
 
-    gy                  =  data[10];                // sensor/imu/gyroX-rps
-    gx                  =  data[11];                // sensor/imu/gyroY-rps
+    gx                  = -data[10];                // sensor/imu/gyroX-rps
+    gy                  =  data[11];                // sensor/imu/gyroY-rps
     gz                  = -data[12];                // sensor/imu/gyroZ-rps
 
     mx                  = data[13];                 // sensor/imu/magX-uT
     my                  = data[14];                 // sensor/imu/magY-uT
     mz                  = data[15];                 // sensor/imu/magZ-uT
 
-    ch_1                = data[18];                 // user-control/channel-1
-    ch_2                = data[19];                 // user-control/channel-2
-    ch_3                = data[20];                 // user-control/channel-3
-    ch_4                = data[21];                 // user-control/channel-4
+    pressure_pa         = data[16];                 // sensor/baro/presStatic-Pa
+
+    #ifdef SITL
+    
+    ctrl_channels[0]    = data[18];                 // user-control/channel-1
+    ctrl_channels[1]    = data[19];                 // user-control/channel-2
+    ctrl_channels[2]    = data[20];                 // user-control/channel-3
+    ctrl_channels[3]    = data[21];                 // user-control/channel-4
+    ctrl_channels[4]    = data[22];                 // user-control/channel-4
+    ctrl_channels[5]    = data[23];                 // user-control/channel-4
+    ctrl_channels[6]    = data[24];                 // user-control/channel-4
+    ctrl_channels[7]    = data[25];                 // user-control/channel-4
+    
+    #endif
 
     if (prev_time_sec < 0) prev_time_sec = time_sec;
 }
@@ -587,44 +574,84 @@ extern "C" void data_to_jsbsim(float *data) {
     data[2] = engine_2_cmd_norm;
     data[3] = engine_3_cmd_norm;
 
-    data[4] = yaw_est;
-    data[5] = pitch_est;
-    data[6] = roll_est;
+    data[4] = alt_est_m;
+    data[5] = alt_rate_est;
+
+    data[6] = yaw_est;
+    data[7] = pitch_est;
+    data[8] = roll_est;
+
+    data[9]  = lin_acc_x;
+    data[10] = lin_acc_y;
+    data[11] = lin_acc_z;
 }
 
 extern "C" void loop(void) {
     const float deltaT = time_sec - prev_time_sec;
     prev_time_sec = time_sec;
 
+    if (deltaT == 0.0f) return;
+
     /**
      * Estimate attitude
      */
-    // sensor_fusion.updateIMU(gx * RAD_TO_DEG, gy * RAD_TO_DEG, gz * RAD_TO_DEG, ax, ay, az);
     
-    sensor_fusion.updateIMU(gy * RAD_TO_DEG, gx * RAD_TO_DEG, -gz * RAD_TO_DEG, -ay, -ax, az);
+    sensor_fusion.updateIMU(-gx * RAD_TO_DEG, gy * RAD_TO_DEG, -gz * RAD_TO_DEG, ax, -ay, az);
     sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
     roll_est    = sensor_fusion.getRoll();
     pitch_est   = sensor_fusion.getPitch();
     yaw_est     = sensor_fusion.getYaw() - 180.0;
+
+    Quaterion_t acc   = { 0, ax, ay, az };
+    Quaterion_t q     = { qw, qx, qy, qz };
+    Quaterion_t q_inv = { qw, -qx, -qy, -qz };
+    Quaterion_t acc_rot = multiplyQuat(multiplyQuat(q, acc), q_inv);
+
+    lin_acc_x = acc_rot.x;
+    lin_acc_y = acc_rot.y;
+    lin_acc_z = acc_rot.z - 1.0f;
 
     bool use_est = true;
     float yaw_used     = use_est ? yaw_est     : yaw_real;
     float pitch_used   = use_est ? pitch_est   : pitch_real;
     float roll_used    = use_est ? roll_est    : roll_real;
 
-    /**
-     * ==== Altitude ====
-     */
-    float alt_sp = 0.0;
-    if (time_sec > rest_time) alt_sp = 1.0;
+
+    float new_alt_est_m = (288.15f / -0.0065f) * (powf(pressure_pa / 101325.0f, (-8.314f * -0.0065f) / (9.81f * 0.0289640f)) - 1);    
+    if (alt_est_m == 0.0f) alt_est_m = new_alt_est_m;
+
+    alt_rate_est = complementaryFilterUpdates(alt_rate_est,
+                                              0.05,
+                                              (new_alt_est_m - alt_est_m) / deltaT,     // barometer based altitude rate estimate
+                                              lin_acc_z * 9.81f * deltaT);              // accelerometer based altitude rate estimate
+    alt_est_m = new_alt_est_m;
 
     /**
      * ==== Yaw ====
      */
     float yaw_sp = 2;
-    if (time_sec > rest_time + 5) yaw_sp = 80;
-    if (yaw_sp - yaw_used >  180) yaw_used += 360;
-    if (yaw_sp - yaw_used < -180) yaw_used -= 360;
+    // if (time_sec > rest_time + 5) yaw_sp = 80;
+    // if (yaw_sp - yaw_used >  180) yaw_used += 360;
+    // if (yaw_sp - yaw_used < -180) yaw_used -= 360;
+
+
+    float yaw_diff = yaw_used - yaw_used_prev;
+    if (yaw_diff < -180) yaw_diff += 360.0f;
+    if (yaw_diff > 180)  yaw_diff -= 360.0f;
+
+    yaw_rate   = yaw_diff / deltaT;
+    roll_rate  = (roll_used  - roll_used_prev)  / deltaT;
+    pitch_rate = (pitch_used - pitch_used_prev) / deltaT;
+
+    yaw_used_prev = yaw_used;
+    roll_used_prev = roll_used;
+    pitch_used_prev = pitch_used;
+
+    /**
+     * ==== Altitude ====
+     */
+    float alt_sp = 0.0;
+    if (time_sec > rest_time) alt_sp = 1.0;
 
     /**
      * Position: world_x -> east -> longitude
@@ -638,42 +665,64 @@ extern "C" void loop(void) {
         y_world_sp_m = 2.5;
     }
 
-    const float x_body_measure_m = get_x_body(yaw_used * DEG_TO_RAD, x_world_measure_m, y_world_measure_m);
-    const float y_body_measure_m = get_y_body(yaw_used * DEG_TO_RAD, x_world_measure_m, y_world_measure_m);
-    const float x_body_sp_m = get_x_body(yaw_used * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);
-    const float y_body_sp_m = get_y_body(yaw_used * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);
-
     /**
      * ==== PIDs ====
      */
-    const float alt_pid_out = 0.255 + pid_update(alt_pid, alt_sp, alt_real, deltaT);
-    const float yaw_pid_out = pid_update(yaw_pid, yaw_sp, yaw_used, deltaT);
+    
+    float throttle_pid_out = 0.0;
 
-    const float x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, deltaT);
-    const float y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, deltaT);
+    if (vertical_mode == VERTICAL_MODE_SP) {
+        throttle_pid_out = 0.255 + pid_update(throttle_pid, alt_sp, alt_real, deltaT);
+    } else if (vertical_mode == VERTICAL_MODE_RATE) {
+        float target_alt_rate = 0.0f;
+        if (ctrl_channels[2] < 0.4f) target_alt_rate = (ctrl_channels[2] - 0.4f) * 20.0f;
+        if (ctrl_channels[2] > 0.6f) target_alt_rate = (ctrl_channels[2] - 0.6f) * 20.0f;
+        
+        throttle_pid_out = 0.255 + pid_update(throttle_pid, target_alt_rate, alt_rate_est, deltaT);
+    } else if (vertical_mode == VERTICAL_MODE_DIRECT) {
+        throttle_pid_out = ctrl_channels[2];
+    }
 
-    const float roll_pid_out  = pid_update(roll_pid,   x_body_pid_out, roll_used,  deltaT);
-    const float pitch_pid_out = pid_update(pitch_pid, -y_body_pid_out, pitch_used, deltaT);
-    // const float roll_pid_out  = pid_update(roll_pid,   (ch_4 - 0.5) * 20, roll_used,  deltaT);
-    // const float pitch_pid_out = pid_update(pitch_pid, -(ch_2 - 0.5) * 20, pitch_used, deltaT);
+    
+    float yaw_pid_out = 0.0;
+
+    if (heading_mode == HEADING_MODE_SP) {
+        yaw_pid_out = pid_update(yaw_pid, yaw_sp, yaw_used, deltaT);
+    } else if (heading_mode == HEADING_MODE_RATE) {
+        yaw_pid_out = pid_update(yaw_rate_pid, (ctrl_channels[3] - 0.5f) * 100.0f, yaw_rate, deltaT);
+    }
+
+
+    float roll_pid_out = 0.0;
+    float pitch_pid_out = 0.0;
+
+    if (lateral_mode == LATERAL_MODE_FIXED_POS) {
+        const float x_body_measure_m = get_x_body(yaw_used * DEG_TO_RAD, x_world_measure_m, y_world_measure_m);
+        const float y_body_measure_m = get_y_body(yaw_used * DEG_TO_RAD, x_world_measure_m, y_world_measure_m);
+        const float x_body_sp_m = get_x_body(yaw_used * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);
+        const float y_body_sp_m = get_y_body(yaw_used * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);    
+        
+        const float x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, deltaT);
+        const float y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, deltaT);
+    
+        roll_pid_out  = pid_update(roll_pid,   x_body_pid_out, roll_used,  deltaT);
+        pitch_pid_out = pid_update(pitch_pid, -y_body_pid_out, pitch_used, deltaT);
+    } else if (lateral_mode == LATERAL_MODE_RATE) {
+        // TODO but not yet needed
+    } else if (lateral_mode == LATERAL_MODE_ANGLE) {
+        roll_pid_out  = pid_update(roll_pid,   (ctrl_channels[0] - 0.5) * 40.0f, roll_used,  deltaT);
+        pitch_pid_out = pid_update(pitch_pid, -(ctrl_channels[1] - 0.5) * 40.0f, pitch_used, deltaT);
+    }
+
 
     /**
      * ==== Output ====
      */
-    // engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
-    // engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
-    // engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
-    // engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, ch_3 - 0.092, ch_1 - 0.5, pitch_pid_out, roll_pid_out));
 
-    engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
-    engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
-    engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
-    engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, alt_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
-
-    // engine_0_cmd_norm = ch_3 - 0.091 + (ch_1 - 0.5);
-    // engine_1_cmd_norm = ch_3 - 0.091 + (ch_1 - 0.5);
-    // engine_2_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
-    // engine_3_cmd_norm = ch_3 - 0.091 - (ch_1 - 0.5);
+    engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, throttle_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, throttle_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, throttle_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
+    engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, throttle_pid_out, yaw_pid_out, pitch_pid_out, roll_pid_out));
 
 }
 
@@ -705,7 +754,7 @@ const float engine_mixer(const int engine_id,
 }
 
 const float mixer_to_cmd(const float mixer_output) {
-    return MAX(0.0, MIN(1.0, (const double)mixer_output));
+    return MAX(0.0f, MIN(1.0f, mixer_output));
 }
 
 const float get_x_body(const float yaw_rad, const float x_world, const float y_world) {

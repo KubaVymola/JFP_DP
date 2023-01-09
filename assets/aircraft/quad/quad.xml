@@ -21,6 +21,7 @@
     <aerodynamics />
 
     <!-- ? The path is relative to {root_dir}/systems directory, hence the ".." -->
+    <!-- <system file="../aircraft/quad/quad_propulsion_system.xml" /> -->
     <system file="../aircraft/quad/SensorImu_quad.xml" />
     <system file="../aircraft/quad/SensorBaro_quad.xml" />
 
@@ -37,6 +38,7 @@
             <property> user-control/channel-5 </property>
             <property> user-control/channel-6 </property>
             <property> user-control/channel-7 </property>
+            <property> user-control/channel-8 </property>
         </to_jsbsim>
         
         <!-- Preperties will be sent via ws and can be excpected in 3d visualizer -->
@@ -212,10 +214,19 @@
             <property> fcs/throttle-cmd-norm[2] </property>
             <property> fcs/throttle-cmd-norm[3] </property>
 
-            <!-- [4,5,6] -->
+            <!-- [4,5] -->
+            <property> fcs/alt-est-m </property>
+            <property> fcs/alt-rate-est </property>
+
+            <!-- [6,7,8] -->
             <property> fcs/psi-est </property>
             <property> fcs/theta-est </property>
             <property> fcs/phi-est </property>
+            
+            <!-- [9,10,11] -->
+            <property> fcs/lin-acc-y </property>
+            <property> fcs/lin-acc-x </property>
+            <property> fcs/lin-acc-z </property>
         </to_jsbsim>
 
         <from_jsbsim>
@@ -251,15 +262,24 @@
             <property> sensor/baro/presStatic-Pa </property>
             <property> sensor/baro/temp-C </property>
 
-            <!-- [18,19,20,21] -->
+            <!-- [18,19,20,21,22,23,24,25] -->
             <property> user-control/channel-1 </property>
             <property> user-control/channel-2 </property>
             <property> user-control/channel-3 </property>
             <property> user-control/channel-4 </property>
+            <property> user-control/channel-5 </property>
+            <property> user-control/channel-6 </property>
+            <property> user-control/channel-7 </property>
+            <property> user-control/channel-8 </property>
         </from_jsbsim>
 
         <telemetry>
             <property> telem/simulation/sim-time-sec </property>
+
+            <property> telem/channel-0 </property>
+            <property> telem/channel-1 </property>
+            <property> telem/channel-2 </property>
+            <property> telem/channel-3 </property>
 
             <property> telem/sensor/imu/accelX-mg </property>
             <property> telem/sensor/imu/accelY-mg </property>
@@ -269,7 +289,7 @@
             <property> telem/pitch </property>
             <property> telem/roll </property>
 
-            <!-- mapping attribute is used when JSBSim is not running -->
+            <!-- mapping attribute is used when JSBSim is not running (rt_telem or replay_telem) -->
             <!-- Given properties get mapped to sim_data based on the mapping attribute value -->
             <property mapping="ext/ecef-q-1"> telem/ecef-q-1 </property>
             <property mapping="ext/ecef-q-2"> telem/ecef-q-2 </property>

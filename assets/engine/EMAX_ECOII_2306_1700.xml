@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<brushless_dc_motor name="EMAX ECO II Series 2306, 1700kV">
+    <velocityconstant> 1700 </velocityconstant>
+    <coilresistance>0.074</coilresistance>
+    <noloadcurrent>1.1</noloadcurrent>
+    <maxvolts>11.1</maxvolts>
+</brushless_dc_motor>

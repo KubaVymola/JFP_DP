@@ -111,7 +111,7 @@
         <sensor name="AccelX">
             <input>sensor/imu/accelX-true-mps2</input>
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
@@ -122,7 +122,7 @@
         <sensor name="AccelY">
             <input>sensor/imu/accelY-true-mps2</input>
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
@@ -133,7 +133,7 @@
         <sensor name="AccelZ">
             <input>sensor/imu/accelZ-true-mps2</input>
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
@@ -179,7 +179,7 @@
             </orientation>
 
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
@@ -202,7 +202,7 @@
             </orientation>
 
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>
@@ -225,7 +225,7 @@
             </orientation>
 
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>

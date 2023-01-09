@@ -348,7 +348,7 @@ void print_help() {
         "  --sitl=<path>            relative path to the dynamic library with SITL FCS\n"
         "  --sitl_div=<value>       divide the simulation loop rate to get SITL FCS rate (integer only, default 1)\n"
         "  --serial=<path>          path to the serial port that sends channel packets\n"
-        "  --hitl                   allow the serial device to run as HITL"
+        "  --hitl                   allow the serial device to run as HITL\n"
         "  --save_telem=<path>      specify path where the telemetry from the serial device will get saved\n"
         "  --rt_telem               do not run JSBSim, only log telemetry in real time\n"
         "  --ws=<port>              start a websocket server on a given port\n"
