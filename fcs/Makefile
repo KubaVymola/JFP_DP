@@ -36,6 +36,7 @@ C_SOURCES =
 
 CXX_SOURCES = \
 src/main.cpp \
+src/utils.cpp \
 src/Adafruit_AHRS_Madgwick.cpp
 
 ASM_SOURCES = 
@@ -95,6 +96,8 @@ LIBS += -lnosys
 OPT = -Og
 LDFLAGS = $(MCU) -specs=nosys.specs -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 DEFS += -DMCU
+CXX_SOURCES += \
+src/usb-packets.cpp
 endif
 
 ifeq ($(OUTPUT_TYPE),CPU)

@@ -113,9 +113,9 @@
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
-            <gain>1</gain>
-            <bias>0</bias>
-            <delay>0</delay>
+            <gain> 1.05 </gain>
+            <bias> 0.03 </bias>
+            <delay> 0 </delay>
             <output>sensor/imu/accelX-mps2</output>
         </sensor>
 
@@ -124,9 +124,9 @@
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
-            <gain>1</gain>
-            <bias>0</bias>
-            <delay>0</delay>
+            <gain> 1.2 </gain>
+            <bias> 0.04 </bias>
+            <delay> 0 </delay>
             <output>sensor/imu/accelY-mps2</output>
         </sensor>
 
@@ -135,9 +135,9 @@
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.02</noise>
             <drift_rate>0</drift_rate>
-            <gain>1</gain>
-            <bias>0</bias>
-            <delay>0</delay>
+            <gain> 1.1 </gain>
+            <bias> 0.05 </bias>
+            <delay> 0 </delay>
             <output>sensor/imu/accelZ-mps2</output>
         </sensor>
     </channel>
@@ -182,7 +182,7 @@
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
-            <bias>0</bias>
+            <bias>0.3</bias>
             <delay>0</delay>
             <output>sensor/imu/gyroX-rps</output>
         </gyro>
@@ -204,9 +204,9 @@
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
-            <gain>1</gain>
-            <bias>0</bias>
-            <delay>0</delay>
+            <gain> 1 </gain>
+            <bias> 0.4 </bias>
+            <delay> 0 </delay>
             <output>sensor/imu/gyroY-rps</output>
         </gyro>
 
@@ -227,9 +227,9 @@
             <lag>0</lag>
             <noise distribution="GAUSSIAN" variation="ABSOLUTE">0.0012217</noise>
             <drift_rate>0</drift_rate>
-            <gain>1</gain>
-            <bias>0</bias>
-            <delay>0</delay>
+            <gain> 1 </gain>
+            <bias> 0.5 </bias>
+            <delay> 0 </delay>
             <output>sensor/imu/gyroZ-rps</output>
         </gyro>
     </channel>
