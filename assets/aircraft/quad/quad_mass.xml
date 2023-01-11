@@ -60,7 +60,7 @@
     <ixz unit="SLUG*FT2"> 0 </ixz>
     <iyz unit="SLUG*FT2"> 0 </iyz>
 
-    <emptywt unit="KG">0.109995</emptywt>
+    <emptywt unit="KG">0.179995</emptywt>
     <location name="CG" unit="M">
         <x> 0 </x>
         <y> 0 </y>
