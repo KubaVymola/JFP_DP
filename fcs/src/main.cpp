@@ -110,6 +110,7 @@ const uint8_t vertical_mode = VERTICAL_MODE_RATE;
 const uint8_t lateral_mode = LATERAL_MODE_ANGLE;
 
 Adafruit_Madgwick sensor_fusion;
+// Adafruit_NXPSensorFusion sensor_fusion;
 
 pid_state_t alt_sp_pid;         /* VERTICAL_MODE_SP */
 pid_state_t alt_rate_pid;       /* VERTICAL_MODE_RATE */
@@ -172,12 +173,13 @@ float to_jsbsim[12] = { 0 };
 #endif // HITL
 
 #ifdef MCU
-bmi160_t himu;
+int last_loop_time_ms;
 
 int8_t current_channel;
 int32_t last_captured_value;
 uint32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
 
+bmi160_t himu;
 #endif // MCU
 
 /**
@@ -300,6 +302,8 @@ extern "C" void init() {
     landing_event_start_s = -1.0f;
 
 #ifdef MCU
+    last_loop_time_ms = 0;
+
     current_channel = -1;
     last_captured_value = -1;
 #endif // MCU
@@ -642,6 +646,13 @@ int main(void) {
     HAL_Delay(3000);
 
     while (1) {
+
+        /**
+         * Fix the frequency to 50 Hz (20 ms)
+         */
+        if (HAL_GetTick() - last_loop_time_ms < 20) continue;
+        last_loop_time_ms = HAL_GetTick();
+
         
         // {
         //     // uint8_t hp203_status = hp203b_test(&hi2c1);
@@ -765,8 +776,6 @@ int main(void) {
         //     ret_z,
         //     0.3);
         // send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
-
-        HAL_Delay(20);
 
         HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     }

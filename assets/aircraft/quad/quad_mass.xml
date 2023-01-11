@@ -1,22 +1,211 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- General -->
+	<!-- Part Number S5_T_Plate -->
+	<!-- Part Name S5_T_Plate -->
+	<!-- Description -->
+	<!-- Material Name	ABS Plastic -->
+<!--  -->
+<!-- Manage -->
+	<!-- Item Number -->
+	<!-- Lifecycle -->
+	<!-- Revision -->
+	<!-- State	Working -->
+	<!-- Change Order -->
+<!--  -->
+<!-- Physical -->
+	<!-- Mass	109.995 g -->
+	<!-- Volume	1.038E+05 mm^3 -->
+	<!-- Density	0.001 g / mm^3 -->
+	<!-- Area	70128.719 mm^2 -->
+	<!-- World X,Y,Z	101.081 mm, -99.711 mm, -30.00 mm -->
+	<!-- Center of Mass	-0.21 mm, 0.024 mm, -2.727 mm -->
+	<!-- Bounding Box -->
+		<!-- Length	175.411 mm -->
+		<!-- Width	213.636 mm -->
+		<!-- Height	53.00 mm -->
+	<!-- Moment of Inertia at Center of Mass   (g mm^2) -->
+		<!-- Ixx	2.259E+05 -->
+		<!-- Ixy	-4.175 -->
+		<!-- Ixz	-1648.756 -->
+		<!-- Iyx	-4.175 -->
+		<!-- Iyy	2.455E+05 -->
+		<!-- Iyz	89.495 -->
+		<!-- Izx	-1648.756 -->
+		<!-- Izy	89.495 -->
+		<!-- Izz	4.159E+05 -->
+	<!-- Moment of Inertia at Origin   (g mm^2) -->
+		<!-- Ixx	2.267E+05 -->
+		<!-- Ixy	-3.627 -->
+		<!-- Ixz	-1711.633 -->
+		<!-- Iyx	-3.627 -->
+		<!-- Iyy	2.464E+05 -->
+		<!-- Iyz	96.621 -->
+		<!-- Izx	-1711.633 -->
+		<!-- Izy	96.621 -->
+		<!-- Izz	4.160E+05 -->
+
+
+
 <mass_balance>
     <!-- ? Orig from F450 -->
     <!-- <ixx unit="KG*M2">0.0190</ixx> -->
     <!-- <iyy unit="KG*M2">0.0190</iyy> -->
     <!-- <izz unit="KG*M2">0.0252</izz> -->
 
-    <ixx unit="KG*M2">0.0290</ixx>
-    <iyy unit="KG*M2">0.0290</iyy>
-    <izz unit="KG*M2">0.0352</izz>
+    <ixx unit="KG*M2">0.0002259</ixx>
+    <iyy unit="KG*M2">0.0002455</iyy>
+    <izz unit="KG*M2">0.0004159</izz>
     <ixy unit="SLUG*FT2"> 0 </ixy>
     <ixz unit="SLUG*FT2"> 0 </ixz>
     <iyz unit="SLUG*FT2"> 0 </iyz>
 
-    <emptywt unit="KG">0.6</emptywt>
+    <emptywt unit="KG">0.109995</emptywt>
     <location name="CG" unit="M">
         <x> 0 </x>
         <y> 0 </y>
         <z> 0 </z>
     </location>
+
+    <pointmass name="M1">
+        <form shape="cylinder">
+            <radius unit="M"> 0.03 </radius>
+            <length unit="M"> 0.017 </length>
+        </form>
+        <weight unit="KG"> 0.0304 </weight>
+        <location unit="M">
+            <x>  0.066 </x>
+            <y>  0.09 </y>
+            <z> -0.001 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="Prop1">
+        <form shape="cylinder">
+            <radius unit="IN"> 5.1 </radius>
+            <length unit="M">  0.001 </length>
+        </form>
+        <weight unit="KG"> 0.004 </weight>
+        <location unit="M">
+            <x> 0.066 </x>
+            <y> 0.09 </y>
+            <z> 0.0005 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="M2">
+        <form shape="cylinder">
+            <radius unit="M"> 0.03 </radius>
+            <length unit="M"> 0.017 </length>
+        </form>
+        <weight unit="KG"> 0.0304 </weight>
+        <location unit="M">
+            <x> -0.066 </x>
+            <y>  0.09 </y>
+            <z> -0.001 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="Prop2">
+        <form shape="cylinder">
+            <radius unit="IN"> 5.1 </radius>
+            <length unit="M">  0.001 </length>
+        </form>
+        <weight unit="KG"> 0.004 </weight>
+        <location unit="M">
+            <x> -0.066 </x>
+            <y>  0.09 </y>
+            <z>  0.0005 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="M3">
+        <form shape="cylinder">
+            <radius unit="M"> 0.03 </radius>
+            <length unit="M"> 0.017 </length>
+        </form>
+        <weight unit="KG"> 0.0304 </weight>
+        <location unit="M">
+            <x>  0.066 </x>
+            <y> -0.09 </y>
+            <z> -0.001 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="Prop3">
+        <form shape="cylinder">
+            <radius unit="IN"> 5.1 </radius>
+            <length unit="M">  0.001 </length>
+        </form>
+        <weight unit="KG"> 0.004 </weight>
+        <location unit="M">
+            <x>  0.066 </x>
+            <y> -0.09 </y>
+            <z>  0.0005 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="M4">
+        <form shape="cylinder">
+            <radius unit="M"> 0.03 </radius>
+            <length unit="M"> 0.017 </length>
+        </form>
+        <weight unit="KG"> 0.0304 </weight>
+        <location unit="M">
+            <x> -0.066 </x>
+            <y> -0.09 </y>
+            <z> -0.001 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="Prop4">
+        <form shape="cylinder">
+            <radius unit="IN"> 5.1 </radius>
+            <length unit="M">  0.001 </length>
+        </form>
+        <weight unit="KG"> 0.004 </weight>
+        <location unit="M">
+            <x> -0.066 </x>
+            <y> -0.09 </y>
+            <z>  0.0005 </z>
+        </location>
+    </pointmass>
+    
+    <pointmass name="Battery">
+        <form shape="ball">
+            <radius unit="IN"> 2 </radius>
+        </form>
+        <weight unit="KG"> 0.275 </weight>
+        <location unit="M">
+            <x> 0.0 </x>
+            <y> 0.0 </y>
+            <z> 0.033 </z>
+        </location>
+    </pointmass>
+
+    <pointmass name="RC Receiver">
+        <form shape="ball">
+            <radius unit="IN"> 1 </radius>
+        </form>
+        <weight unit="KG"> 0.006 </weight>
+        <location unit="M">
+            <x> -0.06 </x>
+            <y>  0.0 </y>
+            <z>  0.025 </z>
+        </location>
+    </pointmass>
+
+
+    <pointmass name="FC+ESC">
+        <form shape="ball">
+            <radius unit="IN"> 1.5 </radius>
+        </form>
+        <weight unit="KG"> 0.030 </weight>
+        <location unit="M">
+            <x> 0.0 </x>
+            <y> 0.0 </y>
+            <z> 0.01 </z>
+        </location>
+    </pointmass>
+
 </mass_balance>

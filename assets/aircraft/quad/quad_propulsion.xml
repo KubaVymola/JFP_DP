@@ -7,7 +7,7 @@
             <location unit="M">
                 <x> 0.07 </x>
                 <y> 0.09 </y>
-                <z> 0.0  </z>
+                <z> 0.0005  </z>
             </location>
             <orient unit="DEG">
                 <roll>  0.0  </roll>
@@ -25,7 +25,7 @@
             <location unit="M">
                 <x> -0.07 </x>
                 <y>  0.09 </y>
-                <z>  0.0  </z>
+                <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
                 <roll>  0.0  </roll>
@@ -43,7 +43,7 @@
             <location unit="M">
                 <x>  0.07 </x>
                 <y> -0.09 </y>
-                <z>  0.0  </z>
+                <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
                 <roll>  0.0  </roll>
@@ -61,7 +61,7 @@
             <location unit="M">
                 <x> -0.07 </x>
                 <y> -0.09 </y>
-                <z>  0.0  </z>
+                <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
                 <roll>  0.0  </roll>
