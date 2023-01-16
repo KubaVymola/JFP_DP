@@ -227,23 +227,22 @@ extern "C" void init() {
     printf("Hello from FCS\n");
 #endif // SITL
 
-    pid_init(alt_sp_pid,    0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
-    pid_init(alt_rate_pid,  0.10,  0.05,  0.08,     0.15, -0.5, 0.5);
+    pid_init(alt_sp_pid,    0.05,  0.025,  0.04,     0.15, -0.5, 0.5);
+    pid_init(alt_rate_pid,  0.1,   0.001,  0.06,     0.15, -0.5, 0.5);
     
-    pid_init(yaw_sp_pid,    0.012, 0.02,  0.005,    0.15, -0.2, 0.2);
-    pid_init(yaw_rate_pid,  0.008, 0.0,   0.0005,   0.15, -0.2, 0.2);
+    pid_init(yaw_sp_pid,    0.0006, 0.0002, 0.0025,   0.15, -0.2, 0.2);
+    pid_init(yaw_rate_pid,  0.0004, 0.0,    0.00009,   0.15, -0.2, 0.2);
     
     pid_init(x_body_pid,    4,     0.1,   4,        0.15, -10,  10);  // Output is used as roll  setpoint
     pid_init(y_body_pid,    4,     0.1,   4,        0.15, -10,  10);  // Output is used as pitch setpoint
 
-    pid_init(roll_pid,      0.002, 0,     0.0012,   0.15, -0.2, 0.2);
-    pid_init(pitch_pid,     0.002, 0,     0.0012,   0.15, -0.2, 0.2);
+    pid_init(roll_pid,      0.0003, 0.00002,  0.00005,   0.15, -0.2, 0.2);
+    pid_init(pitch_pid,     0.0003, 0.00002,  0.00005,   0.15, -0.2, 0.2);
 
-    pid_init(roll_rate_pid,  0.002, 0,     0.0012,   0.15, -0.2, 0.2);
-    pid_init(pitch_rate_pid, 0.002, 0,     0.0012,   0.15, -0.2, 0.2);
+    pid_init(roll_rate_pid,  0.002, 0,     0.0012,  0.15, -0.2, 0.2);
+    pid_init(pitch_rate_pid, 0.002, 0,     0.0012,  0.15, -0.2, 0.2);
 
-    pid_integrator_disable(roll_pid);
-    pid_integrator_disable(pitch_pid);
+    disable_pid_integrators();
 
     time_s = 0;
     prev_time_s = -1;

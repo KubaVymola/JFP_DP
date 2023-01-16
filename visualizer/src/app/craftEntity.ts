@@ -2,7 +2,7 @@ import { Quaternion, Scene, TransformNode, Vector3 } from "@babylonjs/core";
 import { DEG_TO_RAD } from "./constants";
 import Entity from "./entity";
 
-const SPINNER_COEF = 1 / 10;
+const SPINNER_COEF = 1 / 30;
 
 class CraftEntity extends TransformNode {
     // posOffset: Vector3;

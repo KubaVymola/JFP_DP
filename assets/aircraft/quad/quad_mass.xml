@@ -68,9 +68,8 @@
     </location>
 
     <pointmass name="M1">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="M"> 0.03 </radius>
-            <length unit="M"> 0.017 </length>
         </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
@@ -81,9 +80,8 @@
     </pointmass>
 
     <pointmass name="Prop1">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="IN"> 5.1 </radius>
-            <length unit="M">  0.001 </length>
         </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
@@ -94,9 +92,8 @@
     </pointmass>
 
     <pointmass name="M2">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="M"> 0.03 </radius>
-            <length unit="M"> 0.017 </length>
         </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
@@ -107,9 +104,8 @@
     </pointmass>
 
     <pointmass name="Prop2">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="IN"> 5.1 </radius>
-            <length unit="M">  0.001 </length>
         </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
@@ -120,9 +116,8 @@
     </pointmass>
 
     <pointmass name="M3">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="M"> 0.03 </radius>
-            <length unit="M"> 0.017 </length>
         </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
@@ -133,9 +128,8 @@
     </pointmass>
 
     <pointmass name="Prop3">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="IN"> 5.1 </radius>
-            <length unit="M">  0.001 </length>
         </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
@@ -146,9 +140,8 @@
     </pointmass>
 
     <pointmass name="M4">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="M"> 0.03 </radius>
-            <length unit="M"> 0.017 </length>
         </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
@@ -159,9 +152,8 @@
     </pointmass>
 
     <pointmass name="Prop4">
-        <form shape="cylinder">
+        <form shape="ball">
             <radius unit="IN"> 5.1 </radius>
-            <length unit="M">  0.001 </length>
         </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">

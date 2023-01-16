@@ -83,14 +83,14 @@
             <property> propulsion/engine[3]/pitch-angle-rad </property>
         </from_jsbsim>
         
-        <file>3d/quad.obj</file>
-        <node mesh="quad_body_quad.001">
-            <node mesh="aft_right_prop_quad.002">
+        <file>3d/quad_v2.obj</file>
+        <node mesh="quad_fusion360_v2">
+            <node mesh="aft_right_quad_fusion360_v2.001">
                 <spinner_property> propulsion/engine/propeller-rpm </spinner_property>
                 <prop_sense_property> propulsion/engine/propeller-sense </prop_sense_property>
                 <pivot>
-                    <x> 0.065 </x>
-                    <y> 0.09  </y>
+                    <x> 0.066538 </x>
+                    <y> 0.090709 </y>
                     <z> 0.0   </z>
                 </pivot>
                 <axis>
@@ -101,8 +101,8 @@
             </node>
             <node>
                 <position>
-                    <x>  0.07 </x>
-                    <y>  0.09 </y>
+                    <x>  0.066538 </x>
+                    <y>  0.090709 </y>
                     <z> -0.01 </z>
                 </position>
                 <thrust_property> propulsion/engine/thrust-lbs </thrust_property>
@@ -110,12 +110,12 @@
                 <engine_yaw_property> propulsion/engine/yaw-angle-rad </engine_yaw_property>
             </node>
             
-            <node mesh="front_right_prop_quad.004">
+            <node mesh="fwd_right_quad_fusion360_v2.002">
                 <spinner_property> propulsion/engine[1]/propeller-rpm  </spinner_property>
                 <prop_sense_property> propulsion/engine[1]/propeller-sense </prop_sense_property>
                 <pivot>
-                    <x> -0.068 </x>
-                    <y>  0.09  </y>
+                    <x> -0.066373 </x>
+                    <y>  0.090825 </y>
                     <z>  0.0   </z>
                 </pivot>
                 <axis>
@@ -126,8 +126,8 @@
             </node>
             <node>
                 <position>
-                    <x> -0.07 </x>
-                    <y>  0.09 </y>
+                    <x> -0.066373 </x>
+                    <y>  0.090825 </y>
                     <z> -0.01 </z>
                 </position>
                 <thrust_property> propulsion/engine[1]/thrust-lbs </thrust_property>
@@ -135,12 +135,12 @@
                 <engine_pitch_property> propulsion/engine[1]/pitch-angle-rad </engine_pitch_property>
             </node>
 
-            <node mesh="aft_left_prop_quad">
+            <node mesh="aft_left_quad_fusion360_v2.003">
                 <spinner_property> propulsion/engine[2]/propeller-rpm  </spinner_property>
                 <prop_sense_property> propulsion/engine[2]/propeller-sense </prop_sense_property>
                 <pivot>
-                    <x>  0.065 </x>
-                    <y> -0.09  </y>
+                    <x>  0.066222 </x>
+                    <y> -0.090516 </y>
                     <z>  0.0   </z>
                 </pivot>
                 <axis>
@@ -151,8 +151,8 @@
             </node>
             <node>
                 <position>
-                    <x>  0.07 </x>
-                    <y> -0.09 </y>
+                    <x>  0.066222 </x>
+                    <y> -0.090516 </y>
                     <z> -0.01 </z>
                 </position>
                 <thrust_property> propulsion/engine[2]/thrust-lbs </thrust_property>
@@ -160,12 +160,12 @@
                 <engine_yaw_property> propulsion/engine[2]/yaw-angle-rad </engine_yaw_property>
             </node>
             
-            <node mesh="front_left_prop_quad.003">
+            <node mesh="fwd_left_quad_fusion360_v2.004">
                 <spinner_property> propulsion/engine[3]/propeller-rpm </spinner_property>
                 <prop_sense_property> propulsion/engine[3]/propeller-sense </prop_sense_property>
                 <pivot>
-                    <x> -0.065 </x>
-                    <y> -0.09  </y>
+                    <x> -0.066373 </x>
+                    <y> -0.090400 </y>
                     <z>  0.0   </z>
                 </pivot>
                 <axis>
@@ -176,8 +176,8 @@
             </node>
             <node>
                 <position>
-                    <x> -0.07 </x>
-                    <y> -0.09 </y>
+                    <x> -0.066373 </x>
+                    <y> -0.090400 </y>
                     <z> -0.01 </z>
                 </position>
                 <thrust_property> propulsion/engine[3]/thrust-lbs </thrust_property>

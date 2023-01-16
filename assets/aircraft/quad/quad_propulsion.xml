@@ -5,8 +5,8 @@
     <engine file="EMAX_ECOII_2306_1700">
         <thruster file="Dalprop_5146">
             <location unit="M">
-                <x> 0.07 </x>
-                <y> 0.09 </y>
+                <x> 0.066538 </x>
+                <y> 0.090709 </y>
                 <z> 0.0005  </z>
             </location>
             <orient unit="DEG">
@@ -23,8 +23,8 @@
     <engine file="EMAX_ECOII_2306_1700">
         <thruster file="Dalprop_5146">
             <location unit="M">
-                <x> -0.07 </x>
-                <y>  0.09 </y>
+                <x> -0.066373 </x>
+                <y>  0.090825 </y>
                 <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
@@ -41,8 +41,8 @@
     <engine file="EMAX_ECOII_2306_1700">
         <thruster file="Dalprop_5146">
             <location unit="M">
-                <x>  0.07 </x>
-                <y> -0.09 </y>
+                <x>  0.066222 </x>
+                <y> -0.090516 </y>
                 <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
@@ -59,8 +59,8 @@
     <engine file="EMAX_ECOII_2306_1700">
         <thruster file="Dalprop_5146">
             <location unit="M">
-                <x> -0.07 </x>
-                <y> -0.09 </y>
+                <x> -0.066373 </x>
+                <y> -0.090400 </y>
                 <z>  0.0005  </z>
             </location>
             <orient unit="DEG">
