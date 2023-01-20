@@ -27,6 +27,7 @@ struct sim_config_t {
     int sitl_div;
 
     uint16_t ws_port;
+    uint16_t cmd_port;
 };
 
 #endif

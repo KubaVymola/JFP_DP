@@ -180,6 +180,11 @@ void SerialInterface::handle_event(const std::string &event_name, json *sim_data
 }
 
 
+/**
+ * Send data up to 64 - HEADER_SIZE - FOOTER_SIZE bytes. Currently can send only one packet.
+ * 
+ * @param channel_number 0: commands, 1: telemetry, 2: HITL data, 3: debug log
+*/
 void SerialInterface::send_data_usb(int serial_port, int channel_number, void *data, uint16_t data_size, int item_size, int buffer_size) {
     uint16_t current_offset = 0;
     uint16_t maximum_data_in_packet = round_down_to_multiple(buffer_size - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE, item_size);
@@ -237,7 +242,7 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         /**
          * Invalid packet received
          */
-        if (channel_number > 0x02
+        if (channel_number > 0x03
         || current_data[1] != 0x55
         || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || data_size > 64
@@ -249,9 +254,18 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         /**
          * Receive and print command output
          */
-        if (channel_number == 0x00) {
+        // if (channel_number == 0x00) {
+        //     write(STDOUT_FILENO, current_data + PACKET_HEADER_SIZE, data_size);
+        //     printf("\n");
+        // }
+
+        /**
+         * Receive and print debug output
+         */
+        if (channel_number == 0x03) {
+            // printf("FCS DEBUG: ");
+            // printf("\n");
             write(STDOUT_FILENO, current_data + PACKET_HEADER_SIZE, data_size);
-            printf("\n");
         }
 
         /**
@@ -260,7 +274,7 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         if (channel_number == 0x01) {
             if (save_telemetry_file.is_open()) {
                 save_telemetry_file.write(current_data + PACKET_HEADER_SIZE, data_size);
-                save_telemetry_file.flush();
+                // save_telemetry_file.flush();
             }
 
             if (use_rt_telem || use_replay_telem) {

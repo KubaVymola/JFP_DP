@@ -10,7 +10,7 @@ __weak void packet_from_usb_callback(uint8_t channel_number, uint8_t *current_da
 /**
  * Send data up to 64 - HEADER_SIZE - FOOTER_SIZE bytes. Currently can send only one packet.
  * 
- * @param channel_number 0: commands, 1: telemetry, 2: HITL data
+ * @param channel_number 0: commands, 1: telemetry, 2: HITL data, 3: debug log
  * @param data pointer to the data
  * @param data_size how many bytes of data to send
  * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
@@ -65,7 +65,7 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
         /**
          * Invalid packet received (no 0 at the end)
          */
-        if (channel_number > 0x02
+        if (channel_number > 0x03
         || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || current_data[1] != 0x55
         || data_size > 64

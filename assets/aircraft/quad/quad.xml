@@ -286,6 +286,8 @@
             <property mapping="ext/ecef-q-4"> telem/ecef-q-4 </property>
 
             <property mapping="ext/altitude-m"> telem/alt-m </property>
+
+            <property> telem/alt-est-m </property>
         </telemetry>
     </fcs_interface>
     

@@ -3,6 +3,7 @@ OPT =
 
 BUILD_DIR = build
 
+AUTOARM =
 TARGET = 
 FAMILY = 
 VENDOR =
@@ -11,6 +12,7 @@ OUTPUT_TYPE =
 # ==== TARGET SETTINGS ====
 # Target list:
 #   - STM32L151
+#   - STM32F405
 
 ifeq ($(TARGET), STM32L151)
 FAMILY = STM32L1
@@ -18,7 +20,7 @@ VENDOR = ST
 OUTPUT_TYPE = MCU
 endif
 
-ifeq ($(TARGET), STM32F403)
+ifeq ($(TARGET), STM32F405)
 FAMILY = STM32F4
 VENDOR = ST
 OUTPUT_TYPE = MCU
@@ -110,25 +112,12 @@ endif
 # VENDOR SETTINGS
 ####################################################################################################
 ifeq ($(VENDOR),ST)
-C_SOURCES += \
-src/usb/usb_device.c \
-src/usb/usbd_desc.c \
-src/usb/usbd_cdc_if.c \
-src/usb/usbd_conf.c \
-src/usb/usbd_core.c \
-src/usb/usbd_ctlreq.c \
-src/usb/usbd_ioreq.c \
-src/usb/usbd_cdc.c \
-src/hal/st/config.c \
-src/hal/st/gpio.c \
-src/hal/st/dma.c \
-src/hal/st/i2c.c \
-src/hal/st/tim.c \
-src/hal/st/usart.c
 CXX_SOURCES += \
 src/drivers/bmi160.cpp \
 src/drivers/hp203b.cpp
-INCLUDES += -Isrc/drivers -Isrc/usb -Isrc/hal/st -Isrc/hal/st/cmsis
+C_SOURCES += \
+src/drivers/w25qxx.c
+INCLUDES += -Isrc/drivers -Isrc/hal/st -Isrc/hal/st/cmsis
 DEFS += -DUSE_HAL_DRIVER -DVENDOR_ST
 LDFLAGS += -u _printf_float
 endif
@@ -162,13 +151,87 @@ src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_exti.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_tim.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_tim_ex.c \
 src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_i2c.c \
-src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_uart.c
+src/hal/st/stm32l1/hal_driver/stm32l1xx_hal_uart.c \
+src/hal/st/stm32l1/config.c \
+src/hal/st/stm32l1/gpio.c \
+src/hal/st/stm32l1/dma.c \
+src/hal/st/stm32l1/i2c.c \
+src/hal/st/stm32l1/tim.c \
+src/hal/st/stm32l1/usart.c \
+src/usb/stm32l1/usbd_conf.c \
+src/usb/stm32l1/usb_device.c \
+src/usb/stm32l1/usbd_desc.c \
+src/usb/stm32l1/usbd_cdc_if.c \
+src/usb/stm32l1/usbd_core.c \
+src/usb/stm32l1/usbd_ctlreq.c \
+src/usb/stm32l1/usbd_ioreq.c \
+src/usb/stm32l1/usbd_cdc.c
 INCLUDES += \
--Isrc/hal/st/stm32l1/cmsis \
+-Isrc/hal/st/stm32l1 \
 -Isrc/hal/st/stm32l1/core \
+-Isrc/hal/st/stm32l1/cmsis \
 -Isrc/hal/st/stm32l1/hal_driver \
--Isrc/hal/st/stm32l1/hal_driver/Legacy
+-Isrc/hal/st/stm32l1/hal_driver/Legacy \
+-Isrc/usb/stm32l1
 DEFS += -DSTM32L1
+endif
+
+ifeq ($(FAMILY),STM32F4)
+CPU = -mcpu=cortex-m4
+FPU = -mfpu=fpv4-sp-d16
+FLOAT-ABI = -mfloat-abi=hard
+C_SOURCES += \
+src/hal/st/stm32f4/config.c \
+src/hal/st/stm32f4/gpio.c \
+src/hal/st/stm32f4/spi.c \
+src/hal/st/stm32f4/tim.c \
+src/hal/st/stm32f4/adc.c \
+src/hal/st/stm32f4/i2c.c \
+src/hal/st/stm32f4/usart.c \
+src/hal/st/stm32f4/core/stm32f4xx_it.c \
+src/hal/st/stm32f4/core/stm32f4xx_hal_msp.c \
+src/hal/st/stm32f4/core/system_stm32f4xx.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_pcd.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_pcd_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_ll_usb.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_rcc.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_rcc_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_flash.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_flash_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_flash_ramfunc.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_gpio.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_dma_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_dma.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_pwr.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_pwr_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_cortex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_exti.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_spi.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_tim.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_tim_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_adc.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_adc_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_ll_adc.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_i2c.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_i2c_ex.c \
+src/hal/st/stm32f4/hal_driver/stm32f4xx_hal_uart.c \
+src/usb/stm32f4/usbd_conf.c \
+src/usb/stm32f4/usb_device.c \
+src/usb/stm32f4/usbd_desc.c \
+src/usb/stm32f4/usbd_cdc_if.c \
+src/usb/stm32f4/usbd_core.c \
+src/usb/stm32f4/usbd_ctlreq.c \
+src/usb/stm32f4/usbd_ioreq.c \
+src/usb/stm32f4/usbd_cdc.c
+INCLUDES += \
+-Isrc/hal/st/stm32f4 \
+-Isrc/hal/st/stm32f4/core \
+-Isrc/hal/st/stm32f4/cmsis \
+-Isrc/hal/st/stm32f4/hal_driver \
+-Isrc/hal/st/stm32f4/hal_driver/Legacy \
+-Isrc/usb/stm32f4
+DEFS += -DSTM32F4
 endif
 
 ####################################################################################################
@@ -180,10 +243,18 @@ DEFS += -DSTM32L151xB
 LDSCRIPT = src/hal/st/stm32l1/stm32l151/gcc/STM32L151C8Tx_FLASH.ld
 endif
 
+ifeq ($(TARGET),STM32F405)
+ASM_SOURCES += src/hal/st/stm32f4/stm32f405/gcc/startup_stm32f405xx.s
+DEFS += -DSTM32F405xx
+LDSCRIPT = src/hal/st/stm32f4/stm32f405/gcc/STM32F405RGTx_FLASH.ld
+endif
 
-
-
-
+####################################################################################################
+# AUTOARM
+####################################################################################################
+ifeq ($(AUTOARM),1)
+DEFS += -DAUTOARM
+endif
 
 # all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 all: sitl

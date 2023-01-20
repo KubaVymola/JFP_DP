@@ -27,17 +27,19 @@
 
 #ifdef MCU
 #include "main.h"
-#include "dma.h"
-#include "i2c.h"
 #include "tim.h"
-#include "usart.h"
-#include "usb_device.h"
 #include "gpio.h"
+#include "spi.h"
+#include "i2c.h"
+#include "usb_device.h"
 #include "usbd_cdc_if.h"
+// #include "usart.h"
+// #include "dma.h"
 
 #include "usb-packets.h"
 #include "bmi160.h"
 #include "hp203b.h"
+#include "w25qxx.h"
 #endif // MCU
 
 /**
@@ -49,8 +51,12 @@
  * ==== DEFINES ====
  */
 
-// #define AUTO_ARM                 true
+#ifdef AUTOARM
+#define AUTO_ARM                 true
+#else
 #define AUTO_ARM                 false
+#endif
+
 
 
 #define HEADING_MODE_SP         1  /* Heading is held at a fixed value */
@@ -105,9 +111,9 @@
 char cmd_string[256];
 
 const float rest_time_s = 5.0;
-const uint8_t heading_mode = HEADING_MODE_RATE;
-const uint8_t vertical_mode = VERTICAL_MODE_RATE;
-const uint8_t lateral_mode = LATERAL_MODE_ANGLE;
+const uint8_t heading_mode = HEADING_MODE_SP;
+const uint8_t vertical_mode = VERTICAL_MODE_SP;
+const uint8_t lateral_mode = LATERAL_MODE_FIXED_POS;
 
 Adafruit_Madgwick sensor_fusion;
 // Adafruit_NXPSensorFusion sensor_fusion;
@@ -177,9 +183,10 @@ int last_loop_time_ms;
 
 int8_t current_channel;
 int32_t last_captured_value;
-uint32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
+int32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
 
-bmi160_t himu;
+bmi160_t hbmi160;
+hp203b_t hhp203b;
 #endif // MCU
 
 /**
@@ -296,7 +303,7 @@ extern "C" void init() {
     
     is_airborne = false;
     is_armed = false;
-    arm_channel_norm_prev = 1.0f; /* Conservative for safety */
+    arm_channel_norm_prev = 1.0f; /* Conservative, for extra safety */
     takeoff_event_start_s = -1.0f;
     landing_event_start_s = -1.0f;
 
@@ -306,7 +313,6 @@ extern "C" void init() {
     current_channel = -1;
     last_captured_value = -1;
 #endif // MCU
-
     sensor_fusion.begin(50.0);
 }
 
@@ -369,7 +375,7 @@ extern "C" void loop(void) {
     const float deltaT = time_s - prev_time_s;
     prev_time_s = time_s;
 
-    if (deltaT == 0.0f) return;
+    if (deltaT <= 0.0f) return;
 
     /**
      * Calibration
@@ -400,6 +406,8 @@ extern "C" void loop(void) {
     }
 #endif
 
+    if (acc_norm_mean <= 0.1f) acc_norm_mean = 1.0f;
+
     ax_g = ax_g / acc_norm_mean;
     ay_g = ay_g / acc_norm_mean;
     az_g = az_g / acc_norm_mean;
@@ -427,10 +435,11 @@ extern "C" void loop(void) {
      * ==== Altitude ====
      */
     alt_measurement_m = (288.15f / -0.0065f) * (powf(pressure_pa / 101325.0f, (-8.314f * -0.0065f) / (G_TO_MPS * 0.0289640f)) - 1);    
+    // alt_measurement_m = (275.15f / -0.0065f) * (powf(pressure_pa / 100600.0f, (-8.314f * -0.0065f) / (G_TO_MPS * 0.0289640f)) - 1);    
     if (alt_measurement_m_prev == 0.0f) alt_measurement_m_prev = alt_measurement_m;
     if (alt_est_m_prev == 0.0f) alt_est_m_prev = alt_est_m;
 
-    alt_est_m = lowpass_filter_update(0.1f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
+    alt_est_m = lowpass_filter_update(0.05f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
     alt_rate_est_mps = complementary_filter_update(alt_rate_est_mps,
                                                    0.05,
                                                    (alt_est_m - alt_est_m_prev) / deltaT,  // barometer based altitude rate estimate
@@ -612,63 +621,44 @@ int main(void) {
     HAL_Init();
 
     SystemClock_Config();
-
-    MX_GPIO_Init();
-    MX_I2C1_Init();
+    
     MX_USB_DEVICE_Init();
+    MX_GPIO_Init();
+    MX_I2C2_Init();
+    MX_TIM3_Init();
     MX_TIM4_Init();
-    MX_TIM9_Init();
-    MX_TIM10_Init();
     MX_TIM11_Init();
-    // MX_DMA_Init();
-    // MX_USART1_UART_Init();
+    MX_SPI1_Init();
+    MX_SPI3_Init();
 
+    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
+    HAL_Delay(500);
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
-    bmi160_init(&himu, &hi2c1, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
+    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
+    hp203b_setup(&hhp203b, &hi2c2, 1);
+    W25qxx_Init();
 
-    hp203b_setup(&hi2c1);
+
+    // uint8_t input_buf[4] = { 1, 2, 3, 4};
+    // uint8_t output_buf[4] = { 0 };
+    // W25qxx_EraseSector(1);
+    // W25qxx_WriteSector(input_buf, 1, 0, 4);
+    // W25qxx_ReadSector(output_buf, 1, 0, 4);
+    // while (1);
+
 
     init();
 
-    HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+    HAL_TIM_IC_Start_IT(&htim11, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
-    htim10.Instance->CCR1 = 1000;
-    htim9.Instance->CCR1 = 1000;
-    htim9.Instance->CCR2 = 1000;
-    htim11.Instance->CCR1 = 1000;
-
-    HAL_Delay(3000);
+    HAL_Delay(2000);
 
     while (1) {
-
-        /**
-         * Fix the frequency to 50 Hz (20 ms)
-         */
-        if (HAL_GetTick() - last_loop_time_ms < 20) continue;
-        last_loop_time_ms = HAL_GetTick();
-
-        
-        // {
-        //     // uint8_t hp203_status = hp203b_test(&hi2c1);
-        //     float pressure = hp203b_get_pressure(&hi2c1);
-
-        //     char buf[128];
-        //     sprintf(buf, "pressure: %f\r\n", pressure);
-        //     CDC_Transmit_FS((uint8_t *)buf, strlen(buf));
-
-        //     HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
-        //     HAL_Delay(1000);
-
-        //     continue;
-        // }
-
-
-        
         // ==== MCU CODE ====
         // Time the main loop (100 Hz / 500 Hz / 1000 Hz)
         // Read sensors (possibly using DMA)
@@ -701,6 +691,13 @@ int main(void) {
         // Config file ?
         // ==== END SITL CODE ====
 
+
+        /**
+         * Fix the frequency to 50 Hz (20 ms)
+         */
+        if (HAL_GetTick() - last_loop_time_ms < 20) continue;
+        last_loop_time_ms = HAL_GetTick();
+
         
         #ifdef HITL
         __disable_irq();
@@ -709,27 +706,29 @@ int main(void) {
         #endif // HITL
 
         #ifdef INDEP
-        if (bmi160_get_data_rdy(&himu)) {
-            bmi160_update_acc_gyro_data(&himu);
+        if (bmi160_get_data_rdy(&hbmi160)) {
+            bmi160_update_acc_gyro_data(&hbmi160);
         }
         
         time_s = HAL_GetTick() / 1000.0f;
-        ax_g = himu.acc_x;
-        ay_g = himu.acc_y;
-        az_g = himu.acc_z;
-        gx_rad = himu.gyro_x * DEG_TO_RAD;
-        gy_rad = himu.gyro_y * DEG_TO_RAD;
-        gz_rad = himu.gyro_z * DEG_TO_RAD;
+        ax_g = hbmi160.acc_x;
+        ay_g = hbmi160.acc_y;
+        az_g = hbmi160.acc_z;
+        gx_rad = hbmi160.gyro_x * DEG_TO_RAD;
+        gy_rad = hbmi160.gyro_y * DEG_TO_RAD;
+        gz_rad = hbmi160.gyro_z * DEG_TO_RAD;
+
+        pressure_pa = hp203b_get_pressure_pa(&hhp203b);
 
         // TODO pressure
         #endif
 
         loop();
 
-        htim10.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
-        htim9.Instance->CCR1 = engine_1_cmd_norm * 1000.0f + 1000.0f;
-        htim9.Instance->CCR2 = engine_2_cmd_norm * 1000.0f + 1000.0f;
-        htim11.Instance->CCR1 = engine_3_cmd_norm * 1000.0f + 1000.0f;
+        htim3.Instance->CCR1 = engine_0_cmd_norm * 1000.0f + 1000.0f;
+        htim3.Instance->CCR2 = engine_1_cmd_norm * 1000.0f + 1000.0f;
+        htim4.Instance->CCR1 = engine_2_cmd_norm * 1000.0f + 1000.0f;
+        htim4.Instance->CCR2 = engine_3_cmd_norm * 1000.0f + 1000.0f;
 
         #ifdef HITL
         data_to_jsbsim(to_jsbsim);
@@ -739,42 +738,43 @@ int main(void) {
         /**
          * Simple debug output
          */
-        // char buf[256];
-        // sprintf(buf, "%f\r\n", alt_rate_est_mps);
-        // send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+        char buf[256];
+        sprintf(buf, "%f\r\n", alt_est_m);
+        send_data_over_usb_packets(0x03, (void *)buf, strlen(buf), 1, 64);
 
 
         /**
          * Rotate quaternion that's send via telemetry by -90 deg in pitch to correctly visualize
          * the vehicle in 3D
         */
-        // float ret_x =  0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
-        // float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
-        // float ret_z =  0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
-        // float ret_w = -0 * qx - -0.7071067811865475 * qy - 0 * qz + 0.7071067811865476 * qw;
+        float ret_x =  0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
+        float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
+        float ret_z =  0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
+        float ret_w = -0 * qx - -0.7071067811865475 * qy - 0 * qz + 0.7071067811865476 * qw;
 
 
         /**
          * Telemetry output
          */
-        // sprintf(buf, "%f," "%f,%f,%f,%f," "%f,%f,%f," "%f,%f,%f," "%f,%f,%f,%f," "%f\n",
-        //     time_s,
-        //     ctrl_channels_norm[0],
-        //     ctrl_channels_norm[1],
-        //     ctrl_channels_norm[2],
-        //     ctrl_channels_norm[3],
-        //     himu.acc_x,
-        //     himu.acc_y,
-        //     himu.acc_z,
-        //     yaw_est,
-        //     pitch_est,
-        //     roll_est,
-        //     ret_w,
-        //     ret_x,
-        //     ret_y,
-        //     ret_z,
-        //     0.3);
-        // send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
+        sprintf(buf, "%f," "%f,%f,%f,%f," "%f,%f,%f," "%f,%f,%f," "%f,%f,%f,%f," "%f," "%f\r\n",
+            time_s,
+            ctrl_channels_norm[0],
+            ctrl_channels_norm[1],
+            ctrl_channels_norm[2],
+            ctrl_channels_norm[3],
+            hbmi160.acc_x,
+            hbmi160.acc_y,
+            hbmi160.acc_z,
+            yaw_est_deg,
+            pitch_est_deg,
+            roll_est_deg,
+            ret_w,
+            ret_x,
+            ret_y,
+            ret_z,
+            0.3,
+            alt_est_m);
+        send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
 
         HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     }
@@ -784,34 +784,34 @@ int main(void) {
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     
     /**
-     * Input capture PPM (pin PB8)
+     * Input capture PPM (pin PB9)
      */
-    if (htim != &htim4) return;
+    if (htim == &htim11) {
+        int32_t current_captured_value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
 
-    int32_t current_captured_value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
+        if (last_captured_value == -1) {
+            last_captured_value = current_captured_value;
+            return;
+        }
 
-    if (last_captured_value == -1) {
+        int32_t difference = current_captured_value > last_captured_value
+                        ? current_captured_value - last_captured_value
+                        : 65535 - last_captured_value + current_captured_value;
+
         last_captured_value = current_captured_value;
-        return;
+
+        if (difference > 5000) {
+            current_channel = 0;
+            return;
+        }
+
+        if (current_channel < 0) return;
+        if (current_channel >= NUM_CTRL_CHANNELS) return;
+
+        ppm_us[current_channel] = difference;
+        ctrl_channels_norm[current_channel] = (difference - 1000) / 1000.0f;
+        current_channel++;
     }
-
-    int32_t difference = current_captured_value > last_captured_value
-                       ? current_captured_value - last_captured_value
-                       : 0xFFFF - last_captured_value + current_captured_value;
-
-    last_captured_value = current_captured_value;
-
-    if (difference > 5000) {
-        current_channel = 0;
-        return;
-    }
-
-    if (current_channel < 0) return;
-    if (current_channel >= NUM_CTRL_CHANNELS) return;
-
-    ppm_us[current_channel] = difference;
-    ctrl_channels_norm[current_channel] = (difference - 1000) / 1000.0f;
-    current_channel++;
 }
 
 

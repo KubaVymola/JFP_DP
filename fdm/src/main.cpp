@@ -243,6 +243,9 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         } else if (keyword == "--ws") {
             sim_config.ws_port = atoi(value.c_str());
 
+        } else if (keyword == "--cmd") {
+            sim_config.cmd_port = atoi(value.c_str());
+
         } else if (keyword == "--sitl") {
             sim_config.sitl_path = value;
 
@@ -352,6 +355,7 @@ void print_help() {
         "  --save_telem=<path>      specify path where the telemetry from the serial device will get saved\n"
         "  --rt_telem               do not run JSBSim, only log telemetry in real time\n"
         "  --ws=<port>              start a websocket server on a given port\n"
+        "  --cmd=<port>             open port for command input and output\n"
         "  --root_dir=<dir>         root path for JSBSim assets (aircraft, script, engine; default '.')\n"
         "  --sim_rate=<hertz>       how many iterations will the simulation do in a second\n"
         "  --sim_end=<seconds>      how long the simulation will run (0 for endless, default is 60)\n"

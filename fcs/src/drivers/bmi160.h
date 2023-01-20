@@ -7,8 +7,11 @@ extern "C" {
 
 #include <stdint.h>
 
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_i2c.h"
+#include "main.h"
+#include "gpio.h"
+#include "stm32xxxx_hal.h"
+#include "stm32xxxx_hal_spi.h"
+
 
 #define BMI160_I2C_ADDRESS              0xD0
 #define BMI160_I2C_ADDRESS_ALT          0xD2
@@ -104,7 +107,9 @@ extern "C" {
 
 
 struct bmi160_t {
-    I2C_HandleTypeDef *hi2c;
+    SPI_HandleTypeDef *hspi;
+    // I2C_HandleTypeDef *hi2c;
+
     uint8_t address;
 
     int16_t acc_raw[3];
@@ -132,12 +137,13 @@ struct bmi160_t {
  * @param sd0_pin 0 if SD0 is pulled to GND, 1 if SD0 is pulled to 3V3
  */
 void bmi160_init(struct bmi160_t *hbmi160,
-                 I2C_HandleTypeDef *hi2c,
+                 SPI_HandleTypeDef *hspi,
                  uint8_t sd0_pin,
                  uint8_t accel_rate,
                  uint8_t accel_range,
                  uint8_t gyro_rate,
                  uint8_t gyro_range);
+                //  I2C_HandleTypeDef *hi2c,
 
 /**
  * Called by the bmi160_init function
@@ -185,6 +191,9 @@ void bmi160_update_acc_gyro_data(struct bmi160_t *hbmi160);
 float bmi160_get_temp_data(struct bmi160_t *hbmi160);
 
 void bmi160_configure_interrupts(struct bmi160_t *hbmi160);
+
+void bmi160_spi_write(SPI_HandleTypeDef *hspi, uint8_t *buf, uint8_t len);
+void bmi160_spi_read(SPI_HandleTypeDef *hspi, uint8_t addr, uint8_t *buf, uint8_t len);
 
 #ifdef __cplusplus
 } // extern "C"
