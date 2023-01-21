@@ -21,6 +21,7 @@
 #include "serial_interface.h"
 #include "sim_config.h"
 #include "sim_events.h"
+#include "command_interface.h"
 
 using json = nlohmann::json;
 
@@ -93,6 +94,7 @@ int main(int argc, char **argv) {
     sim_config.print_all_properties = false;
     sim_config.root_dir = ".";
     sim_config.ws_port = 0;
+    sim_config.cmd_port = 0;
 
     sim_config.sitl_path = "";
     sim_config.sitl_div = 1;
@@ -115,11 +117,12 @@ int main(int argc, char **argv) {
     StateLogger state_logger;
     SITLInterface sitl_interface;
     SerialInterface serial_interface;
+    CommandInterface command_interface;
     
     std::thread push_thread;
     std::thread server_thread;
     std::thread sim_thread;
-    
+
     /**
      * Init
      */
@@ -133,6 +136,10 @@ int main(int argc, char **argv) {
         sim_events.register_client(EVENT_SIM_AFTER_ITER, &state_logger);
     }
 
+    if (sim_config.cmd_port != 0) {
+        command_interface.init(sim_config.cmd_port);
+    }
+
     if (!sim_config.sitl_path.empty()) {
         sitl_interface.sitl_init(sim_config, &sim_data);
         sim_events.register_client(EVENT_SIM_BEFORE_ITER, &sitl_interface);
@@ -140,7 +147,7 @@ int main(int argc, char **argv) {
     }
 
     if (!sim_config.serial_path.empty()) {
-        serial_interface.serial_init(sim_config, &sim_data);
+        serial_interface.serial_init(sim_config, &sim_data, &command_interface);
         sim_events.register_client(EVENT_SIM_BEFORE_ITER, &serial_interface);
         sim_events.register_client(EVENT_SIM_AFTER_ITER,  &serial_interface);
     }
@@ -275,6 +282,13 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
             sim_config.command_line_properties.push_back(prop_name);
             sim_config.command_line_property_values.push_back(prop_value);
             
+        } else if (keyword == "--sitl_config") {
+            std::string prop_name = value.substr(0, value.find("="));
+            std::string propValueString = value.substr(value.find("=") + 1);
+            double prop_value = atof(propValueString.c_str());
+            
+            sim_config.sitl_config_props[prop_name] = prop_value;
+            
         } else if (keyword.substr(0, 2) != "--" && value.empty()) {
             if (position_arg == 0) {
                 sim_config.script_path = keyword;
@@ -361,6 +375,7 @@ void print_help() {
         "  --sim_end=<seconds>      how long the simulation will run (0 for endless, default is 60)\n"
         "  --jsbsim_output=<path>   path to JSBSim output definition (legacy)\n"
         "  --set=<property=value>   set property to given value\n"
+        "  --sitl_config=<property=value>  set property for SITL tunning\n"
         "  --realtime               the simulation will run in real time (default)\n"
         "  --batch                  the simulation will run as fast as possible\n"
         "  --print_props            print all properties before running\n"

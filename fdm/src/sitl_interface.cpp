@@ -21,6 +21,7 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
     }
 
     init_fcs            = (init_func)dlsym(lib, "init");
+    init_override       = (init_override_func)dlsym(lib, "init_override");
     data_from_jsbsim    = (data_to_fcs_func)dlsym(lib, "data_from_jsbsim");
     loop_fcs            = (loop_func)dlsym(lib, "loop");
     data_to_jsbsim      = (data_from_fcs_func)dlsym(lib, "data_to_jsbsim");
@@ -31,6 +32,13 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
      * Init FCS
      */
     init_fcs(sim_data);
+
+
+    // TODO add map
+    // std::map<std::string, float> test_map;
+    // test_map["test"] = 1.16f;
+
+    init_override(sim_config.sitl_config_props);
 }
 
 void SITLInterface::parse_xml_config(sim_config_t& sim_config) {

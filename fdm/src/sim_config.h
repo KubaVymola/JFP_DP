@@ -1,6 +1,10 @@
 #ifndef SIMCONFIG_H
 #define SIMCONFIG_H
 
+#include <vector>
+#include <string>
+#include <map>
+
 struct sim_config_t {
     std::string root_dir;
     std::string script_path;
@@ -14,6 +18,8 @@ struct sim_config_t {
     std::vector<std::string> jsbsim_outputs;
     std::vector<std::string> command_line_properties;
     std::vector<double> command_line_property_values;
+
+    std::map<std::string, float> sitl_config_props;
 
     bool realtime;   // realtime == !batch
     bool print_all_properties;

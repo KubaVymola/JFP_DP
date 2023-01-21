@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "nlohmann/json.hpp"
 #include "tinyxml2.h"
@@ -13,6 +14,7 @@
 using json = nlohmann::json;
 
 typedef void (*init_func)(json *);
+typedef void (*init_override_func)(std::map<std::string, float>&);
 typedef void (*data_to_fcs_func)(float *);
 typedef void (*loop_func)(void);
 typedef void (*data_from_fcs_func)(float *);
@@ -35,6 +37,7 @@ private:
     std::vector<std::string> to_jsbsim_properties;
 
     init_func init_fcs;
+    init_override_func init_override;
     data_to_fcs_func data_from_jsbsim;
     loop_func loop_fcs;
     data_from_fcs_func data_to_jsbsim;

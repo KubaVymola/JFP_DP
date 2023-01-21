@@ -1,4 +1,5 @@
 add_executable(fdm "${JFP_SOURCES}"
+    command_interface.cpp
     jsbsim_interface.cpp
     main.cpp
     realtime_loop.cpp

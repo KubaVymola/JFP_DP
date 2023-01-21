@@ -37,7 +37,7 @@ $ ./fdm <script_file> [<output_file> [<output_file> ...]] <options>
 ### SITL example
 
 ```
-$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --sitl_div=5 --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sim_end=-1
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --sitl_div=5 --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sitl_config=alt_sp_pid_p=0.035 --sim_end=-1
 ```
 
 ### HITL example

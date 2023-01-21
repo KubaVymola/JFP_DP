@@ -22,7 +22,10 @@
 
 #ifdef SITL
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+#include <string>
+#include <map>
 #endif // SITL
 
 #ifdef MCU
@@ -88,8 +91,9 @@
 
 #define LANDING_LIN_ACC_THRESHLD 0.1f
 #define LANDING_RATES_THRESHLD   1.0f
+#define LANDING_VERTICAL_RATE_THRESHLD 2.0f
 #define LANDING_THRUST_POS_THRESHLD 0.2f
-#define LANDING_EVENT_DURATION   1.0f /* Amount of seconds required to hold the conditions until detection */
+#define LANDING_EVENT_DURATION   2.0f /* Amount of seconds required to hold the conditions until detection */
 
 #define EVENT_TIME_INVALID      (-1.0f)
 
@@ -155,6 +159,8 @@ float yaw_rate_dps;
 float roll_rate_dps;
 float pitch_rate_dps;
 
+float alt_sp;
+
 float qw, qx, qy, qz;
 float lin_acc_x_g, lin_acc_y_g, lin_acc_z_g;
 
@@ -198,7 +204,7 @@ hp203b_t hhp203b;
  * ==== FUNCTION DECLARATIONS ====
  */
 
-extern "C" void init(/* json *sim_data */);
+extern "C" void init();
 extern "C" void data_from_jsbsim(float *data);
 extern "C" void data_to_jsbsim(float *data);
 extern "C" void loop(void);
@@ -215,17 +221,18 @@ bool detect_disarm();
 void disable_pid_integrators();
 void enable_pid_integrators();
 
+#ifdef SITL
+extern "C" void init_override(std::map<std::string, float> &config);
+#endif
+
 #ifdef MCU
 extern "C" void SystemClock_Config(void);
+void parse_user_command();
 #endif // MCU
 
 /**
  * ==== END FUNCTION DECLARATIONS ====
  */
-
-// #ifdef SITL
-// extern "C" void pre_init(json *sim_data) {}
-// #endif
 
 
 extern "C" void init() {
@@ -287,6 +294,8 @@ extern "C" void init() {
     roll_rate_dps = 0.0f;
     pitch_rate_dps = 0.0f;
 
+    alt_sp = 0.0;
+
     qw = 1.0f;
     qx = 0.0f;
     qy = 0.0f;
@@ -307,6 +316,8 @@ extern "C" void init() {
     takeoff_event_start_s = -1.0f;
     landing_event_start_s = -1.0f;
 
+    memset(cmd_string, '\0', sizeof(cmd_string));
+
 #ifdef MCU
     last_loop_time_ms = 0;
 
@@ -315,6 +326,14 @@ extern "C" void init() {
 #endif // MCU
     sensor_fusion.begin(50.0);
 }
+
+#ifdef SITL
+extern "C" void init_override(std::map<std::string, float>& config) {
+    if (config.count("alt_sp_pid_p") > 0) alt_sp_pid.k_p = config["alt_sp_pid_p"];
+    if (config.count("alt_sp_pid_i") > 0) alt_sp_pid.k_i = config["alt_sp_pid_i"];
+    if (config.count("alt_sp_pid_d") > 0) alt_sp_pid.k_d = config["alt_sp_pid_d"];
+}
+#endif
 
 
 extern "C" void data_from_jsbsim(float *data) {
@@ -736,11 +755,16 @@ int main(void) {
         #endif // HITL
 
         /**
+         * Commands
+         */
+        parse_user_command();
+
+        char buf[256];
+        /**
          * Simple debug output
          */
-        char buf[256];
-        sprintf(buf, "%f\r\n", alt_est_m);
-        send_data_over_usb_packets(0x03, (void *)buf, strlen(buf), 1, 64);
+        // sprintf(buf, "%f\r\n", alt_est_m);
+        // send_data_over_usb_packets(0x03, (void *)buf, strlen(buf), 1, 64);
 
 
         /**
@@ -814,13 +838,31 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
+void parse_user_command() {
+    if (cmd_string[strlen(cmd_string) - 1] != '\n') return;
+
+    cmd_string[strlen(cmd_string) - 1] = '\0'; // trim string
+    char *token = strtok(cmd_string, " ");
+
+    if (strcmp("sayhi", token) == 0) {
+        const char *buf = "I wont say hi\n";
+        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+    }
+    if (strcmp("alt_sp", token) == 0) {
+        char *val = strtok(NULL, " ");
+        alt_sp = atof(val);
+    }
+
+
+    memset(cmd_string, '\0', sizeof(cmd_string));
+}
 
 void packet_from_usb_callback(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset) {
     /**
      * Cmd data in
      */
     if (channel_number == 0x00) {
-
+        memcpy(cmd_string + data_offset, current_data + PACKET_HEADER_SIZE, data_size);
     }
 
     /**

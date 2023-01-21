@@ -24,7 +24,10 @@ int SerialInterface::round_down_to_multiple(int number, int multiple) {
 
 
 void SerialInterface::serial_init(sim_config_t &sim_config,
-                                  json *sim_data) {
+                                  json *sim_data,
+                                  CommandInterface *command_interface) {
+
+    this->command_interface = command_interface;
     
     use_hitl = sim_config.use_hitl;
     use_rt_telem = sim_config.rt_telem;
@@ -176,6 +179,11 @@ void SerialInterface::handle_event(const std::string &event_name, json *sim_data
         }
         
         send_data_usb(serial_device, 0x02, data, sizeof(data), sizeof(float), 64);
+
+        std::string command = command_interface->update_socket_and_read_commands();
+        if (!command.empty()) {
+            send_data_usb(serial_device, 0x00, (void *)command.c_str(), command.length(), 1, 64);
+        }
     }
 }
 
@@ -254,20 +262,11 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         /**
          * Receive and print command output
          */
-        // if (channel_number == 0x00) {
-        //     write(STDOUT_FILENO, current_data + PACKET_HEADER_SIZE, data_size);
-        //     printf("\n");
-        // }
-
-        /**
-         * Receive and print debug output
-         */
-        if (channel_number == 0x03) {
-            // printf("FCS DEBUG: ");
-            // printf("\n");
-            write(STDOUT_FILENO, current_data + PACKET_HEADER_SIZE, data_size);
+        if (channel_number == 0x00) {
+            printf("Received cmd output\n");
+            command_interface->send_command_output(current_data + PACKET_HEADER_SIZE, data_size);
         }
-
+        
         /**
          * Receive and log telemetry
          */
@@ -307,6 +306,13 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
             for (int i = 0; i < data_size / sizeof(float); ++i) {
                 (*sim_data)[to_jsbsim_properties[i + data_items_offset]] = new_data[i];
             }
+        }
+
+        /**
+         * Receive and print debug output
+         */
+        if (channel_number == 0x03) {
+            write(STDOUT_FILENO, current_data + PACKET_HEADER_SIZE, data_size);
         }
 
 

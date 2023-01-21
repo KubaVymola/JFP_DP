@@ -16,6 +16,7 @@
 
 #include "sim_config.h"
 #include "i_sim_client.h"
+#include "command_interface.h"
 
 using json = nlohmann::json;
 
@@ -24,7 +25,8 @@ public:
     SerialInterface() { }
     ~SerialInterface() { close(serial_device); }
     void serial_init(sim_config_t& sim_config,
-                     json *sim_data);
+                     json *sim_data,
+                     CommandInterface *command_interface);
                 
     void parse_xml_config(sim_config_t& sim_config);
 
@@ -37,6 +39,7 @@ private:
     void receive_data_usb(int serial_port, json *sim_data);
 
     int serial_device;
+    CommandInterface *command_interface;
 
     char new_telem_line[4096];
     int new_telem_line_ptr;
