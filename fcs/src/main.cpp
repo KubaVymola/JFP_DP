@@ -468,13 +468,13 @@ extern "C" void loop(void) {
     alt_est_m_prev = alt_est_m;
 
     float alt_sp = 0.0;
-    if (time_s > rest_time_s) alt_sp = 1.0;
+    if (time_s > rest_time_s) alt_sp = 5.0;
 
     /**
      * ==== Yaw ====
      */
     float yaw_sp_deg = 2;
-    if (time_s > rest_time_s + 5) yaw_sp_deg = 80;
+    // if (time_s > rest_time_s + 5) yaw_sp_deg = 80;
     if (yaw_sp_deg - yaw_est_deg >  180) yaw_sp_deg -= 360;
     if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
 
@@ -498,10 +498,10 @@ extern "C" void loop(void) {
     float x_world_sp_m = 0;
     float y_world_sp_m = 0;
 
-    if (time_s > rest_time_s + 10) {
-        x_world_sp_m = 1;
-        y_world_sp_m = 2.5;
-    }
+    // if (time_s > rest_time_s + 10) {
+    //     x_world_sp_m = 1;
+    //     y_world_sp_m = 2.5;
+    // }
 
     /**
      * ==== Event detection ====

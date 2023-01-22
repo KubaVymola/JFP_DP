@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     }
 
     while (continue_running) {
-        sleep(3);
+        usleep(250000);
     }
 
     /**

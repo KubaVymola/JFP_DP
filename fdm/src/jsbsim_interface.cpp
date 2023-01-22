@@ -312,6 +312,13 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
 
     while ((sim_config.end_time < 0.0 && *continue_running)
         || (result && *continue_running && (FDMExec->GetSimTime() <= sim_config.end_time || sim_config.end_time == 0.0))) {
+
+
+        // if (sim_config.end_time > 0.0 && FDMExec->GetSimTime() > sim_config.end_time) {
+        //     printf("Sim end\n");
+        //     *continue_running = false;
+        //     break;
+        // }
         // Check if increment then hold is on and take appropriate actions if it is
         // Iterate is not supported in realtime - only in batch and playnice modes
         FDMExec->CheckIncrementalHold();
@@ -366,6 +373,8 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
             result = handle_iter(sim_data, sim_data_lock, sim_events);
         }
     }
+
+    *continue_running = false;
 
     time(&tod);
     localtime_r(&tod, &local);
