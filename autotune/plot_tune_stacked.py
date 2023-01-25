@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.widgets import Slider
+from matplotlib.lines import Line2D
 import sys
 import scienceplots
 import signal as sgnl
@@ -11,6 +13,9 @@ plt.style.use(['science', 'no-latex'])
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 
 
+sliders = False
+
+# TODO add flag to enable/disable sliders
 
 # rest_time = 5.0
 # lti = signal.lti([1.0], [0.5, 1.0])
@@ -21,7 +26,6 @@ sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 # plt.show()
 
 # exit(0)
-
 
 
 class Transition:
@@ -39,6 +43,9 @@ if len(sys.argv) < 3:
 
 file_name_prefix = sys.argv[1]
 config_file_path = sys.argv[2]
+
+if '--sliders' in sys.argv:
+    sliders = True
 
 config_root = ET.parse(config_file_path).getroot()
 pass_el = config_root.find('pass')
@@ -126,17 +133,72 @@ while True:
     file_index += 1
 
 
-ax = plt.figure(figsize=(8,6)).add_subplot()
 
-for (i,(time_list,value_list)) in enumerate(zip(time_lists, value_lists)):
-    ax.plot(time_list, value_list, c=cm.RdYlGn(i / file_index))
 
 
 lti_x,lti_y = generate_target_function(transitions, end_time, error_relax_time, error_initial_value)
+
+
+# TODO cli arg to limit iteration range (instead of axes
+
+axes: list[Line2D] = []
+
+fig = plt.figure(figsize=(8,6))
+ax = fig.add_subplot()
+
+max_ax = len(time_lists)
+min_ax = 0
+
+def update():
+    for i,axis in enumerate(axes):
+        if i > max_ax:
+            axis.set_linestyle('None')
+        elif i < min_ax:
+            axis.set_linestyle('None')
+        else:
+            axis.set_linestyle('-')
+
+if sliders:
+    fig.subplots_adjust(bottom=0.25)
+
+    axmax = fig.add_axes([0.25, 0.1, 0.65, 0.05])
+    max_slider = Slider(
+        ax=axmax,
+        label='Max',
+        valmin=0,
+        valmax=len(time_lists) - 1,
+        valinit=len(time_lists) - 1,
+    )
+
+    axmin = fig.add_axes([0.25, 0.05, 0.65, 0.05])
+    min_slider = Slider(
+        ax=axmin,
+        label='Min',
+        valmin=0,
+        valmax=len(time_lists) - 1,
+        valinit=0,
+    )
+
+    def slider_update(value):
+        global min_ax, max_ax
+        min_ax = min_slider.val
+        max_ax = max_slider.val
+
+        update()
+    
+
+    max_slider.on_changed(slider_update)
+    min_slider.on_changed(slider_update)
+
+for (i,(time_list,value_list)) in enumerate(zip(time_lists, value_lists)):
+    axes.extend(ax.plot(time_list, value_list, c=cm.RdYlGn(i / file_index)))
+
 ax.plot(lti_x, lti_y, c='b', label=f'Target {pass_name}')
 ax.set_xlabel('Time [s]')
 ax.set_ylabel(pass_name)
 ax.legend()
+
+update()
 
 plt.grid()
 plt.show()

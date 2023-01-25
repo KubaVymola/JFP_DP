@@ -21,10 +21,10 @@
 
         <define> angle_sp_tune </define>
         
-        P: 0.6 * 0.0007
+        <!-- P: 0.6 * 0.0007
         I: 1.2 * 0.0007 / 2.5
-        D: 3   * 0.0007 * 2.5 / 40
-        
+        D: 3   * 0.0007 * 2.5 / 40 -->
+
         <parameter name="angle_pid_p">
             <min>  0.00001 </min>
             <max>  0.1 </max>

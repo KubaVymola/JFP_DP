@@ -24,8 +24,8 @@
         <define value="0.0"> angle_pid_d </define>
 
         <parameter name="angle_pid_p">
-            <min>  0.00007 </min>
-            <max>  0.0001 </max>
+            <min>  0.00001 </min>
+            <max>  0.0002 </max>
             <step> 0.00001 </step>
             <init> 0.0 </init>
         </parameter>
