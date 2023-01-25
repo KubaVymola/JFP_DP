@@ -436,7 +436,7 @@ class Craft {
 
         this.toJSBSimNames.forEach((name, id) => {
             if (id >= gamepad.axes.length) toReturn[name] = 0.0;
-            else toReturn[name] = (gamepad.axes[id] + 1) / 2;
+            else toReturn[name] = gamepad.axes[id];
         });
 
         return toReturn;

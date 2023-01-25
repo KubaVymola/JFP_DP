@@ -57,7 +57,7 @@
         <data>sensor/imu/magZ-uT</data>
     </plot>
 
-    <plot pos_x="0" pos_y="2" range_from="0" range_to="1" title="User control" ylabel="[norm]">
+    <plot pos_x="0" pos_y="2" range_from="-1" range_to="1" title="User control" ylabel="[norm]">
         <data>user-control/channel-1</data>
         <data>user-control/channel-2</data>
         <data>user-control/channel-3</data>
@@ -70,8 +70,14 @@
         <data>fcs/lin-acc-z</data>
     </plot>
 
-    <plot pos_x="2" pos_y="2" range_from="-20" range_to="20" title="Vertical speed est" ylabel="[m/s]">
+    <plot pos_x="2" pos_y="2" range_from="-35" range_to="35" title="Vertical speed est" ylabel="[m/s]">
         <data>fcs/alt-rate-est</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="2" range_from="-50" range_to="130" title="Angle rate est" ylabel="[deg/s]">
+        <data> fcs/yaw-rate-dps </data>
+        <data> fcs/pitch-rate-dps </data>
+        <data> fcs/roll-rate-dps </data>
     </plot>
     
 </timeseries>

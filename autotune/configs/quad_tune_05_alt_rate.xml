@@ -1,0 +1,43 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<autotune>
+    <pass name="alt_rate" end_time="30.0">
+        <transition type="linear">
+            <at_time> 5.0 </at_time>
+            <to> 10.0 </to>
+            <rate> 5.0 </rate>
+        </transition>
+        <transition type="linear">
+            <at_time>20.0</at_time>
+            <to> 5.0 </to>
+            <rate> 5.0 </rate>
+        </transition>
+
+        <error>
+            <type> quadratic </type>
+            <parameter> fcs/alt-rate-est </parameter>
+        </error>
+
+        <define> alt_rate_tune </define>
+        
+        <parameter name="alt_rate_pid_p">
+            <min>  0.00005 </min>
+            <max>  1.0 </max>
+            <step> 0.0001 </step>
+            <init> 0.1214 </init>
+        </parameter>
+
+        <parameter name="alt_rate_pid_i">
+            <min>  0.00005 </min>
+            <max>  0.5 </max>
+            <step> 0.0001 </step>
+            <init> 0.0224 </init>
+        </parameter>
+
+        <parameter name="alt_rate_pid_d">
+            <min>  0.00005 </min>
+            <max>  1.0 </max>
+            <step> 0.0001 </step>
+            <init> 0.042 </init>
+        </parameter>
+    </pass>
+</autotune>

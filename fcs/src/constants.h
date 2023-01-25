@@ -11,6 +11,7 @@
 #endif // M_PI
 
 #define DEG_TO_GEO_M            (6378000.0f * M_PI / 180.0f)
+#define GEO_TO_DEG_M            (180.0f / (6378000.0f * M_PI))
 #define DEG_TO_RAD              (M_PI / 180.0f)
 #define RAD_TO_DEG              (180.0f / M_PI)
 #define G_TO_MPS                9.81f

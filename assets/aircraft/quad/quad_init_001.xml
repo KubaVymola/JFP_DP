@@ -5,7 +5,7 @@
     <longitude unit="DEG"> 0.0 </longitude>
 
     <!-- Aircraft YAW - X-axis -->
-    <psi unit="DEG"> 2.0 </psi>
+    <psi unit="DEG"> 0.01 </psi>
 
     <!-- Aircraft PITCH - Y-axis -->
     <theta unit="DEG"> 0.0 </theta>

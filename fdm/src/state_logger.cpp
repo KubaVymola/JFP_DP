@@ -12,8 +12,7 @@ void StateLogger::init(sim_config_t& sim_config) {
     SGPath log_output_def_path = SGPath(sim_config.root_dir)/sim_config.log_output_def;
     SGPath log_output_out_path;
 
-    printf("%s\n", log_output_def_path.c_str());
-
+    
     XMLDocument log_def_doc(true, COLLAPSE_WHITESPACE);
     log_def_doc.LoadFile(log_output_def_path.c_str());
 
@@ -25,7 +24,12 @@ void StateLogger::init(sim_config_t& sim_config) {
         logged_properties.push_back(property_elem->GetText());
     }
 
+    if (!sim_config.log_output_override.empty()) {
+        log_output_out_path = SGPath(sim_config.root_dir)/sim_config.log_output_override;
+    }
 
+    printf("Data output: %s\n", log_output_def_path.c_str());
+    
     outstream.open(log_output_out_path.str(), std::ios::out);
     
     /**

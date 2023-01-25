@@ -227,6 +227,11 @@
             <property> fcs/lin-acc-y </property>
             <property> fcs/lin-acc-x </property>
             <property> fcs/lin-acc-z </property>
+
+            <!-- [12,13,14] -->
+            <property> fcs/yaw-rate-dps </property>
+            <property> fcs/pitch-rate-dps </property>
+            <property> fcs/roll-rate-dps </property>
         </to_jsbsim>
 
         <from_jsbsim>

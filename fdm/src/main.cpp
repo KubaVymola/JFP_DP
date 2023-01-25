@@ -285,9 +285,17 @@ void parse_cli_options(sim_config_t& sim_config, int argc, char **argv) {
         } else if (keyword == "--sitl_config") {
             std::string prop_name = value.substr(0, value.find("="));
             std::string propValueString = value.substr(value.find("=") + 1);
-            double prop_value = atof(propValueString.c_str());
-            
-            sim_config.sitl_config_props[prop_name] = prop_value;
+
+            if (propValueString.empty()) {
+                sim_config.sitl_config_props[prop_name] = 1.0f;
+
+            } else {
+                double prop_value = atof(propValueString.c_str());
+                sim_config.sitl_config_props[prop_name] = prop_value;
+            }
+
+        } else if (keyword == "--output_path_override") {
+            sim_config.log_output_override = value;
             
         } else if (keyword.substr(0, 2) != "--" && value.empty()) {
             if (position_arg == 0) {
@@ -375,7 +383,8 @@ void print_help() {
         "  --sim_end=<seconds>      how long the simulation will run (0 for endless, default is 60)\n"
         "  --jsbsim_output=<path>   path to JSBSim output definition (legacy)\n"
         "  --set=<property=value>   set property to given value\n"
-        "  --sitl_config=<property=value>  set property for SITL tunning\n"
+        "  --sitl_config=<property[=value]>  set property for SITL tunning\n"
+        "  --output_path_override=<path>     new path for output CSV (relative to root)\n"
         "  --realtime               the simulation will run in real time (default)\n"
         "  --batch                  the simulation will run as fast as possible\n"
         "  --print_props            print all properties before running\n"

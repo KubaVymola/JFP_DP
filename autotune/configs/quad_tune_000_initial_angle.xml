@@ -1,0 +1,35 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<autotune>
+    <pass name="angle_sp_p_only" end_time="30.0" method="all">
+        <error relax_time="0.0" initial_value="0.0">
+            <type> quadratic </type>
+            <parameter> fcs/theta-est </parameter>
+        </error>
+
+        <transition type="lti">
+            <at_time> 15.0 </at_time>
+            <to> 20.0 </to>
+            <rate> 10.0 </rate>
+        </transition>
+
+        <transition type="lti">
+            <at_time> 25.0 </at_time>
+            <to> 0.0 </to>
+            <rate> 10.0 </rate>
+        </transition>
+
+        <define> angle_sp_tune </define>
+        <define value="0.0">  angle_pid_i </define>
+        <define value="0.0"> angle_pid_d </define>
+
+        <parameter name="angle_pid_p">
+            <min>  0.00007 </min>
+            <max>  0.0001 </max>
+            <step> 0.00001 </step>
+            <init> 0.0 </init>
+        </parameter>
+
+    </pass>
+
+</autotune>

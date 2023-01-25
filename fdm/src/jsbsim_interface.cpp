@@ -273,6 +273,12 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
     update_sim_data(sim_data);
     
     std::cout << "sim_data" << sim_data->dump(4) << std::endl;
+    std::cout << "Mass info:" << std::endl;
+    std::cout << "CG X: " << FDMExec->GetMassBalance()->GetXYZcg(1) * 2.54 << " cm" << std::endl;
+    std::cout << "CG Y: " << FDMExec->GetMassBalance()->GetXYZcg(2) * 2.54 << " cm" << std::endl;
+    std::cout << "CG Z: " << FDMExec->GetMassBalance()->GetXYZcg(3) * 2.54 << " cm" << std::endl;
+
+    std::cout << "Mass: " << FDMExec->GetMassBalance()->GetMass() * 14.59390 << " kg" << std::endl;
 
     FDMExec->PrintSimulationConfiguration();
     FDMExec->GetPropagate()->DumpState();

@@ -50,4 +50,8 @@
     <property>fcs/lin-acc-x</property>
     <property>fcs/lin-acc-y</property>
     <property>fcs/lin-acc-z</property>
+
+    <property>fcs/yaw-rate-dps</property>
+    <property>fcs/pitch-rate-dps</property>
+    <property>fcs/roll-rate-dps</property>
 </output>

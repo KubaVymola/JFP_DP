@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<autotune>
+    <pass name="yaw_rate" end_time="40.0">
+        <function>
+            <step>
+                <at_time> 15.0 </at_time>
+                <to> 100.0 </to>
+            </step>
+        </function>
+
+        <error>
+            <type> quadratic </type>
+            <parameter> fcs/yaw-rate-dps </parameter>
+        </error>
+
+        <define> yaw_rate_tune </define>
+        
+        <parameter name="yaw_rate_pid_p">
+            <min>  0.000001 </min>
+            <max>  0.2 </max>
+            <step> 0.000001 </step>
+            <init> 0.0004 </init>
+        </parameter>
+
+        <parameter name="yaw_rate_pid_i">
+            <min>  0.000001 </min>
+            <max>  0.2 </max>
+            <step> 0.000001 </step>
+            <init> 0.00002 </init>
+        </parameter>
+
+        <parameter name="yaw_rate_pid_d">
+            <min>  0.000001 </min>
+            <max>  0.2 </max>
+            <step> 0.000001 </step>
+            <init> 0.00009 </init>
+        </parameter>
+    </pass>
+</autotune>

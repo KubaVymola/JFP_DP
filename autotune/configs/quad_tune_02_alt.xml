@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<autotune>
+    <pass name="alt_sp" end_time="30.0" method="gd">
+        <error relax_time="5.0" initial_value="0.0">
+            <type> quadratic </type>
+            <parameter> ext/altitude-m </parameter>
+        </error>
+
+        <transition type="lti">
+            <at_time> 5.0 </at_time>
+            <to> 5.0 </to>
+            <rate> 10.0 </rate>
+        </transition>
+
+        <define> alt_sp_tune </define>
+        
+        <parameter name="alt_sp_pid_p">
+            <min>  0.001 </min>
+            <max>  0.2 </max>
+            <step> 0.0001 </step>
+            <init> 0.047 </init>
+        </parameter>
+
+        <parameter name="alt_sp_pid_i">
+            <min>  0.001 </min>
+            <max>  0.2 </max>
+            <step> 0.0001 </step>
+            <init> 0.002 </init>
+        </parameter>
+
+        <parameter name="alt_sp_pid_d">
+            <min>  0.001 </min>
+            <max>  0.2 </max>
+            <step> 0.0001 </step>
+            <init> 0.073 </init>
+        </parameter>
+    </pass>
+</autotune>

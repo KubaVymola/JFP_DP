@@ -13,6 +13,7 @@ struct sim_config_t {
     std::string craft_config_path;
 
     std::string log_output_def;
+    std::string log_output_override;
     std::string save_telemetry_path;
 
     std::vector<std::string> jsbsim_outputs;

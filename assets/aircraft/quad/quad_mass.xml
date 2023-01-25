@@ -68,9 +68,6 @@
     </location>
 
     <pointmass name="M1">
-        <form shape="ball">
-            <radius unit="M"> 0.03 </radius>
-        </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
             <x>  0.066 </x>
@@ -80,9 +77,6 @@
     </pointmass>
 
     <pointmass name="Prop1">
-        <form shape="ball">
-            <radius unit="IN"> 5.1 </radius>
-        </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
             <x> 0.066 </x>
@@ -92,9 +86,6 @@
     </pointmass>
 
     <pointmass name="M2">
-        <form shape="ball">
-            <radius unit="M"> 0.03 </radius>
-        </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
             <x> -0.066 </x>
@@ -104,9 +95,6 @@
     </pointmass>
 
     <pointmass name="Prop2">
-        <form shape="ball">
-            <radius unit="IN"> 5.1 </radius>
-        </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
             <x> -0.066 </x>
@@ -116,9 +104,6 @@
     </pointmass>
 
     <pointmass name="M3">
-        <form shape="ball">
-            <radius unit="M"> 0.03 </radius>
-        </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
             <x>  0.066 </x>
@@ -128,9 +113,6 @@
     </pointmass>
 
     <pointmass name="Prop3">
-        <form shape="ball">
-            <radius unit="IN"> 5.1 </radius>
-        </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
             <x>  0.066 </x>
@@ -140,9 +122,6 @@
     </pointmass>
 
     <pointmass name="M4">
-        <form shape="ball">
-            <radius unit="M"> 0.03 </radius>
-        </form>
         <weight unit="KG"> 0.0304 </weight>
         <location unit="M">
             <x> -0.066 </x>
@@ -152,9 +131,6 @@
     </pointmass>
 
     <pointmass name="Prop4">
-        <form shape="ball">
-            <radius unit="IN"> 5.1 </radius>
-        </form>
         <weight unit="KG"> 0.004 </weight>
         <location unit="M">
             <x> -0.066 </x>
@@ -164,9 +140,6 @@
     </pointmass>
     
     <pointmass name="Battery">
-        <form shape="ball">
-            <radius unit="IN"> 2 </radius>
-        </form>
         <weight unit="KG"> 0.275 </weight>
         <location unit="M">
             <x> 0.0 </x>
@@ -175,23 +148,17 @@
         </location>
     </pointmass>
 
-    <pointmass name="RC Receiver">
-        <form shape="ball">
-            <radius unit="IN"> 1 </radius>
-        </form>
-        <weight unit="KG"> 0.006 </weight>
-        <location unit="M">
-            <x> -0.06 </x>
-            <y>  0.0 </y>
-            <z>  0.025 </z>
-        </location>
-    </pointmass>
+    <!-- <pointmass name="RC Receiver"> -->
+        <!-- <weight unit="KG"> 0.002 </weight> -->
+        <!-- <location unit="M"> -->
+            <!-- <x> -0.06 </x> -->
+            <!-- <y>  0.0 </y> -->
+            <!-- <z>  0.025 </z> -->
+        <!-- </location> -->
+    <!-- </pointmass> -->
 
 
     <pointmass name="FC+ESC">
-        <form shape="ball">
-            <radius unit="IN"> 1.5 </radius>
-        </form>
         <weight unit="KG"> 0.030 </weight>
         <location unit="M">
             <x> 0.0 </x>

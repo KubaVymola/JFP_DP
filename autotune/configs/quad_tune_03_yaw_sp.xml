@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<autotune>
+    <pass name="yaw_sp" end_time="40.0">
+        <function>
+            <step>
+                <at_time> 15.0 </at_time>
+                <to> 25.0 </to>
+            </step>
+        </function>
+
+        <error>
+            <type> quadratic </type>
+            <parameter> fcs/psi-est </parameter>
+        </error>
+
+        <define> yaw_sp_tune </define>
+        
+        <parameter name="yaw_sp_pid_p">
+            <min>  0.00001 </min>
+            <max>  0.2 </max>
+            <step> 0.00001 </step>
+            <init> 0.0006 </init>
+        </parameter>
+
+        <parameter name="yaw_sp_pid_i">
+            <min>  0.00001 </min>
+            <max>  0.2 </max>
+            <step> 0.00001 </step>
+            <init> 0.0002 </init>
+        </parameter>
+
+        <parameter name="yaw_sp_pid_d">
+            <min>  0.00001 </min>
+            <max>  0.2 </max>
+            <step> 0.00001 </step>
+            <init> 0.0025 </init>
+        </parameter>
+    </pass>
+</autotune>

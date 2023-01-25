@@ -1,0 +1,40 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<autotune>
+    <pass name="pos" end_time="40.0">
+        <function>
+            <step>
+                <at_time> 15.0 </at_time>
+                <to> 0.00005 </to>
+            </step>
+        </function>
+
+        <error>
+            <type> quadratic </type>
+            <parameter> ext/longitude-deg </parameter>
+        </error>
+
+        <define> pos_sp_tune </define>
+        
+        <parameter name="pos_pid_p">
+            <min>  0.1 </min>
+            <max>  8.0 </max>
+            <step> 0.01 </step>
+            <init> 4.35 </init>
+        </parameter>
+        
+        <parameter name="pos_pid_i">
+            <min>  0.0001 </min>
+            <max>  1.0 </max>
+            <step> 0.001 </step>
+            <init> 0.1 </init>
+        </parameter>
+    
+        <parameter name="pos_pid_d">
+            <min>  0.1 </min>
+            <max>  8.0 </max>
+            <step> 0.01 </step>
+            <init> 6.66 </init>
+        </parameter>
+    </pass>
+</autotune>
