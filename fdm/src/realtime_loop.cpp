@@ -1,6 +1,7 @@
 #include "realtime_loop.h"
 
 #include <unistd.h>
+#include <iostream>
 
 void RealtimeLoop::realtime_iter(bool *continue_running,
                   json *sim_data,
@@ -8,7 +9,7 @@ void RealtimeLoop::realtime_iter(bool *continue_running,
                   SimEvents& sim_events) {
 
     while (*continue_running) {
-        usleep(1000000.0 / 60.0);
+        usleep(1000000.0 / 120.0);
 
         (*sim_data)["simulation/sim-time-sec"] = sim_data->value<double>("simulation/sim-time-sec", 0.0) + (1.0 / 60.0);
 

@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <title>JFP 3D visualizer</title>
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
         <style>
             html,
             body {
@@ -17,16 +18,16 @@
                 height: 100%;
                 aspect-ratio: unset !important;
             }
+
+            
         </style>
     </head>
     <body>
         <div id="container">
-            <div>
+            <div class="grid">
                 <input type="text" id="connect-input" />
-                <button id="connect-button">Connect</button>  
-            </div>
-            <div>
-                <button id="open-root-dir">Select root definition</button>
+                <button role="button" class="outline" id="connect-button">Connect</button>  
+                <button role="button" class="outline" id="open-root-dir">Select root definition</button>
             </div>
             
             <canvas id="render-canvas"></canvas>

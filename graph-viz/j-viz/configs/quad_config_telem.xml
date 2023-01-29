@@ -4,9 +4,9 @@
     <time range_from="0" range_to="60000">telem/simulation/sim-time-sec</time>
     
     <plot pos_x="0" pos_y="0" range_from="-2" range_to="2" title="Acceleration" ylabel="[mg]">
-        <data>telem/sensor/imu/accelX-mg</data>
-        <data>telem/sensor/imu/accelY-mg</data>
-        <data>telem/sensor/imu/accelZ-mg</data>
+        <data>telem/sensor/imu/accelX-g</data>
+        <data>telem/sensor/imu/accelY-g</data>
+        <data>telem/sensor/imu/accelZ-g</data>
     </plot>
 
     <plot pos_x="1" pos_y="0" range_from="-90" range_to="90" title="Attitude" ylabel="[deg]">

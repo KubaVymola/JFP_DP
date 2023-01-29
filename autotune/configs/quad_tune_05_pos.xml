@@ -1,19 +1,18 @@
 <?xml version="1.1" encoding="UTF-8"?>
 
 <autotune>
-    <pass name="pos" end_time="40.0">
-        <function>
-            <step>
-                <at_time> 15.0 </at_time>
-                <to> 0.00005 </to>
-            </step>
-        </function>
-
+    <pass name="pos" end_time="30.0" method="gd">
         <error>
             <type> quadratic </type>
             <parameter> ext/longitude-deg </parameter>
         </error>
 
+        <transition type="lti">
+            <at_time> 10.0 </at_time>
+            <to> 0.00005 </to>
+            <rate> 0.00003 </rate>
+        </transition>
+        
         <define> pos_sp_tune </define>
         
         <parameter name="pos_pid_p">

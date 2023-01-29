@@ -55,6 +55,9 @@
  * ==== DEFINES ====
  */
 
+// #define DEMO_SEQ                        1
+
+
 #ifdef AUTOARM
 #define AUTO_ARM                         true
 #else
@@ -104,13 +107,14 @@
 #define THROTTLE_CHANNEL                 2
 #define YAW_CHANNEL                      3
 #define ARM_CHANNEL                      4
+#define VERT_MODE_CHANNEL                5
 
 #define TUNE_ANGLE_SP                    0
 #define TUNE_POS_SP                      1
 #define TUNE_ALT_SP                      2
 #define TUNE_YAW_SP                      3
 #define TUNE_YAW_RATE                    4
-#define TUNE_ALT_RATE                    5
+#define TUNE_ALT_RATE                    5  // Towards pilot - direct, away from pilot - vert. rate
 
 /**
  * ==== END DEFINES ====
@@ -120,12 +124,11 @@
  * ==== VARIABLES ====
  */
 
-char cmd_string[256];
+char cmd_string[128];
 
-const float rest_time_s = 5.0;
-uint8_t heading_mode;
-uint8_t vertical_mode;
-uint8_t lateral_mode;
+uint8_t heading_mode = HEADING_MODE_RATE;
+uint8_t lateral_mode = LATERAL_MODE_ANGLE;
+uint8_t vertical_mode = VERTICAL_MODE_DIRECT;
 
 Adafruit_Madgwick sensor_fusion;
 // Adafruit_NXPSensorFusion sensor_fusion;
@@ -141,76 +144,87 @@ pid_state_t pitch_pid;
 pid_state_t roll_rate_pid;
 pid_state_t pitch_rate_pid;
 
-float time_s;
-float prev_time_s;
-float x_world_measure_m;  // world_x -> east -> longitude
-float y_world_measure_m;  // world_y -> north -> latitude
-float ax_g, ay_g, az_g, gx_rad, gy_rad, gz_rad;
-float pressure_pa;
-float alt_measurement_m;
-float alt_measurement_m_prev;
-float temp_c;
+float time_s = 0.0f;
+float start_time_s = 0.0f;
+float prev_time_s = -1.0f;
+float x_world_measure_m = 0.0f;  // world_x -> east -> longitude
+float y_world_measure_m = 0.0f;  // world_y -> north -> latitude
+float ax_g = 0.0f, ay_g = 0.0f, az_g = 0.0f;
+float gx_rad = 0.0f, gy_rad = 0.0f, gz_rad = 0.0f;
+float pressure_pa = 0.0f;
+float alt_measurement_m = 0.0f;
+float alt_measurement_m_prev = 0.0f;
+float temp_c = 0.0f;
+float real_yaw_deg = 0.0f;
 
-float gx_mean_rad, gy_mean_rad, gz_mean_rad, acc_norm_mean;
+float gx_mean_rad = 0.0f, gy_mean_rad = 0.0f, gz_mean_rad = 0.0f;
+float acc_norm_mean = 1.0f; 
 int calibration_samples;
 
-float alt_est_m;
-float alt_est_m_prev;
-float alt_rate_est_mps;
-float yaw_est_deg;
-float yaw_est_deg_prev;
-float pitch_est_deg;
-float pitch_est_deg_prev;
-float roll_est_deg;
-float roll_est_deg_prev;
-float yaw_rate_dps;
-float roll_rate_dps;
-float pitch_rate_dps;
+float alt_est_m = 0.0f;
+float alt_est_m_prev = 0.0f;
+float alt_rate_est_mps = 0.0f;
+float yaw_est_deg = 0.0f;
+float yaw_est_deg_prev = 0.0f;
+float pitch_est_deg = 0.0f;
+float pitch_est_deg_prev = 0.0f;
+float roll_est_deg = 0.0f;
+float roll_est_deg_prev = 0.0f;
+float yaw_rate_dps = 0.0f;
+float roll_rate_dps = 0.0f;
+float pitch_rate_dps = 0.0f;
 
-int current_tunning;
-float alt_sp;
-float yaw_sp_deg;
-float x_world_sp_m;
-float y_world_sp_m;
+int current_tunning = -1;
 
-float qw, qx, qy, qz;
-float lin_acc_x_g, lin_acc_y_g, lin_acc_z_g;
+float alt_sp = 0.0f;
+float yaw_sp_deg = 0.0f;
+float x_world_sp_m = 0.0f;
+float y_world_sp_m = 0.0f;
+
+float qw = 1.0f, qx = 0.0f, qy = 0.0f, qz = 0.0f;
+float lin_acc_x_g = 0.0f, lin_acc_y_g = 0.0f, lin_acc_z_g = 0.0f;
 
 // ? FCS channels indexed from 0, RC transmitter indexed from 1
 // ? Channels have range of (-1,1)
 // 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
 float ctrl_channels_norm[NUM_CTRL_CHANNELS] = {0};
 
-float yaw_channel;
-float pitch_channel;
-float roll_channel;
-float throttle_channel;
+float yaw_channel = 0.0f;
+float pitch_channel = 0.0f;
+float roll_channel = 0.0f;
+float throttle_channel = 0.0f;
+float vert_mode_channel = 0.0f;
 
-float engine_0_cmd_norm;
-float engine_1_cmd_norm;
-float engine_2_cmd_norm;
-float engine_3_cmd_norm;
+float engine_0_cmd_norm = 0.0f;
+float engine_1_cmd_norm = 0.0f;
+float engine_2_cmd_norm = 0.0f;
+float engine_3_cmd_norm = 0.0f;
 
-bool is_airborne;
-bool is_armed;
-float arm_channel_norm_prev;
-float takeoff_event_start_s;
-float landing_event_start_s;
+bool is_airborne = false;
+bool is_armed = false;
+bool force_arm = false;
+float arm_channel_norm_prev = 1.0f;
+float takeoff_event_start_s = -1.0f;
+float landing_event_start_s = -1.0f;
 
 #ifdef HITL
-float from_jsbsim[22] = {0};
-float to_jsbsim[12] = {0};
+float from_jsbsim[20] = {0};
+float to_jsbsim[15] = {0};
 #endif  // HITL
 
 #ifdef MCU
-int last_loop_time_ms;
+int last_loop_time_ms = 0;
 
-int8_t current_channel;
-int32_t last_captured_value;
+int8_t current_channel = -1;
+int32_t last_captured_value = -1;
 int32_t ppm_us[NUM_CTRL_CHANNELS] = {0};
+
+uint32_t flash_page_addr = 0;
+uint32_t flash_page_offset = 0;
 
 bmi160_t hbmi160;
 hp203b_t hhp203b;
+
 #endif  // MCU
 
 /**
@@ -237,6 +251,10 @@ bool detect_arm();
 bool detect_disarm();
 void disable_pid_integrators();
 void enable_pid_integrators();
+void demo_sequence();
+
+void write_flash_bytes(uint8_t *buf, uint32_t num_bytes);
+void flash_erase();
 
 #ifdef SITL
 extern "C" void init_override(std::map<std::string, float> &config);
@@ -253,38 +271,17 @@ void parse_user_command();
  */
 
 extern "C" void init() {
+
 #ifdef SITL
     printf("Hello from FCS\n");
 #endif  // SITL
-
 
     /**
      * ==== Good tune ====
      */
 
-    // pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
-    // pid_init(alt_rate_pid, 0.117,  0.0179, 0.0463, 0.15, -0.5, 0.5);
-
-    // pid_init(yaw_sp_pid,   0.00197,  0.00001,  0.00118,  0.15, -0.2, 0.2);
-    // pid_init(yaw_rate_pid, 0.000402, 0.000002, 0.000074, 0.15, -0.2, 0.2);
-
-    // pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
-    // pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
-
-    // pid_init(roll_pid,  0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
-    // pid_init(pitch_pid, 0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
-
-    // pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
-    // pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
-
-    /**
-     * ==== END Good tune ====
-     */
-
-
-
     pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
-    pid_init(alt_rate_pid, 0.1299, 0.031,  0.0332, 0.15, -0.5, 0.5);
+    pid_init(alt_rate_pid, 0.117,  0.0179, 0.0463, 0.15, -0.5, 0.5);
 
     pid_init(yaw_sp_pid,   0.00197,  0.00001,  0.00118,  0.15, -0.2, 0.2);
     pid_init(yaw_rate_pid, 0.000402, 0.000002, 0.000074, 0.15, -0.2, 0.2);
@@ -298,87 +295,104 @@ extern "C" void init() {
     pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
     pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
 
+    /**
+     * ==== END Good tune ====
+     */
+
+
+
+    // pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
+    // pid_init(alt_rate_pid, 0.1299, 0.031,  0.0332, 0.15, -0.5, 0.5);
+
+    // pid_init(yaw_sp_pid,   0.00197,  0.00001,  0.00118,  0.15, -0.2, 0.2);
+    // pid_init(yaw_rate_pid, 0.000402, 0.000002, 0.000074, 0.15, -0.2, 0.2);
+
+    // pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
+    // pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
+
+    // pid_init(roll_pid,  0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
+    // pid_init(pitch_pid, 0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
+
+    // pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
+    // pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
+
     disable_pid_integrators();
 
-    heading_mode = HEADING_MODE_RATE;
-    vertical_mode = VERTICAL_MODE_RATE;
-    lateral_mode = LATERAL_MODE_ANGLE;
-
-    time_s = 0;
-    prev_time_s = -1;
-
-    x_world_measure_m = 0;
-    y_world_measure_m = 0;
-
-    ax_g = 0.0f;
-    ay_g = 0.0f;
-    az_g = 0.0f;
-    gx_rad = 0.0f;
-    gy_rad = 0.0f;
-    gz_rad = 0.0f;
-    pressure_pa = 0.0f;
-    alt_measurement_m = 0.0f;
-    alt_measurement_m_prev = 0.0f;
-    temp_c = 0.0f;
-
-    gx_mean_rad = 0.0f;
-    gy_mean_rad = 0.0f;
-    gz_mean_rad = 0.0f;
-    acc_norm_mean = 0.0f;
-    calibration_samples = 0.0f;
-
-    alt_est_m = 0.0f;
-    alt_est_m_prev = 0.0f;
-    alt_rate_est_mps = 0.0f;
-    yaw_est_deg = 0.0f;
-    yaw_est_deg_prev = 0.0f;
-    pitch_est_deg = 0.0f;
-    pitch_est_deg_prev = 0.0f;
-    roll_est_deg = 0.0f;
-    roll_est_deg_prev = 0.0f;
-    yaw_rate_dps = 0.0f;
-    roll_rate_dps = 0.0f;
-    pitch_rate_dps = 0.0f;
-
-    current_tunning = -1;
-    alt_sp = 0.0f;
-    yaw_sp_deg = 0;
-    x_world_sp_m = 0.0f;
-    y_world_sp_m = 0.0f;
-
-    qw = 1.0f;
-    qx = 0.0f;
-    qy = 0.0f;
-    qz = 0.0f;
-
-    lin_acc_x_g = 0.0f;
-    lin_acc_y_g = 0.0f;
-    lin_acc_z_g = 0.0f;
-
-    engine_0_cmd_norm = 0.0;
-    engine_1_cmd_norm = 0.0;
-    engine_2_cmd_norm = 0.0;
-    engine_3_cmd_norm = 0.0;
-
-    is_airborne = false;
-    is_armed = false;
-    arm_channel_norm_prev = 1.0f; /* Conservative, for extra safety */
-    takeoff_event_start_s = -1.0f;
-    landing_event_start_s = -1.0f;
-
     memset(cmd_string, '\0', sizeof(cmd_string));
-
-#ifdef MCU
-    last_loop_time_ms = 0;
-
-    current_channel = -1;
-    last_captured_value = -1;
-#endif  // MCU
     sensor_fusion.begin(50.0);
+
+    // heading_mode = HEADING_MODE_SP;
+    // vertical_mode = VERTICAL_MODE_SP;
+    // lateral_mode = LATERAL_MODE_FIXED_POS;
+
+    // time_s = 0;
+    // prev_time_s = -1;
+
+    // x_world_measure_m = 0;
+    // y_world_measure_m = 0;
+
+    // ax_g = 0.0f;
+    // ay_g = 0.0f;
+    // az_g = 0.0f;
+    // gx_rad = 0.0f;
+    // gy_rad = 0.0f;
+    // gz_rad = 0.0f;
+    // pressure_pa = 0.0f;
+    // alt_measurement_m = 0.0f;
+    // alt_measurement_m_prev = 0.0f;
+    // temp_c = 0.0f;
+
+    // gx_mean_rad = 0.0f;
+    // gy_mean_rad = 0.0f;
+    // gz_mean_rad = 0.0f;
+    // acc_norm_mean = 0.0f;
+    // calibration_samples = 0.0f;
+
+    // alt_est_m = 0.0f;
+    // alt_est_m_prev = 0.0f;
+    // alt_rate_est_mps = 0.0f;
+    // yaw_est_deg = 0.0f;
+    // yaw_est_deg_prev = 0.0f;
+    // pitch_est_deg = 0.0f;
+    // pitch_est_deg_prev = 0.0f;
+    // roll_est_deg = 0.0f;
+    // roll_est_deg_prev = 0.0f;
+    // yaw_rate_dps = 0.0f;
+    // roll_rate_dps = 0.0f;
+    // pitch_rate_dps = 0.0f;
+
+    // current_tunning = -1;
+    // alt_sp = 0.0f;
+    // yaw_sp_deg = 0;
+    // x_world_sp_m = 0.0f;
+    // y_world_sp_m = 0.0f;
+
+    // qw = 1.0f;
+    // qx = 0.0f;
+    // qy = 0.0f;
+    // qz = 0.0f;
+
+    // lin_acc_x_g = 0.0f;
+    // lin_acc_y_g = 0.0f;
+    // lin_acc_z_g = 0.0f;
+
+    // engine_0_cmd_norm = 0.0;
+    // engine_1_cmd_norm = 0.0;
+    // engine_2_cmd_norm = 0.0;
+    // engine_3_cmd_norm = 0.0;
+
+    // is_airborne = false;
+    // is_armed = false;
+
+    // arm_channel_norm_prev = 1.0f; /* Conservative, for extra safety */
+    // takeoff_event_start_s = -1.0f;
+    // landing_event_start_s = -1.0f;
+
 }
 
 #ifdef SITL
 extern "C" void init_override(std::map<std::string, float> &config) {
+    
     /**
      * alt_sp_pid_*
      * alt_rate_pid_*
@@ -501,7 +515,6 @@ void tunning_config() {
     if (current_tunning == TUNE_ANGLE_SP) {
         if (time_s >  5.0f) throttle_channel =  0.1f;
         if (time_s > 15.0f) pitch_channel    = -1.0f;
-        if (time_s > 25.0f) pitch_channel    =  0.0f;
     }
 
     if (current_tunning == TUNE_POS_SP) {
@@ -510,7 +523,7 @@ void tunning_config() {
     }
 
     if (current_tunning == TUNE_ALT_SP) {
-        if (time_s > rest_time_s) alt_sp = 5.0f;
+        if (time_s >  5.0f) alt_sp = 5.0f;
     }
 
     if (current_tunning == TUNE_YAW_SP) {
@@ -530,6 +543,47 @@ void tunning_config() {
 }
 
 #endif
+
+
+void demo_sequence() {
+    alt_sp = 0.0f;
+    x_world_sp_m = 0.0f;
+    y_world_sp_m = 0.0f;
+    yaw_sp_deg = 0.0f;
+    
+    if (time_s > 5.0) {
+        alt_sp = 2.0f;
+    }
+
+    if (time_s < 10.0f) return;
+
+    int time_s_i = (int)(time_s - 10.0f);
+    const int demo_period = 40;
+
+    if ((time_s_i % demo_period) < ((float)demo_period * 1.0f / 4.0f)) {
+        x_world_sp_m = 5.0f;
+        y_world_sp_m = 0.0f;
+
+    } else if ((time_s_i % demo_period) < ((float)demo_period * 2.0f / 4.0f)) {
+        x_world_sp_m = 5.0f;
+        y_world_sp_m = 5.0f;
+        yaw_sp_deg = 30.0f;
+
+    } else if ((time_s_i % demo_period) < ((float)demo_period * 3.0f / 4.0f)) {
+        x_world_sp_m = 0.0f;
+        y_world_sp_m = 5.0f;
+        yaw_sp_deg = 30.f;
+        alt_sp = 5.0f;
+
+    } else {
+        x_world_sp_m = 0.0f;
+        y_world_sp_m = 0.0f;
+        alt_sp = 5.0f;
+        
+    }
+}
+
+
 
 extern "C" void data_from_jsbsim(float *data) {
     time_s = data[0];  // simulation/sim-time-sec
@@ -551,16 +605,19 @@ extern "C" void data_from_jsbsim(float *data) {
     pressure_pa = data[9];  // sensor/baro/presStatic-Pa
     temp_c = data[10];      // sensor/baro/temp-C
 
+    real_yaw_deg = data[11];  // attitude/psi-deg
+ 
+
 #ifdef SITL
 
-    ctrl_channels_norm[0] = data[11];  // user-control/channel-1
-    ctrl_channels_norm[1] = data[12];  // user-control/channel-2
-    ctrl_channels_norm[2] = data[13];  // user-control/channel-3
-    ctrl_channels_norm[3] = data[14];  // user-control/channel-4
-    ctrl_channels_norm[4] = data[15];  // user-control/channel-4
-    ctrl_channels_norm[5] = data[16];  // user-control/channel-4
-    ctrl_channels_norm[6] = data[17];  // user-control/channel-4
-    ctrl_channels_norm[7] = data[18];  // user-control/channel-4
+    ctrl_channels_norm[0] = data[12];  // user-control/channel-1
+    ctrl_channels_norm[1] = data[13];  // user-control/channel-2
+    ctrl_channels_norm[2] = data[14];  // user-control/channel-3
+    ctrl_channels_norm[3] = data[15];  // user-control/channel-4
+    ctrl_channels_norm[4] = data[16];  // user-control/channel-4
+    ctrl_channels_norm[5] = data[17];  // user-control/channel-4
+    ctrl_channels_norm[6] = data[18];  // user-control/channel-4
+    ctrl_channels_norm[7] = data[19];  // user-control/channel-4
 
 #endif
 
@@ -665,10 +722,24 @@ extern "C" void loop(void) {
     alt_measurement_m_prev = alt_measurement_m;
     alt_est_m_prev = alt_est_m;
 
+#ifdef DEMO_SEQ
+    demo_sequence();
+#endif
+
     /**
      * ==== Yaw ====
      */
-    // if (time_s > rest_time_s + 5) yaw_sp_deg = 80;
+    #ifdef HITL
+    if (lateral_mode == LATERAL_MODE_FIXED_POS) yaw_est_deg = real_yaw_deg;
+    if (yaw_est_deg > 180.0f) yaw_est_deg = -360.0f + yaw_est_deg;
+    #endif
+
+    #ifdef SITL
+    if (lateral_mode == LATERAL_MODE_FIXED_POS) yaw_est_deg = real_yaw_deg;
+    if (yaw_est_deg > 180.0f) yaw_est_deg = -360.0f + yaw_est_deg;
+    #endif
+
+
     if (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
     if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
 
@@ -697,10 +768,10 @@ extern "C" void loop(void) {
     }
     if (detect_arm()) {
         is_armed = true;
+        flash_erase();
     }
     if (detect_disarm()) {
         is_armed = false;
-        // is_airborne = false;
         disable_pid_integrators();
     }
 
@@ -710,10 +781,15 @@ extern "C" void loop(void) {
     yaw_channel = ctrl_channels_norm[YAW_CHANNEL];
     pitch_channel = ctrl_channels_norm[PITCH_CHANNEL];
     roll_channel = ctrl_channels_norm[ROLL_CHANNEL];
+    vert_mode_channel = ctrl_channels_norm[VERT_MODE_CHANNEL];
+
+    if (vert_mode_channel < -0.5f) vertical_mode = VERTICAL_MODE_RATE;
+    
 
 #ifdef SITL
     tunning_config();
 #endif
+
 
     /**
      * ==== PIDs ===================================================================================
@@ -784,8 +860,19 @@ extern "C" void loop(void) {
         const float x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, deltaT);
         const float y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, deltaT);
 
-        roll_cmd = pid_update(roll_pid, x_body_pid_out, roll_est_deg, deltaT);
+        roll_cmd  = pid_update(roll_pid,   x_body_pid_out, roll_est_deg,  deltaT);
         pitch_cmd = pid_update(pitch_pid, -y_body_pid_out, pitch_est_deg, deltaT);
+
+
+        // #ifdef HITL
+        // char debug_buf[256];
+        // sprintf(debug_buf, "x_mes: %f\tx_sp: %f\troll_sp: %f\troll_cmd: %f\r\n", x_body_measure_m, x_body_sp_m, x_body_pid_out, roll_cmd);
+        // send_data_over_usb_packets(0x03, debug_buf, strlen(debug_buf), 1, 64);
+        // #endif
+
+        // sprintf(debug_buf, "roll_sp: %f, roll_meassure: %f\r\n", x_body_pid_out, roll_est_deg);
+        // send_data_over_usb_packets(0x03, debug_buf, strlen(debug_buf), 1, 64);
+        
 
     } else if (lateral_mode == LATERAL_MODE_ANGLE_RATE) {
         roll_cmd = pid_update(roll_rate_pid, roll_channel * MAX_ANGLE_RATE, roll_rate_dps, deltaT);
@@ -799,11 +886,14 @@ extern "C" void loop(void) {
      * ==== END Pitch/roll command ====
      */
 
+
     /**
      * ==== OUTPUT =================================================================================
      */
 
     if (is_armed) {
+        // throttle_cmd = throttle_cmd / cos(roll_est_deg * DEG_TO_RAD) / cos(pitch_est_deg * DEG_TO_RAD);
+        
         engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
         engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
         engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
@@ -833,13 +923,14 @@ int main(void) {
     MX_SPI1_Init();
     MX_SPI3_Init();
 
-    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
-    HAL_Delay(500);
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
+    HAL_Delay(500);
+    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
 
     bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
     hp203b_setup(&hhp203b, &hi2c2, 1);
-    W25qxx_Init();
+
+    // W25qxx_Init();
 
     // uint8_t input_buf[4] = { 1, 2, 3, 4};
     // uint8_t output_buf[4] = { 0 };
@@ -857,6 +948,8 @@ int main(void) {
     HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
     HAL_Delay(2000);
+
+    start_time_s = HAL_GetTick() / 1000.0f;
 
     while (1) {
         // ==== MCU CODE ====
@@ -906,7 +999,7 @@ int main(void) {
             bmi160_update_acc_gyro_data(&hbmi160);
         }
 
-        time_s = HAL_GetTick() / 1000.0f;
+        time_s = HAL_GetTick() / 1000.0f - start_time_s;
         ax_g = hbmi160.acc_x;
         ay_g = hbmi160.acc_y;
         az_g = hbmi160.acc_z;
@@ -926,6 +1019,7 @@ int main(void) {
         htim4.Instance->CCR1 = engine_2_cmd_norm * 1000.0f + 1000.0f;
         htim4.Instance->CCR2 = engine_3_cmd_norm * 1000.0f + 1000.0f;
 
+
 #ifdef HITL
         data_to_jsbsim(to_jsbsim);
         send_data_over_usb_packets(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float), 64);
@@ -936,7 +1030,7 @@ int main(void) {
          */
         parse_user_command();
 
-        char buf[256];
+        char buf[512];
         /**
          * Simple debug output
          */
@@ -960,9 +1054,12 @@ int main(void) {
                 "%f,%f,%f,%f,"
                 "%f,%f,%f,"
                 "%f,%f,%f,"
+                "%f,%f,%f,"
+                "%f,%f,"
                 "%f,%f,%f,%f,"
                 "%f,"
-                "%f\r\n",
+                "%f,"
+                "%f\n",
                 time_s,
                 ctrl_channels_norm[0],
                 ctrl_channels_norm[1],
@@ -971,18 +1068,29 @@ int main(void) {
                 hbmi160.acc_x,
                 hbmi160.acc_y,
                 hbmi160.acc_z,
+                hbmi160.gyro_x,
+                hbmi160.gyro_y,
+                hbmi160.gyro_z,
                 yaw_est_deg,
                 pitch_est_deg,
                 roll_est_deg,
+                roll_rate_dps,
+                pitch_rate_dps,
                 ret_w,
                 ret_x,
                 ret_y,
                 ret_z,
                 0.3,
+                pressure_pa,
                 alt_est_m);
         send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
 
+        if (is_armed) {
+            write_flash_bytes((uint8_t *)buf, strlen(buf));
+        }
+
         HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+
     }
 }
 
@@ -1024,13 +1132,35 @@ void parse_user_command() {
     cmd_string[strlen(cmd_string) - 1] = '\0';  // trim string
     char *token = strtok(cmd_string, " ");
 
+    char res_buf[256];
+
+
+    if (strcmp("help", token) == 0) {
+        sprintf(res_buf, "sayhi\r\nalt_sp <param>\r\narm\r\ndisarm\r\ndumplog\r\n");
+        send_data_over_usb_packets(0x00, (void *)res_buf, strlen(res_buf), 1, 64);
+    }
     if (strcmp("sayhi", token) == 0) {
-        const char *buf = "I wont say hi\n";
-        send_data_over_usb_packets(0x00, (void *)buf, strlen(buf), 1, 64);
+        sprintf(res_buf, "I wont say hi\r\n");
+        send_data_over_usb_packets(0x00, (void *)res_buf, strlen(res_buf), 1, 64);
     }
     if (strcmp("alt_sp", token) == 0) {
         char *val = strtok(NULL, " ");
         alt_sp = atof(val);
+    }
+    if (strcmp("arm", token) == 0) {
+        is_armed = true;
+        force_arm = true;
+        HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
+        flash_erase();
+        HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
+    }
+    if (strcmp("disarm", token) == 0) {
+        is_armed = false;
+        force_arm = false;
+        // disable_pid_integrators();
+    }
+    if (strcmp("dumplog", token) == 0) {
+        // TODO dump all log
     }
 
     memset(cmd_string, '\0', sizeof(cmd_string));
@@ -1104,7 +1234,9 @@ bool detect_takeoff() {
     // TODO maybe check rates
     // TODO maybe check vectical_rate_est
 
-    if (is_airborne || vector_norm(lin_acc_x_g, lin_acc_y_g, lin_acc_z_g) < TAKEOFF_LIN_ACC_THRESHLD || (vertical_mode != VERTICAL_MODE_SP && ctrl_channels_norm[THROTTLE_CHANNEL] < TAKEOFF_THRUST_POS_THRESHLD)) {
+    if (is_airborne
+    || vector_norm(lin_acc_x_g, lin_acc_y_g, lin_acc_z_g) < TAKEOFF_LIN_ACC_THRESHLD
+    || (vertical_mode != VERTICAL_MODE_SP && ctrl_channels_norm[THROTTLE_CHANNEL] < TAKEOFF_THRUST_POS_THRESHLD)) {
         takeoff_event_start_s = EVENT_TIME_INVALID;
         return false;
     }
@@ -1134,7 +1266,11 @@ bool detect_takeoff() {
  * @return Returns true only once per landing
  */
 bool detect_landing() {
-    if (!is_airborne || vector_norm(lin_acc_x_g, lin_acc_y_g, lin_acc_z_g) > LANDING_LIN_ACC_THRESHLD || roll_rate_dps > LANDING_RATES_THRESHLD || pitch_rate_dps > LANDING_RATES_THRESHLD || (vertical_mode != VERTICAL_MODE_SP && ctrl_channels_norm[THROTTLE_CHANNEL] > LANDING_THRUST_POS_THRESHLD)) {
+    if (!is_airborne
+    || vector_norm(lin_acc_x_g, lin_acc_y_g, lin_acc_z_g) > LANDING_LIN_ACC_THRESHLD
+    || roll_rate_dps > LANDING_RATES_THRESHLD
+    || pitch_rate_dps > LANDING_RATES_THRESHLD
+    || (vertical_mode != VERTICAL_MODE_SP && ctrl_channels_norm[THROTTLE_CHANNEL] > LANDING_THRUST_POS_THRESHLD)) {
         landing_event_start_s = EVENT_TIME_INVALID;
         return false;
     }
@@ -1166,7 +1302,7 @@ bool detect_arm() {
     if (ctrl_channels_norm[THROTTLE_CHANNEL] > IDLE_THRUST_POS_THRESHLD) return false;
     if (is_airborne) return false;
     if (arm_channel_norm_prev > 0.5f) return false;
-    if (ctrl_channels_norm[ARM_CHANNEL] < 0.5f) return false;
+    if (ctrl_channels_norm[ARM_CHANNEL] <= 0.5f) return false;
 
 #ifdef SITL
     printf("Arm detected!\n");
@@ -1178,6 +1314,7 @@ bool detect_arm() {
 bool detect_disarm() {
     if (AUTO_ARM) return false;
     if (!is_armed) return false;
+    if (force_arm) return false;
     if (ctrl_channels_norm[ARM_CHANNEL] > 0.5f) return false;
 
 #ifdef SITL
@@ -1212,3 +1349,38 @@ void enable_pid_integrators() {
     pid_integrator_enable(roll_rate_pid);
     pid_integrator_enable(pitch_rate_pid);
 }
+
+
+void write_flash_bytes(uint8_t *buf, uint32_t num_bytes) {
+
+    return;
+
+    // const uint32_t page_size = 256;
+
+    // while (num_bytes > 0) {
+    //     uint32_t max_bytes = page_size - flash_page_offset;
+
+    //     uint32_t bytes_to_write = num_bytes;
+    //     if (bytes_to_write > max_bytes) bytes_to_write = max_bytes;
+
+    //     W25qxx_WritePage(buf, flash_page_addr, flash_page_offset, bytes_to_write);
+
+    //     flash_page_offset += bytes_to_write;
+    //     if (flash_page_offset >= page_size) {
+    //         flash_page_offset = 0;
+    //         flash_page_addr += 1;
+    //     }
+
+    //     num_bytes -= bytes_to_write;
+    // }
+}
+
+void flash_erase() {
+    return;
+    
+    // W25qxx_EraseChip();
+
+    // flash_page_offset = 0;
+    // flash_page_addr = 0;
+}
+

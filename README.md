@@ -55,3 +55,7 @@ The craft, after loading, should have the nose to +x, up to -z and left -y. To a
 1. The craft has fwd pointing to -x, left is to -y, and down to -z
 2. Export the craft with the following blender settings: +y forward, -z up
 3. Don't "write materials"
+
+## Flash notes
+
+- 255 blocks (64KB), each 16 sectors (4KB), each 16 pages (256B)

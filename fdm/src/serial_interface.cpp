@@ -169,20 +169,22 @@ void SerialInterface::handle_event(const std::string &event_name, json *sim_data
     }
 
     if (event_name == EVENT_SIM_AFTER_ITER) {
-        if (!use_hitl) return;
-        
-        float data[from_jsbsim_properties.size()];
+        if (use_hitl) {
+            float data[from_jsbsim_properties.size()];
 
-        int i = 0;
-        for (const std::string& to_fcs_property : from_jsbsim_properties) {
-            data[i++] = (float)sim_data->value<double>(to_fcs_property, 0.0);
+            int i = 0;
+            for (const std::string& to_fcs_property : from_jsbsim_properties) {
+                data[i++] = (float)sim_data->value<double>(to_fcs_property, 0.0);
+            }
+            
+            send_data_usb(serial_device, 0x02, data, sizeof(data), sizeof(float), 64);
         }
         
-        send_data_usb(serial_device, 0x02, data, sizeof(data), sizeof(float), 64);
 
         std::string command = command_interface->update_socket_and_read_commands();
         if (!command.empty()) {
             send_data_usb(serial_device, 0x00, (void *)command.c_str(), command.length(), 1, 64);
+            printf("Sending command %s\n", command.c_str());
         }
     }
 }
@@ -225,7 +227,7 @@ void SerialInterface::send_data_usb(int serial_port, int channel_number, void *d
 }
 
 void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
-    char buf[1024];
+    char buf[4096];
     int len = read(serial_port, buf, sizeof(buf));
 
     /**
@@ -238,10 +240,23 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
     char *current_data = buf;
 
     while (current_data - buf + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE <= len) {
+        
         uint8_t channel_number  =  current_data[0];
-        uint16_t data_size   = (current_data[3] << 8) | current_data[2];
-        uint16_t data_offset = (current_data[5] << 8) | current_data[4];
-
+        uint16_t data_size   = ((uint8_t)current_data[3] << 8) | (uint8_t)current_data[2];
+        uint16_t data_offset = ((uint8_t)current_data[5] << 8) | (uint8_t)current_data[4];
+        
+        // std::cout << "== iteration " << std::endl;
+        // std::cout << "read " << current_data - buf << std::endl;
+        // std::cout << "data size " << data_size << std::endl;
+        // std::cout << "data offset " << data_offset << std::endl;
+        // printf("0x%x 0x%x\n", (uint8_t)current_data[5], (uint8_t)current_data[4]);
+        
+        // std::cout << "offset[0] " << std::hex << (uint8_t)current_data[5] << std::endl;
+        // std::cout << "offset[1] " << std::hex << (uint8_t)current_data[4] << std::endl;
+        // std::cout << "channel " << std::hex << (int)channel_number << std::endl;
+        // std::cout << "fcs " << std::hex << (int)current_data[1] << std::endl;
+        // std::cout << "ecs " << std::hex << (int)current_data[PACKET_HEADER_SIZE + data_size] << std::endl;
+        // std::cout << "offset " << std::dec << data_offset << std::endl;
         /**
          * Incomplete packet received
          */
@@ -254,7 +269,8 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         || current_data[1] != 0x55
         || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || data_size > 64
-        || data_offset > 512) {
+        || data_offset > 1024) {
+            std::cout << "break" << std::endl;
             current_data++;
             continue;
         }
@@ -273,27 +289,27 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         if (channel_number == 0x01) {
             if (save_telemetry_file.is_open()) {
                 save_telemetry_file.write(current_data + PACKET_HEADER_SIZE, data_size);
-                // save_telemetry_file.flush();
+                save_telemetry_file.flush();
             }
 
-            if (use_rt_telem || use_replay_telem) {
-                for (int i = 0; i < data_size; ++i) {
+            // if (use_rt_telem || use_replay_telem) {
+            //     for (int i = 0; i < data_size; ++i) {
 
-                    /**
-                     * When JSBSim is not running, map given properties to sim_data
-                     * TODO make mapping more elegant
-                     */
-                    if (current_data[i + PACKET_HEADER_SIZE] == '\n') {
-                        process_new_telem_line(sim_data);
-                        memset(new_telem_line, 0, sizeof(new_telem_line));
-                        new_telem_line_ptr = 0;
-                        continue;
-                    }
+            //         /**
+            //          * When JSBSim is not running, map given properties to sim_data
+            //          * TODO make mapping more elegant
+            //          */
+            //         if (current_data[i + PACKET_HEADER_SIZE] == '\n') {
+            //             process_new_telem_line(sim_data);
+            //             memset(new_telem_line, 0, sizeof(new_telem_line));
+            //             new_telem_line_ptr = 0;
+            //             continue;
+            //         }
 
-                    new_telem_line[new_telem_line_ptr] = current_data[i + PACKET_HEADER_SIZE];
-                    new_telem_line_ptr++;
-                }
-            }
+            //         new_telem_line[new_telem_line_ptr] = current_data[i + PACKET_HEADER_SIZE];
+            //         new_telem_line_ptr++;
+            //     }
+            // }
         }
 
         /**

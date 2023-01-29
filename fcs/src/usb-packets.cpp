@@ -38,7 +38,15 @@ void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t dat
 
         to_send[PACKET_HEADER_SIZE + to_send_size] = '\0';
 
-        while (CDC_Transmit_FS(to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE) == USBD_BUSY);
+        // while (CDC_Transmit_FS(to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE) == USBD_BUSY);
+
+        while (1) {
+            uint8_t result = CDC_Transmit_FS(to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE);
+
+            if (result == USBD_BUSY) continue;
+            if (result == USBD_OK) break;
+            if (result == USBD_FAIL) break;
+        }
 
         current_offset += to_send_size;
     }

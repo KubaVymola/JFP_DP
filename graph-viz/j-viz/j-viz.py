@@ -129,9 +129,11 @@ def follow_file(file):
     global new_data, data, data_indices, current_time, running, time_prop_col
     
     file_reset = False
+
+    line_overflow: str = None
     
     while True:
-        line = file.readline()
+        line: str = file.readline()
 
         if not line:
             before_seek = file.tell()
@@ -142,7 +144,7 @@ def follow_file(file):
                 file_reset = True
 
             if after_seek == 0:
-                file.readline()
+                file.readline() # reset file and skip header
 
             yield True
             time.sleep(0.005)
@@ -154,9 +156,19 @@ def follow_file(file):
             file_reset = False
         
         new_data = True
+
+        if line[-1] != '\n':
+            line_overflow = line
+            continue
+
+        line = (line_overflow or '') + line
+        line_overflow = None
+
         line_data = line.split(',')
 
-        data.append([float(x or 0) for x in line_data])
+        # print(line_data)
+
+        data.append([float(x.strip()) for x in line_data])
         current_time = float(line_data[time_prop_col])
 
         if running > 0:

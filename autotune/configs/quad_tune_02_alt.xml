@@ -15,25 +15,29 @@
 
         <define> alt_sp_tune </define>
         
+        <!-- 0.211 * 0.6 -->
+        <!-- 0.211 * 1.2 / 10 -->
+        <!-- 0.211 * 3 * 10 / 40 -->
+        
         <parameter name="alt_sp_pid_p">
             <min>  0.001 </min>
-            <max>  0.2 </max>
+            <max>  0.5 </max>
             <step> 0.0001 </step>
-            <init> 0.047 </init>
+            <init> 0.0126 </init>
         </parameter>
 
         <parameter name="alt_sp_pid_i">
             <min>  0.001 </min>
             <max>  0.2 </max>
             <step> 0.0001 </step>
-            <init> 0.002 </init>
+            <init> 0.002532 </init>
         </parameter>
 
         <parameter name="alt_sp_pid_d">
             <min>  0.001 </min>
-            <max>  0.2 </max>
+            <max>  0.5 </max>
             <step> 0.0001 </step>
-            <init> 0.073 </init>
+            <init> 0.015825 </init>
         </parameter>
     </pass>
 </autotune>

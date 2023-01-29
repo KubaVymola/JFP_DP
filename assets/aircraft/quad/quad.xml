@@ -256,7 +256,10 @@
             <property> sensor/baro/presStatic-Pa </property>
             <property> sensor/baro/temp-C </property>
 
-            <!-- [11,12,13,14,15,16,17,18] -->
+            <!-- [11] -->
+            <property> attitude/psi-deg </property>
+
+            <!-- [12,13,14,15,16,17,18,19] -->
             <property> user-control/channel-1 </property>
             <property> user-control/channel-2 </property>
             <property> user-control/channel-3 </property>
@@ -275,13 +278,20 @@
             <property> telem/channel-2 </property>
             <property> telem/channel-3 </property>
 
-            <property> telem/sensor/imu/accelX-mg </property>
-            <property> telem/sensor/imu/accelY-mg </property>
-            <property> telem/sensor/imu/accelZ-mg </property>
+            <property> telem/sensor/imu/accelX-g </property>
+            <property> telem/sensor/imu/accelY-g </property>
+            <property> telem/sensor/imu/accelZ-g </property>
+
+            <property> telem/sensor/imu/gyroX-dps </property>
+            <property> telem/sensor/imu/gyroY-dps </property>
+            <property> telem/sensor/imu/gyroZ-dps </property>
 
             <property> telem/yaw </property>
             <property> telem/pitch </property>
             <property> telem/roll </property>
+
+            <property> telem/pitch-rate-dps </property>
+            <property> telem/roll-rate-dps </property>
 
             <!-- mapping attribute is used when JSBSim is not running (rt_telem or replay_telem) -->
             <!-- Given properties get mapped to sim_data based on the mapping attribute value -->

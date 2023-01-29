@@ -7,18 +7,18 @@
         <data>ext/altitude-m</data>
     </plot>
 
-    <plot pos_x="1" pos_y="0" range_from="-0.00005" range_to="0.00005" title="Geo position" ylabel="Pos [deg]">
+    <plot pos_x="1" pos_y="0" range_from="-0.00007" range_to="0.00007" title="Geo position" ylabel="Pos [deg]">
         <data>ext/longitude-deg</data>
         <data>ext/latitude-deg</data>
     </plot>
 
-    <plot pos_x="2" pos_y="0" range_from="-30" range_to="30" title="JSBSim attitude" ylabel="Angle [deg]">
+    <plot pos_x="2" pos_y="0" range_from="-40" range_to="40" title="JSBSim attitude" ylabel="Angle [deg]">
         <data>attitude/psi-deg</data>
         <data>attitude/theta-deg</data>
         <data>attitude/phi-deg</data>
     </plot>
 
-    <plot pos_x="3" pos_y="0" range_from="-30" range_to="30" title="Estimated attitude" ylabel="Angle [deg]">
+    <plot pos_x="3" pos_y="0" range_from="-40" range_to="40" title="Estimated attitude" ylabel="Angle [deg]">
         <data>fcs/psi-est</data>
         <data>fcs/theta-est</data>
         <data>fcs/phi-est</data>

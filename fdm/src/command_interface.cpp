@@ -29,6 +29,8 @@ void CommandInterface::init(uint16_t port) {
         return;
     }
 
+    printf("Socket on port %d listening\n", port);
+
     read_poll_fds.push_back({ socket_fd, POLLIN });
 }
 
@@ -68,7 +70,7 @@ std::string CommandInterface::update_socket_and_read_commands() {
             /**
              * Pass the read command to serial interface and to FCS
              */
-            buf[len] = '\0';
+            buf[len] = '\0';            
             return std::string(buf);
         }
 

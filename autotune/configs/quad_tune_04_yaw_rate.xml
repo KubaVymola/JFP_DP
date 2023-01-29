@@ -1,17 +1,16 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <autotune>
-    <pass name="yaw_rate" end_time="40.0">
-        <function>
-            <step>
-                <at_time> 15.0 </at_time>
-                <to> 100.0 </to>
-            </step>
-        </function>
-
+    <pass name="yaw_rate" end_time="30.0" method="gd">
         <error>
             <type> quadratic </type>
             <parameter> fcs/yaw-rate-dps </parameter>
         </error>
+
+        <transition type="lti">
+            <at_time> 10.0 </at_time>
+            <to> 100.0 </to>
+            <rate> 50.0 </rate>
+        </transition>
 
         <define> yaw_rate_tune </define>
         
