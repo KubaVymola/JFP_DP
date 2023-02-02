@@ -118,7 +118,7 @@ def parse_config(file_name: str):
                 if item_name not in header_items: continue
 
                 data_indices.append(header_items.index(x.text.strip()))
-                lns.append(axs[pos_x][pos_y].plot([], [], label=x.text.strip(), linewidth=1.5)[0])
+                lns.append(axs[pos_x][pos_y].plot([], [], label=(x.attrib['label'] if 'label' in x.attrib else x.text.strip()), linewidth=1.5)[0])
 
             axs[pos_x][pos_y].grid(True, color = 'gray', linestyle = '--', linewidth = 0.5)
             axs[pos_x][pos_y].legend()

@@ -242,8 +242,8 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
     while (current_data - buf + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE <= len) {
         
         uint8_t channel_number  =  current_data[0];
-        uint16_t data_size   = ((uint8_t)current_data[3] << 8) | (uint8_t)current_data[2];
-        uint16_t data_offset = ((uint8_t)current_data[5] << 8) | (uint8_t)current_data[4];
+        uint16_t data_size   = ((uint16_t)current_data[3] << 8) | (uint8_t)current_data[2];
+        uint16_t data_offset = ((uint16_t)current_data[5] << 8) | (uint8_t)current_data[4];
         
         // std::cout << "== iteration " << std::endl;
         // std::cout << "read " << current_data - buf << std::endl;
@@ -292,24 +292,24 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
                 save_telemetry_file.flush();
             }
 
-            // if (use_rt_telem || use_replay_telem) {
-            //     for (int i = 0; i < data_size; ++i) {
+            if (use_rt_telem || use_replay_telem) {
+                for (int i = 0; i < data_size; ++i) {
 
-            //         /**
-            //          * When JSBSim is not running, map given properties to sim_data
-            //          * TODO make mapping more elegant
-            //          */
-            //         if (current_data[i + PACKET_HEADER_SIZE] == '\n') {
-            //             process_new_telem_line(sim_data);
-            //             memset(new_telem_line, 0, sizeof(new_telem_line));
-            //             new_telem_line_ptr = 0;
-            //             continue;
-            //         }
+                    /**
+                     * When JSBSim is not running, map given properties to sim_data
+                     * TODO make mapping more elegant
+                     */
+                    if (current_data[i + PACKET_HEADER_SIZE] == '\n') {
+                        process_new_telem_line(sim_data);
+                        memset(new_telem_line, 0, sizeof(new_telem_line));
+                        new_telem_line_ptr = 0;
+                        continue;
+                    }
 
-            //         new_telem_line[new_telem_line_ptr] = current_data[i + PACKET_HEADER_SIZE];
-            //         new_telem_line_ptr++;
-            //     }
-            // }
+                    new_telem_line[new_telem_line_ptr] = current_data[i + PACKET_HEADER_SIZE];
+                    new_telem_line_ptr++;
+                }
+            }
         }
 
         /**

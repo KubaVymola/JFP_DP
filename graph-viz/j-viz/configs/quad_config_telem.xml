@@ -1,29 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <timeseries grid_x="5" grid_y="2">
-    <time range_from="0" range_to="60000">telem/simulation/sim-time-sec</time>
+    <time range_from="0" range_to="60">telem/simulation/sim-time-sec</time>
     
-    <plot pos_x="0" pos_y="0" range_from="-2" range_to="2" title="Acceleration" ylabel="[mg]">
+    <plot pos_x="0" pos_y="0" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
         <data>telem/sensor/imu/accelX-g</data>
         <data>telem/sensor/imu/accelY-g</data>
         <data>telem/sensor/imu/accelZ-g</data>
     </plot>
 
-    <plot pos_x="1" pos_y="0" range_from="-90" range_to="90" title="Attitude" ylabel="[deg]">
+    <plot pos_x="1" pos_y="0" range_from="-180" range_to="180" title="Gyro" ylabel="[deg/s]">
+        <data>telem/sensor/imu/gyroX-dps</data>
+        <data>telem/sensor/imu/gyroY-dps</data>
+        <data>telem/sensor/imu/gyroZ-dps</data>
+    </plot>
+
+    <plot pos_x="2" pos_y="0" range_from="-180" range_to="180" title="Rates" ylabel="[deg/s]">
+        <data>telem/pitch-rate-dps</data>
+        <data>telem/roll-rate-dps</data>
+        <data>telem/yaw-rate-dps</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="0" range_from="-90" range_to="90" title="Attitude" ylabel="[deg]">
         <data>telem/yaw</data>
         <data>telem/pitch</data>
         <data>telem/roll</data>
     </plot>
 
-    <plot pos_x="2" pos_y="0" range_from="0" range_to="1" title="Control" ylabel="[norm]">
-        <data>telem/channel-0</data>
-        <data>telem/channel-1</data>
-        <data>telem/channel-2</data>
-        <data>telem/channel-3</data>
-    </plot>
-
-    <plot pos_x="3" pos_y="0" range_from="240" range_to="260" title="Alt" ylabel="[m agl]">
+    <plot pos_x="4" pos_y="0" range_from="240" range_to="260" title="Alt" ylabel="[m agl]">
         <data>telem/alt-est-m</data>
     </plot>
+
+    <plot pos_x="0" pos_y="1" range_from="-1" range_to="1" title="Control" ylabel="[norm]">
+        <data label="roll-channel">telem/channel-0</data>
+        <data label="pitch-channel">telem/channel-1</data>
+        <data label="throttle-channel">telem/channel-2</data>
+        <data label="yaw-channel">telem/channel-3</data>
+        <data label="arm-channel">telem/channel-4</data>
+        <data label="vert-mode-channel">telem/channel-5</data>
+    </plot>
+
+    <plot pos_x="1" pos_y="1" range_from="-10" range_to="10" title="Alt rate" ylabel="[m/s]">
+        <data>telem/alt-rate-mps</data>
+    </plot>
+
+    <plot pos_x="2" pos_y="1" range_from="-1" range_to="1" title="Channel cmd" ylabel="[norm]">
+        <data>telem/throttle-cmd-norm</data>
+        <data>telem/yaw-cmd-norm</data>
+        <data>telem/roll-cmd-norm</data>
+        <data>telem/pitch-cmd-norm</data>
+    </plot>
+
+    <plot pos_x="3" pos_y="1" range_from="0" range_to="1" title="Engine cmd" ylabel="[norm]">
+        <data>telem/engine-0-cmd-norm</data>
+        <data>telem/engine-1-cmd-norm</data>
+        <data>telem/engine-2-cmd-norm</data>
+        <data>telem/engine-3-cmd-norm</data>
+    </plot>
+
+    <plot pos_x="4" pos_y="1" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]">
+        <data>telem/lin-acc-x-g</data>
+        <data>telem/lin-acc-y-g</data>
+        <data>telem/lin-acc-z-g</data>
+    </plot>
+
 
 </timeseries>

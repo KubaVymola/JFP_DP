@@ -277,10 +277,16 @@
             <property> telem/channel-1 </property>
             <property> telem/channel-2 </property>
             <property> telem/channel-3 </property>
+            <property> telem/channel-4 </property>
+            <property> telem/channel-5 </property>
 
             <property> telem/sensor/imu/accelX-g </property>
             <property> telem/sensor/imu/accelY-g </property>
             <property> telem/sensor/imu/accelZ-g </property>
+
+            <property> telem/lin-acc-x-g </property>
+            <property> telem/lin-acc-y-g </property>
+            <property> telem/lin-acc-z-g </property>
 
             <property> telem/sensor/imu/gyroX-dps </property>
             <property> telem/sensor/imu/gyroY-dps </property>
@@ -292,6 +298,19 @@
 
             <property> telem/pitch-rate-dps </property>
             <property> telem/roll-rate-dps </property>
+            <property> telem/yaw-rate-dps </property>
+
+            <property> telem/alt-rate-mps </property>
+
+            <property> telem/throttle-cmd-norm </property>
+            <property> telem/yaw-cmd-norm </property>
+            <property> telem/roll-cmd-norm </property>
+            <property> telem/pitch-cmd-norm </property>
+
+            <property> telem/engine-0-cmd-norm </property>
+            <property> telem/engine-1-cmd-norm </property>
+            <property> telem/engine-2-cmd-norm </property>
+            <property> telem/engine-3-cmd-norm </property>
 
             <!-- mapping attribute is used when JSBSim is not running (rt_telem or replay_telem) -->
             <!-- Given properties get mapped to sim_data based on the mapping attribute value -->
@@ -302,7 +321,11 @@
 
             <property mapping="ext/altitude-m"> telem/alt-m </property>
 
+            <property> telem/pressure-pa </property>
+
             <property> telem/alt-est-m </property>
+
+            <property> telem/cpu-usage-percent </property>
         </telemetry>
     </fcs_interface>
     

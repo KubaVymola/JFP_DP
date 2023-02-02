@@ -44,8 +44,8 @@ void send_data_over_usb_packets(uint8_t channel_number, void *data, uint16_t dat
             uint8_t result = CDC_Transmit_FS(to_send, PACKET_HEADER_SIZE + to_send_size + PACKET_FOOTER_SIZE);
 
             if (result == USBD_BUSY) continue;
-            if (result == USBD_OK) break;
-            if (result == USBD_FAIL) break;
+            if (result == USBD_OK)   break;
+            if (result == USBD_FAIL) return;
         }
 
         current_offset += to_send_size;
@@ -62,8 +62,8 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
     */
     while (current_data - Buf + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE <= len) {
         uint8_t channel_number  =  current_data[0];
-        uint16_t data_size      = (current_data[3] << 8) | current_data[2];
-        uint16_t data_offset    = (current_data[5] << 8) | current_data[4];
+        uint16_t data_size      = ((uint16_t)current_data[3] << 8) | (uint8_t)current_data[2];
+        uint16_t data_offset    = ((uint16_t)current_data[5] << 8) | (uint8_t)current_data[4];
 
         /**
          * Incomplete packet received
@@ -77,7 +77,7 @@ void process_packet_from_usb(uint8_t* Buf, int len) {
         || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || current_data[1] != 0x55
         || data_size > 64
-        || data_offset > 512) {
+        || data_offset > 1024) {
             current_data++;
             continue;
         }
