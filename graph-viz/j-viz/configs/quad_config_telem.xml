@@ -27,7 +27,7 @@
         <data>telem/roll</data>
     </plot>
 
-    <plot pos_x="4" pos_y="0" range_from="240" range_to="260" title="Alt" ylabel="[m agl]">
+    <plot pos_x="4" pos_y="0" range_from="-10" range_to="10" title="Alt" ylabel="[m agl]">
         <data>telem/alt-est-m</data>
     </plot>
 

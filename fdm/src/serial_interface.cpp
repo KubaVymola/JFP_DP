@@ -9,6 +9,8 @@
 
 #include "sim_events.h"
 #include "timer.h"
+#include "errno.h"
+#include "string.h"
 
 #define LOBYTE(x)  ((uint8_t)(x & 0x00FFU))
 #define HIBYTE(x)  ((uint8_t)((x & 0xFF00U) >> 8U))
@@ -74,8 +76,8 @@ void SerialInterface::serial_init(sim_config_t &sim_config,
     // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
     // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
 
-    // tty.c_cc[VTIME] = 10;  // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
-    // tty.c_cc[VMIN] = 0;
+    tty.c_cc[VTIME] = 10;  // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+    tty.c_cc[VMIN] = 0;
 
     // Set in/out baud rate to be 115200
     cfsetispeed(&tty, B115200);
@@ -227,7 +229,7 @@ void SerialInterface::send_data_usb(int serial_port, int channel_number, void *d
 }
 
 void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
-    char buf[4096];
+    uint8_t buf[4096];
     int len = read(serial_port, buf, sizeof(buf));
 
     /**
@@ -237,50 +239,51 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
         return;
     }
 
-    char *current_data = buf;
+    // TODO maybe not a good idea, but it seems that 1020 bytes is the maximum to read
+    if (len >= 1020) return;
+    
+    uint8_t *current_data = buf;
 
     while (current_data - buf + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE <= len) {
         
         uint8_t channel_number  =  current_data[0];
         uint16_t data_size   = ((uint16_t)current_data[3] << 8) | (uint8_t)current_data[2];
         uint16_t data_offset = ((uint16_t)current_data[5] << 8) | (uint8_t)current_data[4];
-        
-        // std::cout << "== iteration " << std::endl;
-        // std::cout << "read " << current_data - buf << std::endl;
-        // std::cout << "data size " << data_size << std::endl;
-        // std::cout << "data offset " << data_offset << std::endl;
-        // printf("0x%x 0x%x\n", (uint8_t)current_data[5], (uint8_t)current_data[4]);
-        
-        // std::cout << "offset[0] " << std::hex << (uint8_t)current_data[5] << std::endl;
-        // std::cout << "offset[1] " << std::hex << (uint8_t)current_data[4] << std::endl;
-        // std::cout << "channel " << std::hex << (int)channel_number << std::endl;
-        // std::cout << "fcs " << std::hex << (int)current_data[1] << std::endl;
-        // std::cout << "ecs " << std::hex << (int)current_data[PACKET_HEADER_SIZE + data_size] << std::endl;
-        // std::cout << "offset " << std::dec << data_offset << std::endl;
-        /**
-         * Incomplete packet received
-         */
-        if (current_data - buf + PACKET_HEADER_SIZE + data_size + PACKET_FOOTER_SIZE > len) break;
 
         /**
-         * Invalid packet received
+         * Invalid packet header received
          */
         if (channel_number > 0x03
         || current_data[1] != 0x55
-        || current_data[PACKET_HEADER_SIZE + data_size] != '\0'
         || data_size > 64
         || data_offset > 1024) {
-            std::cout << "break" << std::endl;
             current_data++;
             continue;
         }
+        
+        /**
+         * Incomplete packet received
+         */
+        if (current_data - buf + PACKET_HEADER_SIZE + data_size + PACKET_FOOTER_SIZE > len) {
+            break;
+        }
+
+
+        /**
+         * Invalid packet footer received
+         */
+        if (current_data[PACKET_HEADER_SIZE + data_size] != '\0') {
+            current_data++;
+            continue;
+        }
+
 
         /**
          * Receive and print command output
          */
         if (channel_number == 0x00) {
             printf("Received cmd output\n");
-            command_interface->send_command_output(current_data + PACKET_HEADER_SIZE, data_size);
+            command_interface->send_command_output((char *)(current_data + PACKET_HEADER_SIZE), data_size);
         }
         
         /**
@@ -288,7 +291,7 @@ void SerialInterface::receive_data_usb(int serial_port, json *sim_data) {
          */
         if (channel_number == 0x01) {
             if (save_telemetry_file.is_open()) {
-                save_telemetry_file.write(current_data + PACKET_HEADER_SIZE, data_size);
+                save_telemetry_file.write((char *)(current_data + PACKET_HEADER_SIZE), data_size);
                 save_telemetry_file.flush();
             }
 

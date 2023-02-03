@@ -319,11 +319,10 @@
             <property mapping="ext/ecef-q-3"> telem/ecef-q-3 </property>
             <property mapping="ext/ecef-q-4"> telem/ecef-q-4 </property>
 
-            <property mapping="ext/altitude-m"> telem/alt-m </property>
-
+            
             <property> telem/pressure-pa </property>
-
-            <property> telem/alt-est-m </property>
+            
+            <property mapping="ext/altitude-m"> telem/alt-est-m </property>
 
             <property> telem/cpu-usage-percent </property>
         </telemetry>

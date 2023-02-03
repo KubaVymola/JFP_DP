@@ -163,6 +163,7 @@ int calibration_samples = 0;
 
 float alt_est_m = 0.0f;
 float alt_est_m_prev = 0.0f;
+float initial_alt_m = 0.0f;
 float alt_rate_est_mps = 0.0f;
 float yaw_est_deg = 0.0f;
 float yaw_est_deg_prev = 0.0f;
@@ -664,6 +665,8 @@ extern "C" void loop(void) {
     alt_measurement_m_prev = alt_measurement_m;
     alt_est_m_prev = alt_est_m;
 
+    if (initial_alt_m == 0.0f) initial_alt_m = alt_est_m;
+
 #ifdef DEMO_SEQ
     demo_sequence();
 #endif
@@ -888,6 +891,16 @@ int main(void) {
          * Fix the frequency to 50 Hz (20 ms)
          */
         if (HAL_GetTick() - last_loop_time_ms < (1000.0f / LOOP_FREQUENCY)) continue;
+        
+        /**
+         * Skip too slow iterations
+         */
+        if (HAL_GetTick() - last_loop_time_ms > (1000.0f / LOOP_FREQUENCY) * 2.0f) {
+            last_loop_time_ms = HAL_GetTick();
+            HAL_Delay(10);
+            continue;
+        }
+
         last_loop_time_ms = HAL_GetTick();
 
 #ifdef HITL
@@ -910,8 +923,6 @@ int main(void) {
         gz_rad = hbmi160.gyro_z * DEG_TO_RAD;
 
         pressure_pa = hp203b_get_pressure_pa(&hhp203b);
-
-// TODO pressure
 #endif
 
         loop();
@@ -932,7 +943,7 @@ int main(void) {
          */
         parse_user_command();
 
-        char buf[512];
+        char buf[512] = { 0 };
         /**
          * Simple debug output
          */
@@ -963,7 +974,6 @@ int main(void) {
                 "%f,%f,%f,%f,"
                 "%f,%f,%f,%f,"
                 "%f,%f,%f,%f,"
-                "%f,"
                 "%f,"
                 "%f,"
                 "%f\n",
@@ -1013,12 +1023,10 @@ int main(void) {
                 ret_x,
                 ret_y,
                 ret_z,
-
-                0.3,
                 
                 pressure_pa,
 
-                alt_est_m,
+                alt_est_m - initial_alt_m,
                 
                 cpu_usage);
         send_data_over_usb_packets(0x01, (void *)buf, strlen(buf), 1, 64);
