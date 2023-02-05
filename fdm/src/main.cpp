@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     }
 
     if (!sim_config.sitl_path.empty()) {
-        sitl_interface.sitl_init(sim_config, &sim_data);
+        sitl_interface.sitl_init(sim_config, &sim_data, &command_interface);
         sim_events.register_client(EVENT_SIM_BEFORE_ITER, &sitl_interface);
         sim_events.register_client(EVENT_SIM_AFTER_ITER,  &sitl_interface);
     }

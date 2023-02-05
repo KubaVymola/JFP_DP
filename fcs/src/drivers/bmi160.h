@@ -9,8 +9,8 @@ extern "C" {
 
 #include "main.h"
 #include "gpio.h"
-#include "stm32xxxx_hal.h"
-#include "stm32xxxx_hal_spi.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_spi.h"
 
 
 #define BMI160_I2C_ADDRESS              0xD0

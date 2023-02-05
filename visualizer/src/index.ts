@@ -19,7 +19,7 @@ const createWindow = (): void => {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 1000,
-        height: 600,
+        height: 700,
         webPreferences: {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
         },

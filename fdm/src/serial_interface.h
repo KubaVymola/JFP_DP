@@ -34,9 +34,10 @@ public:
 
 private:
     void process_new_telem_line(json *sim_data);
-    int round_down_to_multiple(int number, int multiple);
-    void send_data_usb(int serial_port, int channel_number, void *data, uint16_t data_size, int item_size, int buffer_size);
-    void receive_data_usb(int serial_port, json *sim_data);
+    void receive_data_usb(json *sim_data);
+
+    uint8_t j_packet_send_callback(uint8_t* Buf, uint16_t Len);
+    void j_packet_recv_callback(json *sim_data, uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset);
 
     int serial_device;
     CommandInterface *command_interface;

@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "stm32xxxx_hal.h"
-#include "stm32xxxx_hal_i2c.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_i2c.h"
 
 #define HP203B_CSB0_ADDR        0xEE
 #define HP203B_CSB1_ADDR        0xEC

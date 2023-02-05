@@ -168,8 +168,8 @@ def follow_file(file):
 
         # print(line_data)
 
-        data.append([float(x.strip()) for x in line_data])
-        current_time = float(line_data[time_prop_col])
+        data.append([float(x.strip() or 0) for x in line_data])
+        current_time = float(line_data[time_prop_col] or 0)
 
         if running > 0:
             data = [line for line in data if line[time_prop_col] - current_time > -running]

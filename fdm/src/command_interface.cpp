@@ -29,7 +29,7 @@ void CommandInterface::init(uint16_t port) {
         return;
     }
 
-    printf("Socket on port %d listening\n", port);
+    printf("CMD: Socket on port %d listening\n", port);
 
     read_poll_fds.push_back({ socket_fd, POLLIN });
 }
@@ -41,7 +41,7 @@ std::string CommandInterface::update_socket_and_read_commands() {
 
 
     if (read_poll_fds[0].revents & POLLIN) {
-        printf("New connection\n");
+        printf("CMD: New connection\n");
 
         sockaddr_in rsa;
         int rsa_size = sizeof(rsa);
@@ -60,7 +60,7 @@ std::string CommandInterface::update_socket_and_read_commands() {
             int len = read(it->fd, buf, sizeof(buf) - 1);
 
             if (len <= 0) {
-                printf("Client closed\n");
+                printf("CMD: Client closed\n");
                 close(it->fd);
                 read_poll_fds.erase(it);
                 continue;

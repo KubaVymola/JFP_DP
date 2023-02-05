@@ -13,9 +13,7 @@ plt.style.use(['science', 'no-latex'])
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 
 
-sliders = False
-
-# TODO add flag to enable/disable sliders
+slider = False
 
 # rest_time = 5.0
 # lti = signal.lti([1.0], [0.5, 1.0])
@@ -38,14 +36,14 @@ class Transition:
 
 
 if len(sys.argv) < 3:
-    print('Usage: python plot_tune_stacked.py <file_prefix> <config_file>')
+    print('Usage: python plot_tune_stacked.py <file_prefix> <config_file> [--slider]')
     exit(1)
 
 file_name_prefix = sys.argv[1]
 config_file_path = sys.argv[2]
 
-if '--sliders' in sys.argv:
-    sliders = True
+if '--slider' in sys.argv:
+    slider = True
 
 config_root = ET.parse(config_file_path).getroot()
 pass_el = config_root.find('pass')
@@ -154,7 +152,7 @@ def update():
         else:
             plot.set_linestyle('None')
 
-if sliders:
+if slider:
     fig.subplots_adjust(bottom=0.25)
 
     axiter = fig.add_axes([0.25, 0.1, 0.65, 0.05])
