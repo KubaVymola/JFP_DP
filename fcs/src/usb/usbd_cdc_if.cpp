@@ -23,7 +23,6 @@
 
 /* USER CODE BEGIN INCLUDE */
 
-#include "main.h"
 #include <functional>
 #include <stdint.h>
 
@@ -273,8 +272,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-
-  HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 
   j_packet_recv(Buf, *Len, j_packet_recv_callback);
 

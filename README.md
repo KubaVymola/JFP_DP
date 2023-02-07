@@ -56,6 +56,10 @@ The craft, after loading, should have the nose to +x, up to -z and left -y. To a
 2. Export the craft with the following blender settings: +y forward, -z up
 3. Don't "write materials"
 
-## Flash notes
+# Python venv
 
-- 255 blocks (64KB), each 16 sectors (4KB), each 16 pages (256B)
+```
+$ python3 -m venv venv
+$ source ./venv/bin/activate
+(venv) $ pip install -r requirements.txt
+```

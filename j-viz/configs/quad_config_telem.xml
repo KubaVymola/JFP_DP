@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<timeseries grid_x="5" grid_y="2">
+<timeseries grid_x="5" grid_y="3">
     <time range_from="0" range_to="60">telem/simulation/sim-time-sec</time>
     
     <plot pos_x="0" pos_y="0" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
@@ -64,5 +64,8 @@
         <data>telem/lin-acc-z-g</data>
     </plot>
 
+    <plot pos_x="0" pos_y="2" range_from="101200" range_to="101400" title="Pressure" ylabel="[Pa]">
+        <data>telem/pressure-pa</data>
+    </plot>
 
 </timeseries>

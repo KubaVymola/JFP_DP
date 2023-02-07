@@ -43,7 +43,7 @@ src/sitl_data_interface.cpp \
 src/sitl_tunning.cpp \
 src/user_commands.cpp \
 src/utils.cpp \
-../shared/j_packets.cpp
+../utils/j_packets.cpp
 
 ASM_SOURCES = 
 
@@ -64,7 +64,7 @@ BIN = $(CP) -O binary -S
 CPU = 
 MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 
-INCLUDES = -Isrc -Isrc/drivers -I../shared
+INCLUDES = -Isrc -Isrc/drivers -I../utils
 DEFS = 
 
 AS_DEFS = $(DEFS)

@@ -367,10 +367,11 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
 
                 if (play_nice) sim_nsleep(sleep_nseconds);
 
-                if (FDMExec->GetSimTime() >= new_five_second_value) { // Print out elapsed time every five seconds.
-                    std::cout << "Simulation elapsed time: " << FDMExec->GetSimTime() << std::endl;
-                    new_five_second_value += 5.0;
-                }
+            }
+            
+            if (FDMExec->GetSimTime() >= new_five_second_value) { // Print out elapsed time every five seconds.
+                std::cout << "Simulation elapsed time: " << FDMExec->GetSimTime() << std::endl;
+                new_five_second_value += 5.0;
             }
         } else { // Suspended
             was_paused = true;

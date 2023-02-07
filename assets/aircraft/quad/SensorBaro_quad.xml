@@ -30,7 +30,7 @@
         <sensor name="presStatic-Pa">
             <input>sensor/baro/presStatic-true-Pa</input>
             <lag>0</lag>
-            <noise distribution="GAUSSIAN" variation="ABSOLUTE">1.5</noise>
+            <noise distribution="GAUSSIAN" variation="ABSOLUTE">11.01</noise>
             <drift_rate>0</drift_rate>
             <gain>1</gain>
             <bias>0</bias>

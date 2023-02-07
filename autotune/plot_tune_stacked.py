@@ -152,6 +152,8 @@ def update():
         else:
             plot.set_linestyle('None')
 
+plt.grid()
+
 if slider:
     fig.subplots_adjust(bottom=0.25)
 
@@ -184,5 +186,4 @@ ax.legend()
 
 update()
 
-plt.grid()
 plt.show()

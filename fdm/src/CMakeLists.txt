@@ -10,10 +10,10 @@ add_executable(fdm "${JFP_SOURCES}"
     state_logger.cpp
     timer.cpp
     ws_server.cpp
-    ../../shared/j_packets.cpp
+    ../../utils/j_packets.cpp
 )
 
-target_include_directories(fdm PRIVATE ../../shared)
+target_include_directories(fdm PRIVATE ../../utils)
 
 target_link_libraries(fdm PRIVATE app_external_deps)
 

@@ -28,6 +28,7 @@
 #include "flash_logging.h"
 #include "user_commands.h"
 #include "demo_sequence.h"
+#include "pressure.h"
 
 #ifdef SITL
 #include <stdio.h>
@@ -233,7 +234,7 @@ extern "C" void control_loop(void) {
     /**
      * ==== Altitude ====
      */
-    alt_measurement_m = (288.15f / -0.0065f) * (powf(pressure_pa / 101325.0f, (-8.314f * -0.0065f) / (G_TO_MPS * 0.0289640f)) - 1);
+    alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
     // alt_measurement_m = (275.15f / -0.0065f) * (powf(pressure_pa / 100600.0f, (-8.314f * -0.0065f) / (G_TO_MPS * 0.0289640f)) - 1);
     if (alt_measurement_m_prev == 0.0f) alt_measurement_m_prev = alt_measurement_m;
     if (alt_est_m == 0.0f) alt_est_m = alt_measurement_m;
@@ -544,9 +545,9 @@ void after_loop(void) {
             alt_est_m - initial_alt_m,
             
             cpu_usage);
-    j_packet_send(0x01, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
 
-    // do_flash_log(buf);
+    j_packet_send(0x01, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
+    do_flash_log(buf);
 }
 
 #ifdef MCU
@@ -582,6 +583,8 @@ int main(void) {
     HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
     HAL_Delay(2000);
+
+    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_RESET);
 
     start_time_s = HAL_GetTick() / 1000.0f;
 
