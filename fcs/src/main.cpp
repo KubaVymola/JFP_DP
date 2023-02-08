@@ -185,12 +185,16 @@ extern "C" void control_loop(void) {
      * Calibration
      */
     if (time_s < CALIBRATION_TIME_S) {
+        if (pressure_pa == 0.0f) return;
+        
         float curr_acc_norm = sqrtf(ax_g * ax_g + ay_g * ay_g + az_g * az_g);
         acc_norm_mean = (acc_norm_mean * calibration_samples + curr_acc_norm) / (calibration_samples + 1);
 
         gx_mean_rad = (gx_mean_rad * calibration_samples + gx_rad) / (calibration_samples + 1);
         gy_mean_rad = (gy_mean_rad * calibration_samples + gy_rad) / (calibration_samples + 1);
         gz_mean_rad = (gz_mean_rad * calibration_samples + gz_rad) / (calibration_samples + 1);
+
+        pressure_pa_mean = (pressure_pa_mean * calibration_samples + pressure_pa) / (calibration_samples + 1);
 
         calibration_samples++;
         return;
@@ -235,10 +239,9 @@ extern "C" void control_loop(void) {
      * ==== Altitude ====
      */
     alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
-    // alt_measurement_m = (275.15f / -0.0065f) * (powf(pressure_pa / 100600.0f, (-8.314f * -0.0065f) / (G_TO_MPS * 0.0289640f)) - 1);
-    if (alt_measurement_m_prev == 0.0f) alt_measurement_m_prev = alt_measurement_m;
-    if (alt_est_m == 0.0f) alt_est_m = alt_measurement_m;
-    if (alt_est_m_prev == 0.0f) alt_est_m_prev = alt_est_m;
+    if (alt_measurement_m_prev == -1.0f) alt_measurement_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (alt_est_m == -1.0f)              alt_est_m              = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (alt_est_m_prev == -1.0f)         alt_est_m_prev         = get_alt_asl_from_pressure(pressure_pa_mean);
 
     alt_est_m = lowpass_filter_update(0.015f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
     alt_rate_est_mps = complementary_filter_update(alt_rate_est_mps,
@@ -249,7 +252,7 @@ extern "C" void control_loop(void) {
     alt_measurement_m_prev = alt_measurement_m;
     alt_est_m_prev = alt_est_m;
 
-    if (initial_alt_m == 0.0f) initial_alt_m = alt_est_m;
+    if (initial_alt_m == -1.0f) initial_alt_m = get_alt_asl_from_pressure(pressure_pa_mean);
 
 #ifdef DEMO_SEQ
     demo_sequence();

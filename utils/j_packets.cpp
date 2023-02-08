@@ -47,7 +47,7 @@ void j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8
     }
 }
 
-
+// TODO add return statuses
 void j_packet_recv(uint8_t *Buf, int len, std::function<void(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset)> j_packet_recv_callback) {
     uint8_t *current_data = Buf;
 

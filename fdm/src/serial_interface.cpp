@@ -205,6 +205,7 @@ void SerialInterface::receive_data_usb(json *sim_data) {
     }
 
     // TODO maybe not a good idea, but it seems that 1020 bytes is the maximum to read
+    // TODO memcpy the remainder of the buffer (incomplete packet) to the begining of buf; instead of returning
     if (len >= 1020) return;
     
     auto j_packet_recv_cb_wrapper = std::bind(&SerialInterface::j_packet_recv_callback, this, sim_data, _1, _2, _3, _4);

@@ -41,17 +41,18 @@ inline float ax_g = 0.0f, ay_g = 0.0f, az_g = 0.0f;
 inline float gx_rad = 0.0f, gy_rad = 0.0f, gz_rad = 0.0f;
 inline float pressure_pa = 0.0f;
 inline float alt_measurement_m = 0.0f;
-inline float alt_measurement_m_prev = 0.0f;
+inline float alt_measurement_m_prev = -1.0f;
 inline float temp_c = 0.0f;
 inline float real_yaw_deg = 0.0f;
 
 inline float gx_mean_rad = 0.0f, gy_mean_rad = 0.0f, gz_mean_rad = 0.0f;
 inline float acc_norm_mean = 1.0f; 
+inline float pressure_pa_mean = 0.0f;
 inline int calibration_samples = 0;
 
-inline float alt_est_m = 0.0f;
-inline float alt_est_m_prev = 0.0f;
-inline float initial_alt_m = 0.0f;
+inline float alt_est_m = -1.0f;
+inline float alt_est_m_prev = -1.0f;
+inline float initial_alt_m = -1.0f;
 inline float alt_rate_est_mps = 0.0f;
 inline float yaw_est_deg = 0.0f;
 inline float yaw_est_deg_prev = 0.0f;
