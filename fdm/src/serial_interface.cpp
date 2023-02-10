@@ -24,6 +24,8 @@ void SerialInterface::serial_init(sim_config_t &sim_config,
     
     use_hitl = sim_config.use_hitl;
     use_rt_telem = sim_config.rt_telem;
+    use_replay_telem = 0;
+
     memset(new_telem_line, 0, sizeof(new_telem_line));
     new_telem_line_ptr = 0;
     
@@ -194,22 +196,34 @@ uint8_t SerialInterface::j_packet_send_callback(uint8_t* Buf, uint16_t Len) {
 }
 
 void SerialInterface::receive_data_usb(json *sim_data) {
-    uint8_t buf[4096];
-    int len = read(serial_device, buf, sizeof(buf));
+    // uint8_t packet_buf[4096];
+
+    memset(packet_buf + buf_carry, '\0', sizeof(packet_buf) - buf_carry);
+    int len = read(serial_device, packet_buf + buf_carry, 2048) + buf_carry;
 
     /**
      * n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
      */
     if (len < 0) {
+        printf("ERR: serial read error\n");
         return;
     }
 
-    // TODO maybe not a good idea, but it seems that 1020 bytes is the maximum to read
-    // TODO memcpy the remainder of the buffer (incomplete packet) to the begining of buf; instead of returning
-    if (len >= 1020) return;
-    
     auto j_packet_recv_cb_wrapper = std::bind(&SerialInterface::j_packet_recv_callback, this, sim_data, _1, _2, _3, _4);
-    j_packet_recv(buf, len, j_packet_recv_cb_wrapper);
+    int processed = j_packet_recv(packet_buf, len, j_packet_recv_cb_wrapper);
+
+    if (processed < 0) {
+        printf("ERR: j-packet error\n");
+        memset(packet_buf, '\0', sizeof(packet_buf));
+        buf_carry = 0;
+        return;
+    }
+
+    int remaining = len - processed;
+    if (remaining > 0) printf("INFO: Running packet carry over\n");
+    memcpy(packet_buf, packet_buf + processed, remaining);
+    buf_carry = remaining;
+
 }
 
 void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset) {
@@ -243,6 +257,8 @@ void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_num
                     new_telem_line_ptr = 0;
                     continue;
                 }
+
+                if (new_telem_line_ptr >= sizeof(new_telem_line)) break;
 
                 new_telem_line[new_telem_line_ptr] = current_data[i + J_PACKET_HEADER_SIZE];
                 new_telem_line_ptr++;
@@ -278,6 +294,7 @@ void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_num
 void SerialInterface::process_new_telem_line(json *sim_data) {
     char *data = strtok(new_telem_line, ",");
     int i = 0;
+
 
     while (data != NULL) {
         if (telemetry_mapping.count(i)) {

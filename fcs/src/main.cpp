@@ -88,9 +88,6 @@ extern "C" void init() {
 
     send_jpacket_info(0x03, "Hello from FCS", 64);
 
-    // const char *text = "Hello from FCS";
-    // j_packet_send(0x03, (void *)text, strlen(text), 1, J_PACKET_SIZE, j_packet_send_callback);
-
     /**
      * ==== Good tune ====
      */
@@ -206,6 +203,7 @@ extern "C" void control_loop(void) {
         send_jpacket_info(0x03, "gx_mean %f°", 64, gx_mean_rad * RAD_TO_DEG);
         send_jpacket_info(0x03, "gy_mean %f°", 64, gy_mean_rad * RAD_TO_DEG);
         send_jpacket_info(0x03, "gz_mean %f°", 64, gz_mean_rad * RAD_TO_DEG);
+        send_jpacket_info(0x03, "mean pressure %f Pa", 64, pressure_pa_mean);
         send_jpacket_info(0x03, "READY...", 64);
         
         calibration_samples = 0;

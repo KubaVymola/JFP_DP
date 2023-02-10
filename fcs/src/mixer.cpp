@@ -15,7 +15,6 @@ const float engine_mixer(const int engine_id,
     float min_output = throttle_cmd - abs(yaw_cmd) - abs(pitch_cmd) - abs(roll_cmd);
     float max_output = throttle_cmd + abs(yaw_cmd) + abs(pitch_cmd) + abs(roll_cmd);
 
-    // TODO test this
     float thrust_offset = 0.0f;
     if (min_output < IDLE_ARM_THRUST) thrust_offset = IDLE_ARM_THRUST - min_output;
     if (max_output > 1.0f)            thrust_offset = 1.0f - max_output;

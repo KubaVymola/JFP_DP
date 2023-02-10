@@ -14,7 +14,7 @@ int round_down_to_multiple(int number, int multiple) {
  * @param data_size how many bytes of data to send
  * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
 */
-void j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size, uint16_t buffer_size, std::function<uint8_t(uint8_t *Buf, uint16_t Len)> j_packet_send_callback) {
+int j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size, uint16_t buffer_size, std::function<uint8_t(uint8_t *Buf, uint16_t Len)> j_packet_send_callback) {
     uint16_t current_offset = 0;
     uint16_t maximum_data_in_packet = round_down_to_multiple(buffer_size - J_PACKET_HEADER_SIZE - J_PACKET_FOOTER_SIZE, item_size);
 
@@ -40,22 +40,47 @@ void j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8
 
             if (result == 0) break;     // equiv. to USBD_OK
             if (result == 1) continue;  // equiv. to USBD_BUSY
-            if (result == 3) return;    // equiv. to USBD_FAIL
+            if (result == 3) return -1;    // equiv. to USBD_FAIL
         }
 
         current_offset += to_send_size;
     }
+
+    return 0;
 }
 
-// TODO add return statuses
-void j_packet_recv(uint8_t *Buf, int len, std::function<void(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset)> j_packet_recv_callback) {
+int j_packet_recv(uint8_t *Buf, int len, std::function<void(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset)> j_packet_recv_callback) {
     uint8_t *current_data = Buf;
 
     /**
      * There must be at least J_PACKET_HEADER_SIZE + J_PACKET_FOOTER_SIZE left in the buffer
      * in order for the packet to be valid
     */
-    while (current_data - Buf + J_PACKET_HEADER_SIZE + J_PACKET_FOOTER_SIZE <= len) {
+    while (1) {
+
+        /**
+         * Correct end of function
+         */
+        if (current_data - Buf == len) {
+            break;
+        }
+
+        /**
+         * More bytes were processed than whan was received
+         */
+        if (current_data - Buf > len) {
+            return -1;
+        }
+
+        /**
+         * There must be at least J_PACKET_HEADER_SIZE + J_PACKET_FOOTER_SIZE left in the buffer
+         * in order for the packet to be valid
+        */
+        if (current_data - Buf + J_PACKET_HEADER_SIZE + J_PACKET_FOOTER_SIZE > len) {
+            break;
+        }
+        
+
         uint8_t channel_number  =  current_data[0];
         uint16_t data_size      = ((uint16_t)current_data[3] << 8) | (uint8_t)current_data[2];
         uint16_t data_offset    = ((uint16_t)current_data[5] << 8) | (uint8_t)current_data[4];
@@ -91,4 +116,6 @@ void j_packet_recv(uint8_t *Buf, int len, std::function<void(uint8_t channel_num
 
         current_data += J_PACKET_HEADER_SIZE + data_size + J_PACKET_FOOTER_SIZE;
     }
+
+    return current_data - Buf;
 }

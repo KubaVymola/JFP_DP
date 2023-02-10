@@ -45,6 +45,9 @@ private:
     char new_telem_line[4096];
     int new_telem_line_ptr;
 
+    uint8_t packet_buf[4096];
+    int buf_carry = 0;
+
     bool use_hitl;
     bool use_rt_telem;
     bool use_replay_telem;

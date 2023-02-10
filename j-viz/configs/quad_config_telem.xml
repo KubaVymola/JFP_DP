@@ -64,7 +64,7 @@
         <data>telem/lin-acc-z-g</data>
     </plot>
 
-    <plot pos_x="0" pos_y="2" range_from="101200" range_to="101400" title="Pressure" ylabel="[Pa]">
+    <plot pos_x="0" pos_y="2" range_from="100000" range_to="101000" title="Pressure" ylabel="[Pa]">
         <data>telem/pressure-pa</data>
     </plot>
 
