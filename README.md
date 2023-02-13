@@ -63,3 +63,15 @@ $ python3 -m venv venv
 $ source ./venv/bin/activate
 (venv) $ pip install -r requirements.txt
 ```
+
+# Feature requests
+
+- Telemetry replay
+- Use RTOS in fcs
+- Improve pressure measurement using interrupts
+- Try faster PWM duty cycle for better responses
+
+# Bugs
+
+- Higher loop frequencies result in HITL errors (packet bug?)
+- Flash logging uses large amount of CPU power
