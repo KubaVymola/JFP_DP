@@ -25,7 +25,7 @@
 #include "j_packet_send_callback.h"
 #include "j_packet_recv_callback.h"
 #include "mixer.h"
-#include "flash_logging.h"
+#include "flash_interface.h"
 #include "user_commands.h"
 #include "demo_sequence.h"
 #include "pressure.h"
@@ -88,9 +88,7 @@ extern "C" void init() {
 
     send_jpacket_info(0x03, "Hello from FCS", 64);
 
-    /**
-     * ==== Good tune ====
-     */
+    // ! On MCU pid config from flash is used if present (which it most likely is)
 
     pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
     pid_init(alt_rate_pid, 0.1299, 0.031,  0.0332, 0.15, -0.5, 0.5);
@@ -101,14 +99,17 @@ extern "C" void init() {
     pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
     pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
 
-    pid_init(roll_pid,  0.00034, 0.00004, 0.000198, 0.15, -0.2, 0.2);
-    pid_init(pitch_pid, 0.00034, 0.00004, 0.000198, 0.15, -0.2, 0.2);
+    pid_init(roll_pid,  0.00034, 0.00004, 0.0003, 0.15, -0.2, 0.2);
+    pid_init(pitch_pid, 0.00034, 0.00004, 0.0003, 0.15, -0.2, 0.2);
 
-    pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
-    pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
+    pid_init(roll_rate_pid,  0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
+    pid_init(pitch_rate_pid, 0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
+
+    load_pid_flash(false);
+    
 
     /**
-     * ==== END Good tune ====
+     * ==== Good tune ====
      */
 
     // pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
@@ -126,9 +127,12 @@ extern "C" void init() {
     // pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
     // pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
 
+    /**
+     * ==== END Good tune ====
+     */
+    
     disable_pid_integrators();
 
-    memset(cmd_string, '\0', sizeof(cmd_string));
     sensor_fusion.begin(LOOP_FREQUENCY);
 
 }
@@ -570,7 +574,7 @@ int main(void) {
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
     HAL_Delay(500);
 
-    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_50HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_50HZ, BMI160_GYRO_RANGE_1000DPS);
+    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_100HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_100HZ, BMI160_GYRO_RANGE_1000DPS);
     hp203b_setup(&hhp203b, &hi2c2, 1);
 
     W25qxx_Init();
@@ -590,12 +594,6 @@ int main(void) {
     start_time_s = HAL_GetTick() / 1000.0f;
 
     while (1) {
-        
-        // ==== SITL NOTES ====
-        // Telemetry ?
-        // Commands ?
-        // Config ?
-        // ==== END SITL NOTES ====
 
         /**
          * Fix the frequency to 50 Hz (20 ms)
@@ -607,11 +605,14 @@ int main(void) {
          */
         if (HAL_GetTick() - last_loop_time_ms > (1000.0f / LOOP_FREQUENCY) * 2.0f) {
             last_loop_time_ms = HAL_GetTick();
-            HAL_Delay(10);
+            HAL_Delay((uint32_t)(500 / LOOP_FREQUENCY));
             continue;
         }
 
         last_loop_time_ms = HAL_GetTick();
+
+
+        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 
 #ifdef HITL
         __disable_irq();

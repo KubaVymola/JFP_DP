@@ -168,12 +168,18 @@ def follow_file(file):
 
         # print(line_data)
 
-        data.append([float(x.strip() or 0) for x in line_data])
+        data.append([convert_float(x) for x in line_data])
         current_time = float(line_data[time_prop_col] or 0)
 
         if running > 0:
             data = [line for line in data if line[time_prop_col] - current_time > -running]
 
+
+def convert_float(val: str):
+    try:
+        return float(val.strip())
+    except:
+        return 0
 
 def update_plot(frame):
     global new_data, data, time_prop_col, data_indices, lns, running

@@ -13,7 +13,7 @@
 #include "hp203b.h"
 #endif
 
-inline char cmd_string[128];
+inline char cmd_string[128] = { 0 };
 
 inline uint8_t heading_mode  = HEADING_MODE_RATE;
 inline uint8_t lateral_mode  = LATERAL_MODE_ANGLE;
@@ -77,7 +77,7 @@ inline float lin_acc_x_g = 0.0f, lin_acc_y_g = 0.0f, lin_acc_z_g = 0.0f;
 // ? FCS channels indexed from 0, RC transmitter indexed from 1
 // ? Channels have range of (-1,1) and default value of 0
 // 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
-inline float ctrl_channels_norm[NUM_CTRL_CHANNELS] = {0};
+inline float ctrl_channels_norm[NUM_CTRL_CHANNELS] = { 0 };
 
 inline float yaw_channel = 0.0f;
 inline float pitch_channel = 0.0f;
@@ -105,7 +105,7 @@ inline float landing_event_start_s = -1.0f;
 
 inline float cpu_usage = 0.0f;
 
-inline float from_jsbsim[20] = {0};
+inline float from_jsbsim[20] = { 0 };
 
 #ifdef SITL
 struct to_jsbsim_t {
@@ -120,7 +120,7 @@ inline uint32_t last_loop_time_ms = 0;
 
 inline int8_t current_channel = -1;
 inline int32_t last_captured_value = -1;
-inline int32_t ppm_us[NUM_CTRL_CHANNELS] = {0};
+inline int32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
 
 inline uint32_t flash_page_addr = 0;
 inline uint32_t flash_page_offset = 0;

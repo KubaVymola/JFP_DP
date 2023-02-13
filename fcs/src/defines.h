@@ -9,7 +9,7 @@
 #define AUTO_ARM                         false
 #endif
 
-#define LOOP_FREQUENCY                  50.0f
+#define LOOP_FREQUENCY                   100.0f
 
 #define HEADING_MODE_SP                  1 /* Heading is held at a fixed value */
 #define HEADING_MODE_RATE                2 /* Heading is controlled with rate of change */

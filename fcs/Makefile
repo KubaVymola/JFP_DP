@@ -32,7 +32,7 @@ C_SOURCES =
 CXX_SOURCES = \
 src/Adafruit_AHRS_Madgwick.cpp \
 src/demo_sequence.cpp \
-src/flash_logging.cpp \
+src/flash_interface.cpp \
 src/flight_events.cpp \
 src/j_packet_recv_callback.cpp \
 src/j_packet_send_callback.cpp \
