@@ -70,6 +70,7 @@ $ source ./venv/bin/activate
 - Use RTOS in fcs
 - Improve pressure measurement using interrupts
 - Try faster PWM duty cycle for better responses
+- Remove external dependencies and allow running on a supercomputer
 
 # Bugs
 

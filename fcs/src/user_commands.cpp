@@ -116,18 +116,18 @@ void parse_pid_config(pid_state_t& pid) {
 }
 
 void print_pid_config() {
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "alt_sp",   alt_sp_pid.k_p,   alt_sp_pid.k_i,   alt_sp_pid.k_d);
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "alt_rate", alt_rate_pid.k_p, alt_rate_pid.k_i, alt_rate_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "alt_sp",   alt_sp_pid.k_p,   alt_sp_pid.k_i,   alt_sp_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "alt_rate", alt_rate_pid.k_p, alt_rate_pid.k_i, alt_rate_pid.k_d);
     
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "yaw_sp",   yaw_sp_pid.k_p,   yaw_sp_pid.k_i,   yaw_sp_pid.k_d);
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "yaw_rate", yaw_rate_pid.k_p, yaw_rate_pid.k_i, yaw_rate_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "yaw_sp",   yaw_sp_pid.k_p,   yaw_sp_pid.k_i,   yaw_sp_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "yaw_rate", yaw_rate_pid.k_p, yaw_rate_pid.k_i, yaw_rate_pid.k_d);
 
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "x_body", x_body_pid.k_p, x_body_pid.k_i, x_body_pid.k_d);
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "y_body", y_body_pid.k_p, y_body_pid.k_i, y_body_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "x_body", x_body_pid.k_p, x_body_pid.k_i, x_body_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "y_body", y_body_pid.k_p, y_body_pid.k_i, y_body_pid.k_d);
 
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "roll",  roll_pid.k_p,  roll_pid.k_i,  roll_pid.k_d);
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "pitch", pitch_pid.k_p, pitch_pid.k_i, pitch_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "roll",  roll_pid.k_p,  roll_pid.k_i,  roll_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "pitch", pitch_pid.k_p, pitch_pid.k_i, pitch_pid.k_d);
 
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "roll_rate",  roll_rate_pid.k_p,  roll_rate_pid.k_i,  roll_rate_pid.k_d);
-    send_jpacket_info(0x00, "%-11s %.3f  %.3f  %.3f\n", 64, "pitch_rate", pitch_rate_pid.k_p, pitch_rate_pid.k_i, pitch_rate_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "roll_rate",  roll_rate_pid.k_p,  roll_rate_pid.k_i,  roll_rate_pid.k_d);
+    send_jpacket_info(0x00, "%-11s %.6f  %.6f  %.6f\n", 64, "pitch_rate", pitch_rate_pid.k_p, pitch_rate_pid.k_i, pitch_rate_pid.k_d);
 }
