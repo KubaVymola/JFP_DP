@@ -27,7 +27,8 @@ endif
 
 .PHONY: clean
 
-C_SOURCES = 
+C_SOURCES = \
+src/delay_us.c
 
 CXX_SOURCES = \
 src/Adafruit_AHRS_Madgwick.cpp \

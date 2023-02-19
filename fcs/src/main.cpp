@@ -88,19 +88,20 @@ extern "C" void init() {
 
     send_jpacket_info(0x03, "Hello from FCS", 64);
 
-    // ! On MCU pid config from flash is used if present (which it most likely is)
+    // ! In HITL/INDEP pid config from flash is used if present (which it most likely is)
+    // ! In SITL this config is taken
 
     pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
     pid_init(alt_rate_pid, 0.1299, 0.031,  0.0332, 0.15, -0.5, 0.5);
 
-    pid_init(yaw_sp_pid,   0.00197,  0.00001,  0.00118, 0.15, -0.2, 0.2);
-    pid_init(yaw_rate_pid, 0.000804, 0.000004, 0.000148, 0.15, -0.2, 0.2);
+    pid_init(yaw_sp_pid,   0.00098,  0.00001,  0.00059, 0.15, -0.2, 0.2);
+    pid_init(yaw_rate_pid, 0.000204, 0.000002, 0.000037, 0.15, -0.2, 0.2);
 
     pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
     pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
 
-    pid_init(roll_pid,  0.00034, 0.00004, 0.0003, 0.15, -0.2, 0.2);
-    pid_init(pitch_pid, 0.00034, 0.00004, 0.0003, 0.15, -0.2, 0.2);
+    pid_init(roll_pid,  0.00009, 0.00001, 0.00005, 0.15, -0.2, 0.2);
+    pid_init(pitch_pid, 0.00009, 0.00001, 0.00005, 0.15, -0.2, 0.2);
 
     pid_init(roll_rate_pid,  0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
     pid_init(pitch_rate_pid, 0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
@@ -138,26 +139,26 @@ extern "C" void init() {
 }
 
 extern "C" void from_jsbsim_to_glob_state() {
-    time_s = from_jsbsim[0];  // simulation/sim-time-sec
+    time_s              = from_jsbsim[0];  // simulation/sim-time-sec
 
-    x_world_measure_m = from_jsbsim[1] * DEG_TO_GEO_M;  // ext/longitude-deg
-    y_world_measure_m = from_jsbsim[2] * DEG_TO_GEO_M;  // ext/latitude-deg
+    x_world_measure_m   = from_jsbsim[1] * DEG_TO_GEO_M;  // ext/longitude-deg
+    y_world_measure_m   = from_jsbsim[2] * DEG_TO_GEO_M;  // ext/latitude-deg
 
     /**
      * Accelerometer adjusted from JSBSim local frame to expected sensor frame (BMI160)
      */
-    ax_g        = -from_jsbsim[3];  // sensor/imu/accelX-g
-    ay_g        =  from_jsbsim[4];  // sensor/imu/accelY-g
-    az_g        = -from_jsbsim[5];  // sensor/imu/accelZ-g
+    ax_g                = -from_jsbsim[3];  // sensor/imu/accelX-g
+    ay_g                =  from_jsbsim[4];  // sensor/imu/accelY-g
+    az_g                = -from_jsbsim[5];  // sensor/imu/accelZ-g
 
-    gx_rad      = -from_jsbsim[6];  // sensor/imu/gyroX-rps
-    gy_rad      =  from_jsbsim[7];  // sensor/imu/gyroY-rps
-    gz_rad      = -from_jsbsim[8];  // sensor/imu/gyroZ-rps
+    gx_rad              = -from_jsbsim[6];  // sensor/imu/gyroX-rps
+    gy_rad              =  from_jsbsim[7];  // sensor/imu/gyroY-rps
+    gz_rad              = -from_jsbsim[8];  // sensor/imu/gyroZ-rps
 
-    pressure_pa = from_jsbsim[9];   // sensor/baro/presStatic-Pa
-    temp_c      = from_jsbsim[10];  // sensor/baro/temp-C
+    pressure_pa         = from_jsbsim[9];   // sensor/baro/presStatic-Pa
+    temp_c              = from_jsbsim[10];  // sensor/baro/temp-C
 
-    real_yaw_deg = from_jsbsim[11];  // attitude/psi-deg
+    real_yaw_deg        = from_jsbsim[11];  // attitude/psi-deg
  
 
 // #ifdef SITL
@@ -440,18 +441,7 @@ void after_loop(void) {
         engine_0_cmd_norm,
         engine_1_cmd_norm,
         engine_2_cmd_norm,
-        engine_3_cmd_norm,
-        alt_est_m,
-        alt_rate_est_mps,
-        yaw_est_deg,
-        pitch_est_deg,
-        roll_est_deg,
-        lin_acc_x_g,
-        lin_acc_y_g,
-        lin_acc_z_g,
-        yaw_rate_dps,
-        pitch_rate_dps,
-        roll_rate_dps
+        engine_3_cmd_norm
     };
 
 
@@ -567,16 +557,19 @@ int main(void) {
     MX_I2C2_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
+    MX_TIM6_Init();
     MX_TIM11_Init();
     MX_SPI1_Init();
     MX_SPI3_Init();
 
-    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
     HAL_Delay(500);
+
+    HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
     bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_100HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_100HZ, BMI160_GYRO_RANGE_1000DPS);
     hp203b_setup(&hhp203b, &hi2c2, 1);
 
+    HAL_TIM_Base_Start(&htim6);
     W25qxx_Init();
 
     init();
@@ -596,28 +589,35 @@ int main(void) {
     while (1) {
 
         /**
-         * Fix the frequency to 50 Hz (20 ms)
+         * Fix the frequency
          */
         if (HAL_GetTick() - last_loop_time_ms < (1000.0f / LOOP_FREQUENCY)) continue;
         
         /**
          * Skip too slow iterations
          */
-        if (HAL_GetTick() - last_loop_time_ms > (1000.0f / LOOP_FREQUENCY) * 2.0f) {
-            last_loop_time_ms = HAL_GetTick();
-            HAL_Delay((uint32_t)(500 / LOOP_FREQUENCY));
-            continue;
-        }
+        // if (HAL_GetTick() - last_loop_time_ms > (1000.0f / LOOP_FREQUENCY) * 2.0f) {
+        //     last_loop_time_ms = HAL_GetTick();
+        //     HAL_Delay((uint32_t)(500 / LOOP_FREQUENCY));
+        //     continue;
+        // }
 
         last_loop_time_ms = HAL_GetTick();
 
-
-        HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 
 #ifdef HITL
         __disable_irq();
         from_jsbsim_to_glob_state();
         __enable_irq();
+
+        /**
+         * ? Fix for slow USB
+         * Unfortunatelly, USB is not fast enough for 100 Hz loop, and causes occasional glitches
+         * There are two separate timers for HITL, one timer is timing the MCU (last_loop_time_ms),
+         * the other is timing the control loop (time_s)
+         */
+        if (prev_time_s == time_s) continue;
+
 #endif  // HITL
 
 #ifdef INDEP
@@ -625,7 +625,6 @@ int main(void) {
             bmi160_update_acc_gyro_data(&hbmi160);
         }
 
-        time_s = HAL_GetTick() / 1000.0f - start_time_s;
         ax_g = hbmi160.acc_x;
         ay_g = hbmi160.acc_y;
         az_g = hbmi160.acc_z;
@@ -634,14 +633,16 @@ int main(void) {
         gz_rad = hbmi160.gyro_z * DEG_TO_RAD;
 
         pressure_pa = hp203b_get_pressure_pa(&hhp203b);
+
+        time_s = HAL_GetTick() / 1000.0f - start_time_s;
 #endif
 
         control_loop();
 
-        htim3.Instance->CCR1 = engine_0_cmd_norm * 3000.0f + 3000.0f;
-        htim3.Instance->CCR2 = engine_1_cmd_norm * 3000.0f + 3000.0f;
-        htim4.Instance->CCR1 = engine_2_cmd_norm * 3000.0f + 3000.0f;
-        htim4.Instance->CCR2 = engine_3_cmd_norm * 3000.0f + 3000.0f;
+        htim3.Instance->CCR1 = engine_0_cmd_norm * 12000.0f + 12000.0f;
+        htim3.Instance->CCR2 = engine_1_cmd_norm * 12000.0f + 12000.0f;
+        htim4.Instance->CCR1 = engine_2_cmd_norm * 12000.0f + 12000.0f;
+        htim4.Instance->CCR2 = engine_3_cmd_norm * 12000.0f + 12000.0f;
 
         after_loop();
 

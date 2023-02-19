@@ -26,7 +26,6 @@
 #include <functional>
 #include <stdint.h>
 
-// TODO the function pointer is shit
 // extern void j_packet_recv(uint8_t* Buf, int len, std::function<void(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset)> j_packet_recv_callback);
 extern "C" void j_packet_recv(uint8_t *Buf, int len, std::function<void(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset)> j_packet_recv_callback);
 extern "C" void j_packet_recv_callback(uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset);

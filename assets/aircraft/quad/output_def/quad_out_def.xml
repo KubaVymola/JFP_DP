@@ -28,15 +28,6 @@
     <property>sensor/imu/magY-uT</property>
     <property>sensor/imu/magZ-uT</property>
 
-    <property>fcs/psi-est</property>
-    <property>fcs/theta-est</property>
-    <property>fcs/phi-est</property>
-    
-    <property>fcs/throttle-cmd-norm[0]</property>
-    <property>fcs/throttle-cmd-norm[1]</property>
-    <property>fcs/throttle-cmd-norm[2]</property>
-    <property>fcs/throttle-cmd-norm[3]</property>
-
     <property>user-control/channel-1</property>
     <property>user-control/channel-2</property>
     <property>user-control/channel-3</property>
@@ -44,14 +35,23 @@
 
     <property>sensor/baro/presStatic-Pa</property>
 
-    <property>fcs/alt-est-m</property>
-    <property>fcs/alt-rate-est</property>
+    <!-- <property>fcs/psi-est</property> -->
+    <!-- <property>fcs/theta-est</property> -->
+    <!-- <property>fcs/phi-est</property> -->
+    
+    <!-- <property>fcs/throttle-cmd-norm[0]</property> -->
+    <!-- <property>fcs/throttle-cmd-norm[1]</property> -->
+    <!-- <property>fcs/throttle-cmd-norm[2]</property> -->
+    <!-- <property>fcs/throttle-cmd-norm[3]</property> -->
 
-    <property>fcs/lin-acc-x</property>
-    <property>fcs/lin-acc-y</property>
-    <property>fcs/lin-acc-z</property>
+    <!-- <property>fcs/alt-est-m</property> -->
+    <!-- <property>fcs/alt-rate-est</property> -->
 
-    <property>fcs/yaw-rate-dps</property>
-    <property>fcs/pitch-rate-dps</property>
-    <property>fcs/roll-rate-dps</property>
+    <!-- <property>fcs/lin-acc-x</property> -->
+    <!-- <property>fcs/lin-acc-y</property> -->
+    <!-- <property>fcs/lin-acc-z</property> -->
+
+    <!-- <property>fcs/yaw-rate-dps</property> -->
+    <!-- <property>fcs/pitch-rate-dps</property> -->
+    <!-- <property>fcs/roll-rate-dps</property> -->
 </output>

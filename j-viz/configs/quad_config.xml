@@ -18,22 +18,22 @@
         <data>attitude/phi-deg</data>
     </plot>
 
-    <plot pos_x="3" pos_y="0" range_from="-40" range_to="40" title="Estimated attitude" ylabel="Angle [deg]">
-        <data>fcs/psi-est</data>
-        <data>fcs/theta-est</data>
-        <data>fcs/phi-est</data>
-    </plot>
+    <!-- <plot pos_x="3" pos_y="0" range_from="-40" range_to="40" title="Estimated attitude" ylabel="Angle [deg]"> -->
+        <!-- <data>fcs/psi-est</data> -->
+        <!-- <data>fcs/theta-est</data> -->
+        <!-- <data>fcs/phi-est</data> -->
+    <!-- </plot> -->
 
-    <plot pos_x="4" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]">
-        <data>fcs/throttle-cmd-norm[0]</data>
-        <data>fcs/throttle-cmd-norm[1]</data>
-        <data>fcs/throttle-cmd-norm[2]</data>
-        <data>fcs/throttle-cmd-norm[3]</data>
-    </plot>
+    <!-- <plot pos_x="4" pos_y="0" range_from="0" range_to="1" title="Throttle" ylabel="Thr [norm]"> -->
+        <!-- <data>fcs/throttle-cmd-norm[0]</data> -->
+        <!-- <data>fcs/throttle-cmd-norm[1]</data> -->
+        <!-- <data>fcs/throttle-cmd-norm[2]</data> -->
+        <!-- <data>fcs/throttle-cmd-norm[3]</data> -->
+    <!-- </plot> -->
 
-    <plot pos_x="0" pos_y="1" range_from="-0.5" range_to="15" title="Estimated altitude" ylabel="[m]">
-        <data>fcs/alt-est-m</data>
-    </plot>
+    <!-- <plot pos_x="0" pos_y="1" range_from="-0.5" range_to="15" title="Estimated altitude" ylabel="[m]"> -->
+        <!-- <data>fcs/alt-est-m</data> -->
+    <!-- </plot> -->
 
     <plot pos_x="1" pos_y="1" range_from="101200" range_to="101400" title="Pressure" ylabel="[Pa]">
         <data>sensor/baro/presStatic-Pa</data>
@@ -64,20 +64,20 @@
         <data>user-control/channel-4</data>
     </plot>
 
-    <plot pos_x="1" pos_y="2" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]">
-        <data>fcs/lin-acc-y</data>
-        <data>fcs/lin-acc-x</data>
-        <data>fcs/lin-acc-z</data>
-    </plot>
+    <!-- <plot pos_x="1" pos_y="2" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]"> -->
+        <!-- <data>fcs/lin-acc-y</data> -->
+        <!-- <data>fcs/lin-acc-x</data> -->
+        <!-- <data>fcs/lin-acc-z</data> -->
+    <!-- </plot> -->
 
-    <plot pos_x="2" pos_y="2" range_from="-35" range_to="35" title="Vertical speed est" ylabel="[m/s]">
-        <data>fcs/alt-rate-est</data>
-    </plot>
+    <!-- <plot pos_x="2" pos_y="2" range_from="-35" range_to="35" title="Vertical speed est" ylabel="[m/s]"> -->
+        <!-- <data>fcs/alt-rate-est</data> -->
+    <!-- </plot> -->
 
-    <plot pos_x="3" pos_y="2" range_from="-50" range_to="130" title="Angle rate est" ylabel="[deg/s]">
-        <data> fcs/yaw-rate-dps </data>
-        <data> fcs/pitch-rate-dps </data>
-        <data> fcs/roll-rate-dps </data>
-    </plot>
+    <!-- <plot pos_x="3" pos_y="2" range_from="-50" range_to="130" title="Angle rate est" ylabel="[deg/s]"> -->
+        <!-- <data> fcs/yaw-rate-dps </data> -->
+        <!-- <data> fcs/pitch-rate-dps </data> -->
+        <!-- <data> fcs/roll-rate-dps </data> -->
+    <!-- </plot> -->
     
 </timeseries>

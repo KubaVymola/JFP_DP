@@ -215,23 +215,23 @@
             <property> fcs/throttle-cmd-norm[3] </property>
 
             <!-- [4,5] -->
-            <property> fcs/alt-est-m </property>
-            <property> fcs/alt-rate-est </property>
+            <!-- <property> fcs/alt-est-m </property> -->
+            <!-- <property> fcs/alt-rate-est </property> -->
 
             <!-- [6,7,8] -->
-            <property> fcs/psi-est </property>
-            <property> fcs/theta-est </property>
-            <property> fcs/phi-est </property>
+            <!-- <property> fcs/psi-est </property> -->
+            <!-- <property> fcs/theta-est </property> -->
+            <!-- <property> fcs/phi-est </property> -->
             
             <!-- [9,10,11] -->
-            <property> fcs/lin-acc-y </property>
-            <property> fcs/lin-acc-x </property>
-            <property> fcs/lin-acc-z </property>
+            <!-- <property> fcs/lin-acc-y </property> -->
+            <!-- <property> fcs/lin-acc-x </property> -->
+            <!-- <property> fcs/lin-acc-z </property> -->
 
             <!-- [12,13,14] -->
-            <property> fcs/yaw-rate-dps </property>
-            <property> fcs/pitch-rate-dps </property>
-            <property> fcs/roll-rate-dps </property>
+            <!-- <property> fcs/yaw-rate-dps </property> -->
+            <!-- <property> fcs/pitch-rate-dps </property> -->
+            <!-- <property> fcs/roll-rate-dps </property> -->
         </to_jsbsim>
 
         <from_jsbsim>

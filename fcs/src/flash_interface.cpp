@@ -25,6 +25,8 @@ void write_flash_bytes(uint8_t *buf, uint32_t num_bytes) {
     uint32_t remaining_bytes = num_bytes;
 
     while (remaining_bytes > 0) {
+        if (flash_page_addr >= 65535) return;
+        
         uint32_t bytes_to_write = MIN(remaining_bytes, page_size - flash_page_offset);
         
         W25qxx_WritePage(buf, flash_page_addr, flash_page_offset, bytes_to_write);
@@ -48,8 +50,6 @@ void flash_erase() {
 }
 
 void do_flash_log(char *buf) {
-    return;
-    
     if (can_do_logging && is_armed) {
         write_flash_bytes((uint8_t *)buf, strlen(buf));
         HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
@@ -59,6 +59,8 @@ void do_flash_log(char *buf) {
 void dump_flash_log() {
     int page = initial_page;
     while (!W25qxx_IsEmptyPage(page, 0, 256)) {
+        if (flash_page_addr >= 65535) return;
+        
         uint8_t res_buf[256];
         W25qxx_ReadPage((uint8_t *)res_buf, page, 0, 256);
         j_packet_send(0x00, (void *)res_buf, 256, 1, J_PACKET_SIZE, j_packet_send_callback);
@@ -191,6 +193,6 @@ void do_flash_log(char *buf) { }
 void dump_flash_log() { }
 void del_flash_log() { }
 void save_pid_flash(bool is_sector_erased) { }
-void load_pid_flash() { }
+void load_pid_flash(bool send_info) { }
 
 #endif // MCU
