@@ -32,6 +32,7 @@ inline pid_state_t pitch_pid;
 inline pid_state_t roll_rate_pid;
 inline pid_state_t pitch_rate_pid;
 
+inline int iteration = 0;
 inline float time_s = 0.0f;
 inline float start_time_s = 0.0f;
 inline float prev_time_s = -1.0f;
@@ -122,7 +123,8 @@ inline int8_t current_channel = -1;
 inline int32_t last_captured_value = -1;
 inline int32_t ppm_us[NUM_CTRL_CHANNELS] = { 0 };
 
-inline uint32_t flash_page_addr = 0;
+inline const int initial_page = 16;
+inline uint32_t flash_page_addr = initial_page;
 inline uint32_t flash_page_offset = 0;
 
 inline bmi160_t hbmi160;

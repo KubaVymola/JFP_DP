@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-const int initial_page = 16;
-
 void configure_logging();
 void write_flash_bytes(uint8_t *buf, uint32_t num_bytes);
 void flash_erase();

@@ -12,6 +12,10 @@
 #ifdef MCU
 
 void configure_logging() {
+    if (flash_page_addr < initial_page) {
+        flash_page_addr = initial_page;
+    }
+    
     if (flash_page_addr == initial_page) {
         can_do_logging = W25qxx_IsEmptyPage(initial_page, 0, 256);
     } else {

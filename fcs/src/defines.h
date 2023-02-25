@@ -9,7 +9,7 @@
 #define AUTO_ARM                         false
 #endif
 
-#define LOOP_FREQUENCY                   100.0f
+#define LOOP_FREQUENCY                   200.0f
 
 #define HEADING_MODE_SP                  1 /* Heading is held at a fixed value */
 #define HEADING_MODE_RATE                2 /* Heading is controlled with rate of change */
@@ -25,10 +25,10 @@
 
 #define CALIBRATION_TIME_S               2.0f
 
-#define MAX_VERICAL_RATE                 10.0f  /* M/S */
+#define MAX_VERICAL_RATE                 5.0f  /* M/S */
 #define MAX_YAW_RATE                     100.0f /* DEG/S */
 #define MAX_ANGLE_RATE                   20.0f  /* DEG/S */
-#define MAX_ANGLE                        20.0f  /* DEG */
+#define MAX_ANGLE                        30.0f  /* DEG */
 
 #define VERTICAL_RATE_THRUST_POS_DEADBAND 0.3f
 

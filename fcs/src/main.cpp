@@ -63,6 +63,16 @@
 
 
 /**
+ * TODO Dynamic heading mode (deadband, where yaw is held at the last value; use yaw_rate outside of this deadband)
+ * TODO Filter yaw_rate_dps
+ * TODO filter acceleration or linear acceleration (if it does not filter vertical rate, then filter that as well)
+ * TODO better altitude measurement (higher oversampling and divide the resulting vertical rate over the duration that it took to produce the masurement - to avoid spikes)
+ * TODO rethink variable names
+ * TODO better architecture for calibration (don't skip it in rt_telem)
+ * TODO better loop timing design - merge the two separate timers in HITL
+ */
+
+/**
  * ==== FUNCTION DECLARATIONS ====
  */
 
@@ -70,11 +80,6 @@ extern "C" void init();
 extern "C" void from_jsbsim_to_glob_state();
 extern "C" void control_loop(void);
 extern "C" void after_loop(void);
-
-#ifdef SITL
-extern "C" uint8_t data_from_jsbsim(uint8_t *data, int len);
-extern "C" uint8_t data_to_jsbsim(uint8_t *buf);
-#endif
 
 #ifdef MCU
 extern "C" void SystemClock_Config(void);
@@ -246,9 +251,9 @@ extern "C" void control_loop(void) {
     if (alt_est_m == -1.0f)              alt_est_m              = get_alt_asl_from_pressure(pressure_pa_mean);
     if (alt_est_m_prev == -1.0f)         alt_est_m_prev         = get_alt_asl_from_pressure(pressure_pa_mean);
 
-    alt_est_m = lowpass_filter_update(0.015f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
+    alt_est_m = lowpass_filter_update(0.005f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
     alt_rate_est_mps = complementary_filter_update(alt_rate_est_mps,
-                                                    0.05,
+                                                    0.02,
                                                     (alt_est_m - alt_est_m_prev) / deltaT,  // barometer based altitude rate estimate
                                                     lin_acc_z_g * G_TO_MPS * deltaT);       // accelerometer based altitude rate estimate
 
@@ -420,7 +425,13 @@ extern "C" void control_loop(void) {
      */
 
     if (is_armed) {
-        // throttle_cmd = throttle_cmd / cos(roll_est_deg * DEG_TO_RAD) / cos(pitch_est_deg * DEG_TO_RAD);
+        float roll_div = cos(roll_est_deg * DEG_TO_RAD);
+        if (roll_div < 0.5f) roll_div = 0.5f;
+
+        float pitch_div = cos(pitch_est_deg * DEG_TO_RAD);
+        if (pitch_div < 0.5f) pitch_div = 0.5f;
+        
+        throttle_cmd = throttle_cmd / pitch_div / roll_div;
         
         engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
         engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
@@ -464,15 +475,19 @@ void after_loop(void) {
      * Rotate quaternion that's send via telemetry by -90 deg in pitch to correctly visualize
      * the vehicle in 3D
      */
-    float ret_x = 0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
-    float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
-    float ret_z = 0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
-    float ret_w = -0 * qx - -0.7071067811865475 * qy - 0 * qz + 0.7071067811865476 * qw;
 
-    /**
-     * Telemetry output
-     */
-    snprintf(buf,
+
+    if (iteration % 1 == 0) {
+
+        float ret_x = 0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
+        float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
+        float ret_z = 0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
+        float ret_w = -0 * qx - -0.7071067811865475 * qy - 0 * qz + 0.7071067811865476 * qw;
+
+        /**
+         * Telemetry output
+         */
+        snprintf(buf,
             sizeof(buf),
             "%f,"
             "%f,%f,%f,%f,%f,%f,"
@@ -541,8 +556,14 @@ void after_loop(void) {
             
             cpu_usage);
 
-    j_packet_send(0x01, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
-    do_flash_log(buf);
+    
+
+        j_packet_send(0x01, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
+
+        do_flash_log(buf);
+    }
+
+    iteration++;
 }
 
 #ifdef MCU
@@ -566,7 +587,7 @@ int main(void) {
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
-    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_100HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_100HZ, BMI160_GYRO_RANGE_1000DPS);
+    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_400HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_400HZ, BMI160_GYRO_RANGE_1000DPS);
     hp203b_setup(&hhp203b, &hi2c2, 1);
 
     HAL_TIM_Base_Start(&htim6);

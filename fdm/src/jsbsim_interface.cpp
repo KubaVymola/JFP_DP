@@ -297,7 +297,6 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
               << "---- JSBSim Execution beginning ... --------------------------------------------"
               << JSBSim::FGFDMExec::reset << std::endl << std::endl;
 
-
     char s[100];
     time_t tod;
     time(&tod);

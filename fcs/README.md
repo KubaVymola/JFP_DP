@@ -10,7 +10,6 @@
 $ make [clean] indep [flash] TARGET=<target>
 ```
 
-
 ### Make HITL firmware to control simulated vehicle from MCU via serial interface
 
 ```
@@ -25,7 +24,6 @@ $ make [clean] sitl
 
 # Supported TARGETs
 
-- not STM32L151
 - STM32F405
 
 ### Reset MCU with OpenOCD
