@@ -418,28 +418,45 @@ class Craft {
     }
 
     getGamepadData() {
-        let gamepad: Gamepad = null;
-        
-        if (navigator.getGamepads().length > 0) {
-            gamepad = navigator.getGamepads()[0];
-        }
-        
-        const toReturn: any = {};
+        // let gamepad: Gamepad = null;
 
-        if (gamepad === null || !gamepad.connected) {
-            this.toJSBSimNames.forEach((name) => {
-                toReturn[name] = 0.0;
-            });
+        // TODO use ternary operator
+
+        const gamepad = navigator.getGamepads().length > 0
+            ? navigator.getGamepads()[0]
+            : null;
+
+        return this.toJSBSimNames.reduce((acc, name, id) => {
+            if (gamepad === null
+            || !gamepad.connected
+            || id >= gamepad.axes.length) return { ...acc, [name]: 0.0 };
             
-            return toReturn;
-        }
+            return { ...acc, [name]: gamepad.axes[id] };
+        }, {});
 
-        this.toJSBSimNames.forEach((name, id) => {
-            if (id >= gamepad.axes.length) toReturn[name] = 0.0;
-            else toReturn[name] = gamepad.axes[id];
-        });
+        
+        // if (navigator.getGamepads().length > 0) {
+        //     gamepad = navigator.getGamepads()[0];
+        // }
+        
+        // const toReturn: any = {};
 
-        return toReturn;
+        // if (gamepad === null || !gamepad.connected) {
+        //     this.toJSBSimNames.forEach((name) => {
+        //         toReturn[name] = 0.0;
+        //     });
+            
+        //     return toReturn;
+        // }
+
+        // // TODO reduce this to single reduce
+        
+        // this.toJSBSimNames.forEach((name, id) => {
+        //     if (id >= gamepad.axes.length) toReturn[name] = 0.0;
+        //     else toReturn[name] = gamepad.axes[id];
+        // });
+
+        // return toReturn;
     }
 }
 

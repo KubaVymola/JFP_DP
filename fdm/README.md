@@ -14,6 +14,9 @@
 
 ### Ubuntu
 
+
+* apt install build-essential cmake
+
 * asio
     * apt install libasio-dev
 * websocket

@@ -16,7 +16,7 @@ extern SPI_HandleTypeDef _W25QXX_SPI;
 #include "cmsis_os.h"
 #else
 #define W25qxx_Delay(delay) HAL_Delay(delay)
-#define W25qxx_Delay_short() delay_us(100)
+#define W25qxx_Delay_short() delay_us(10)
 #endif
 //###################################################################################################################
 uint8_t W25qxx_Spi(uint8_t Data)

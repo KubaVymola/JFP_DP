@@ -63,9 +63,6 @@
 
 
 /**
- * TODO Dynamic heading mode (deadband, where yaw is held at the last value; use yaw_rate outside of this deadband)
- * TODO Filter yaw_rate_dps
- * TODO filter acceleration or linear acceleration (if it does not filter vertical rate, then filter that as well)
  * TODO better altitude measurement (higher oversampling and divide the resulting vertical rate over the duration that it took to produce the masurement - to avoid spikes)
  * TODO rethink variable names
  * TODO better architecture for calibration (don't skip it in rt_telem)
@@ -105,14 +102,25 @@ extern "C" void init() {
     pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
     pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
 
-    pid_init(roll_pid,  0.00009, 0.00001, 0.00005, 0.15, -0.2, 0.2);
-    pid_init(pitch_pid, 0.00009, 0.00001, 0.00005, 0.15, -0.2, 0.2);
+    pid_init(roll_pid,  0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
+    pid_init(pitch_pid, 0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
 
     pid_init(roll_rate_pid,  0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
     pid_init(pitch_rate_pid, 0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
 
     load_pid_flash(false);
     
+    low_pass_filter_init(alt_est_lpf, 0.5f); // might be 0.16 Hz, according to ChatGPT
+    low_pass_filter_init(alt_rate_est_lpf, 8.0f);
+
+    low_pass_filter_init(yaw_rate_lpf, 5.0f);
+    
+    low_pass_filter_init(acc_x_lpf, 5.0f); // might be 1-2 Hz, according to ChatGPT
+    low_pass_filter_init(acc_y_lpf, 5.0f);
+    low_pass_filter_init(acc_z_lpf, 5.0f);
+
+    // low_pass_filter_init(throttle_lpf, 1.0f);
+
 
     /**
      * ==== Good tune ====
@@ -183,10 +191,10 @@ extern "C" void from_jsbsim_to_glob_state() {
 }
 
 extern "C" void control_loop(void) {
-    const float deltaT = time_s - prev_time_s;
+    const float delta_t_s = time_s - prev_time_s;
     prev_time_s = time_s;
 
-    if (deltaT <= 0.0f) return;
+    if (delta_t_s <= 0.0f) return;
 
     /**
      * Calibration
@@ -228,6 +236,10 @@ extern "C" void control_loop(void) {
     gy_rad = gy_rad - gy_mean_rad;
     gz_rad = gz_rad - gz_mean_rad;
 
+    ax_g = low_pass_filter_update(acc_x_lpf, ax_g, delta_t_s);
+    ay_g = low_pass_filter_update(acc_y_lpf, ay_g, delta_t_s);
+    az_g = low_pass_filter_update(acc_z_lpf, az_g, delta_t_s);
+
     sensor_fusion.updateIMU(-gx_rad * RAD_TO_DEG, gy_rad * RAD_TO_DEG, -gz_rad * RAD_TO_DEG, ax_g, -ay_g, az_g);
     sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
     roll_est_deg = sensor_fusion.getRoll();
@@ -246,21 +258,25 @@ extern "C" void control_loop(void) {
     /**
      * ==== Altitude ====
      */
+
     alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
-    if (alt_measurement_m_prev == -1.0f) alt_measurement_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
-    if (alt_est_m == -1.0f)              alt_est_m              = get_alt_asl_from_pressure(pressure_pa_mean);
-    if (alt_est_m_prev == -1.0f)         alt_est_m_prev         = get_alt_asl_from_pressure(pressure_pa_mean);
 
-    alt_est_m = lowpass_filter_update(0.005f, alt_est_m, alt_measurement_m_prev, alt_measurement_m, deltaT);
-    alt_rate_est_mps = complementary_filter_update(alt_rate_est_mps,
-                                                    0.02,
-                                                    (alt_est_m - alt_est_m_prev) / deltaT,  // barometer based altitude rate estimate
-                                                    lin_acc_z_g * G_TO_MPS * deltaT);       // accelerometer based altitude rate estimate
+    if (alt_est_m      == -INFINITY) alt_est_m      = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (alt_est_m_prev == -INFINITY) alt_est_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (initial_alt_m  == -INFINITY) initial_alt_m  = get_alt_asl_from_pressure(pressure_pa_mean);
+    
+    alt_est_m = low_pass_filter_update(alt_est_lpf, alt_measurement_m, delta_t_s);
+    alt_rate_est_mps = complementary_filter_update(0.02f,
+                                                   (alt_est_m - alt_est_m_prev) / delta_t_s,
+                                                   alt_rate_est_mps + lin_acc_z_g * G_TO_MPS * delta_t_s);
+    alt_rate_est_mps = low_pass_filter_update(alt_rate_est_lpf, alt_rate_est_mps, delta_t_s);
 
-    alt_measurement_m_prev = alt_measurement_m;
     alt_est_m_prev = alt_est_m;
 
-    if (initial_alt_m == -1.0f) initial_alt_m = get_alt_asl_from_pressure(pressure_pa_mean);
+
+    /**
+     * ==== END Altitude ====
+     */
 
 #ifdef DEMO_SEQ
     demo_sequence();
@@ -287,9 +303,10 @@ extern "C" void control_loop(void) {
     if (yaw_diff_deg < -180) yaw_diff_deg += 360.0f;
     if (yaw_diff_deg > 180) yaw_diff_deg -= 360.0f;
 
-    yaw_rate_dps = yaw_diff_deg / deltaT;
-    roll_rate_dps = (roll_est_deg - roll_est_deg_prev) / deltaT;
-    pitch_rate_dps = (pitch_est_deg - pitch_est_deg_prev) / deltaT;
+    yaw_rate_dps = yaw_diff_deg / delta_t_s;
+    yaw_rate_dps = low_pass_filter_update(yaw_rate_lpf, yaw_rate_dps, delta_t_s);
+    roll_rate_dps = (roll_est_deg - roll_est_deg_prev) / delta_t_s;
+    pitch_rate_dps = (pitch_est_deg - pitch_est_deg_prev) / delta_t_s;
 
     yaw_est_deg_prev = yaw_est_deg;
     roll_est_deg_prev = roll_est_deg;
@@ -309,6 +326,7 @@ extern "C" void control_loop(void) {
     if (detect_arm()) {
         is_armed = true;
         configure_logging();
+        // enable_pid_integrators();
     }
     if (detect_disarm()) {
         is_armed = false;
@@ -348,7 +366,7 @@ extern "C" void control_loop(void) {
      * ==== Throttle command ====
      */
     if (vertical_mode == VERTICAL_MODE_SP) {
-        throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_sp_pid, alt_sp, alt_est_m, deltaT);
+        throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_sp_pid, alt_sp, alt_est_m, delta_t_s);
 
     } else if (vertical_mode == VERTICAL_MODE_RATE) {
         float target_alt_rate = 0.0f;
@@ -361,7 +379,7 @@ extern "C" void control_loop(void) {
             target_alt_rate = (throttle_channel - VERTICAL_RATE_THRUST_POS_DEADBAND) * MAX_VERICAL_RATE / (1.0 - VERTICAL_RATE_THRUST_POS_DEADBAND);
         }
 
-        throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, deltaT);
+        throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
 
         /**
          * Idle thrust when on the ground
@@ -375,6 +393,8 @@ extern "C" void control_loop(void) {
 
     }
 
+    // throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
+
     /**
      * ==== END Throttle command ====
      */
@@ -383,10 +403,26 @@ extern "C" void control_loop(void) {
      * ==== Yaw command ====
      */
     if (heading_mode == HEADING_MODE_SP) {
-        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, deltaT);
+        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
 
     } else if (heading_mode == HEADING_MODE_RATE) {
-        yaw_cmd = pid_update(yaw_rate_pid, yaw_channel * MAX_YAW_RATE, yaw_rate_dps, deltaT);
+        yaw_cmd = pid_update(yaw_rate_pid, yaw_channel * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
+
+    } else if (heading_mode == HEADING_MODE_DYNAMIC) {
+        float target_yaw_rate = 0.0f;
+
+        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = yaw_channel - HEADING_DYNAMIC_DEADBAND;
+        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = yaw_channel + HEADING_DYNAMIC_DEADBAND;
+
+        float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
+        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
+
+        if (target_yaw_rate == 0.0f) {
+            yaw_cmd = yaw_sp_pid_out;
+        } else {
+            yaw_cmd = yaw_rate_pid_out;
+            yaw_sp_deg = yaw_est_deg;
+        }
     }
     /**
      * ==== END Yaw command ====
@@ -401,19 +437,19 @@ extern "C" void control_loop(void) {
         const float x_body_sp_m = get_x_body(yaw_est_deg * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);
         const float y_body_sp_m = get_y_body(yaw_est_deg * DEG_TO_RAD, x_world_sp_m, y_world_sp_m);
 
-        const float x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, deltaT);
-        const float y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, deltaT);
+        const float x_body_pid_out = pid_update(x_body_pid, x_body_sp_m, x_body_measure_m, delta_t_s);
+        const float y_body_pid_out = pid_update(y_body_pid, y_body_sp_m, y_body_measure_m, delta_t_s);
 
-        roll_cmd  = pid_update(roll_pid,   x_body_pid_out, roll_est_deg,  deltaT);
-        pitch_cmd = pid_update(pitch_pid, -y_body_pid_out, pitch_est_deg, deltaT);
+        roll_cmd  = pid_update(roll_pid,   x_body_pid_out, roll_est_deg,  delta_t_s);
+        pitch_cmd = pid_update(pitch_pid, -y_body_pid_out, pitch_est_deg, delta_t_s);
 
     } else if (lateral_mode == LATERAL_MODE_ANGLE_RATE) {
-        roll_cmd = pid_update(roll_rate_pid, roll_channel * MAX_ANGLE_RATE, roll_rate_dps, deltaT);
-        pitch_cmd = pid_update(pitch_rate_pid, pitch_channel * MAX_ANGLE_RATE, pitch_rate_dps, deltaT);
+        roll_cmd = pid_update(roll_rate_pid, roll_channel * MAX_ANGLE_RATE, roll_rate_dps, delta_t_s);
+        pitch_cmd = pid_update(pitch_rate_pid, pitch_channel * MAX_ANGLE_RATE, pitch_rate_dps, delta_t_s);
 
     } else if (lateral_mode == LATERAL_MODE_ANGLE) {
-        roll_cmd = pid_update(roll_pid, roll_channel * MAX_ANGLE, roll_est_deg, deltaT);
-        pitch_cmd = pid_update(pitch_pid, -pitch_channel * MAX_ANGLE, pitch_est_deg, deltaT);
+        roll_cmd = pid_update(roll_pid, roll_channel * MAX_ANGLE, roll_est_deg, delta_t_s);
+        pitch_cmd = pid_update(pitch_pid, -pitch_channel * MAX_ANGLE, pitch_est_deg, delta_t_s);
     }
     /**
      * ==== END Pitch/roll command ====
@@ -455,7 +491,7 @@ void after_loop(void) {
         engine_3_cmd_norm
     };
 
-
+    
     j_packet_send(0x02, to_jsbsim, sizeof(to_jsbsim), sizeof(float), J_PACKET_SIZE, j_packet_send_callback);
     
     /**
@@ -477,7 +513,8 @@ void after_loop(void) {
      */
 
 
-    if (iteration % 1 == 0) {
+    if (iteration % (int)(LOOP_FREQUENCY / LOG_FREQUENCY) == 0) {
+    // if (true) {
 
         float ret_x = 0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
         float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
@@ -556,11 +593,13 @@ void after_loop(void) {
             
             cpu_usage);
 
-    
-
         j_packet_send(0x01, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
 
         do_flash_log(buf);
+
+        #ifdef MCU
+        cpu_usage = (HAL_GetTick() - last_loop_time_ms) / (1000.0f / LOOP_FREQUENCY) * 100.0f;
+        #endif
     }
 
     iteration++;
@@ -666,9 +705,6 @@ int main(void) {
         htim4.Instance->CCR2 = engine_3_cmd_norm * 12000.0f + 12000.0f;
 
         after_loop();
-
-
-        cpu_usage = (HAL_GetTick() - last_loop_time_ms) / (1000.0f / LOOP_FREQUENCY) * 100.0f;
     }
 }
 

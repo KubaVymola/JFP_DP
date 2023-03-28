@@ -38,9 +38,9 @@ int j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_
         while (1) {
             uint8_t result = j_packet_send_callback(to_send, J_PACKET_HEADER_SIZE + to_send_size + J_PACKET_FOOTER_SIZE);
 
-            if (result == 0) break;     // equiv. to USBD_OK
-            if (result == 1) continue;  // equiv. to USBD_BUSY
-            if (result == 3) return -1;    // equiv. to USBD_FAIL
+            if (result == 0) break;         // equiv. to USBD_OK
+            if (result == 1) continue;      // equiv. to USBD_BUSY
+            if (result == 3) return -1;     // equiv. to USBD_FAIL
         }
 
         current_offset += to_send_size;

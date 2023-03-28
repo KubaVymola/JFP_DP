@@ -12,9 +12,6 @@
  * @return Returns true only once per take-off
  */
 bool detect_takeoff() {
-    // TODO maybe check rates
-    // TODO maybe check vectical_rate_est
-
     if (is_airborne
     || vector_norm(lin_acc_x_g, lin_acc_y_g, lin_acc_z_g) < TAKEOFF_LIN_ACC_THRESHLD
     || (vertical_mode != VERTICAL_MODE_SP && ctrl_channels_norm[THROTTLE_CHANNEL] < TAKEOFF_THRUST_POS_THRESHLD)) {

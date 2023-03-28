@@ -9,11 +9,13 @@
 #define AUTO_ARM                         false
 #endif
 
-#define LOOP_FREQUENCY                   200.0f
+#define LOOP_FREQUENCY                   400.0f
+#define LOG_FREQUENCY                    50.0f
 
 #define HEADING_MODE_SP                  1 /* Heading is held at a fixed value */
-#define HEADING_MODE_RATE                2 /* Heading is controlled with rate of change */
-#define HEADING_MODE_NONE                3 /* Heading mode used for tunning */
+#define HEADING_MODE_RATE                2 /* Heading rate is held at a fixed value */
+#define HEADING_MODE_DYNAMIC             3 /* Combination of SP (in deadband) and rate */
+#define HEADING_MODE_NONE                4 /* Heading mode used for tunning */
 
 #define VERTICAL_MODE_SP                 1 /* Altitude is held at a fixed value */
 #define VERTICAL_MODE_RATE               2 /* Altitude is controlled with rate of change */
@@ -25,7 +27,7 @@
 
 #define CALIBRATION_TIME_S               2.0f
 
-#define MAX_VERICAL_RATE                 5.0f  /* M/S */
+#define MAX_VERICAL_RATE                 2.0f  /* M/S */
 #define MAX_YAW_RATE                     100.0f /* DEG/S */
 #define MAX_ANGLE_RATE                   20.0f  /* DEG/S */
 #define MAX_ANGLE                        30.0f  /* DEG */
@@ -48,6 +50,8 @@
 #define LANDING_EVENT_DURATION           2.0f   /* Amount of seconds required to hold the conditions until detection */
 
 #define EVENT_TIME_INVALID               (-1.0f)
+
+#define HEADING_DYNAMIC_DEADBAND         0.1f
 
 #define NUM_CTRL_CHANNELS                8
 

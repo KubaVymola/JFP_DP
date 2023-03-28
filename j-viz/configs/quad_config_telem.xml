@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<timeseries grid_x="5" grid_y="3">
+<timeseries grid_x="4" grid_y="3">
     <time range_from="0" range_to="60">telem/simulation/sim-time-sec</time>
     
     <plot pos_x="0" pos_y="0" range_from="-2" range_to="2" title="Acceleration" ylabel="[g]">
@@ -25,10 +25,6 @@
         <data>telem/yaw</data>
         <data>telem/pitch</data>
         <data>telem/roll</data>
-    </plot>
-
-    <plot pos_x="4" pos_y="0" range_from="-10" range_to="10" title="Alt" ylabel="[m agl]">
-        <data>telem/alt-est-m</data>
     </plot>
 
     <plot pos_x="0" pos_y="1" range_from="-1" range_to="1" title="Control" ylabel="[norm]">
@@ -58,14 +54,19 @@
         <data>telem/engine-3-cmd-norm</data>
     </plot>
 
-    <plot pos_x="4" pos_y="1" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]">
+    <plot pos_x="0" pos_y="2" range_from="101000" range_to="101500" title="Pressure" ylabel="[Pa]">
+        <data>telem/pressure-pa</data>
+    </plot>
+
+    <plot pos_x="1" pos_y="2" range_from="-2" range_to="2" title="Linear acc" ylabel="[g]">
         <data>telem/lin-acc-x-g</data>
         <data>telem/lin-acc-y-g</data>
         <data>telem/lin-acc-z-g</data>
     </plot>
 
-    <plot pos_x="0" pos_y="2" range_from="100000" range_to="101000" title="Pressure" ylabel="[Pa]">
-        <data>telem/pressure-pa</data>
+
+    <plot pos_x="2" pos_y="2" range_from="-10" range_to="10" title="Alt" ylabel="[m agl]">
+        <data>telem/alt-est-m</data>
     </plot>
 
 </timeseries>

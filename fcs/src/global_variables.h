@@ -2,9 +2,12 @@
 #define GLOBALVARIABLES_H
 
 #include <stdint.h>
+#include <math.h>
 #include <queue>
+
 #include "defines.h"
 #include "pid.h"
+#include "low_pass_filter.h"
 #include "Adafruit_AHRS_Madgwick.h"
 #include "j_packets.h"
 
@@ -15,7 +18,8 @@
 
 inline char cmd_string[128] = { 0 };
 
-inline uint8_t heading_mode  = HEADING_MODE_RATE;
+// inline uint8_t heading_mode  = HEADING_MODE_RATE;
+inline uint8_t heading_mode  = HEADING_MODE_DYNAMIC;
 inline uint8_t lateral_mode  = LATERAL_MODE_ANGLE;
 inline uint8_t vertical_mode = VERTICAL_MODE_DIRECT;
 
@@ -38,23 +42,27 @@ inline float start_time_s = 0.0f;
 inline float prev_time_s = -1.0f;
 inline float x_world_measure_m = 0.0f;  // world_x -> east -> longitude
 inline float y_world_measure_m = 0.0f;  // world_y -> north -> latitude
+inline low_pass_filter_t acc_x_lpf, acc_y_lpf, acc_z_lpf;
 inline float ax_g = 0.0f, ay_g = 0.0f, az_g = 0.0f;
 inline float gx_rad = 0.0f, gy_rad = 0.0f, gz_rad = 0.0f;
-inline float pressure_pa = 0.0f;
-inline float alt_measurement_m = 0.0f;
-inline float alt_measurement_m_prev = -1.0f;
 inline float temp_c = 0.0f;
 inline float real_yaw_deg = 0.0f;
 
 inline float gx_mean_rad = 0.0f, gy_mean_rad = 0.0f, gz_mean_rad = 0.0f;
 inline float acc_norm_mean = 1.0f; 
-inline float pressure_pa_mean = 0.0f;
 inline int calibration_samples = 0;
 
-inline float alt_est_m = -1.0f;
-inline float alt_est_m_prev = -1.0f;
-inline float initial_alt_m = -1.0f;
+inline low_pass_filter_t alt_est_lpf;
+inline low_pass_filter_t alt_rate_est_lpf;
+inline float pressure_pa = 0.0f;
+inline float pressure_pa_mean = 0.0f;
+inline float alt_measurement_m = 0.0f;
+inline float alt_est_m = -INFINITY;
+inline float alt_est_m_prev = -INFINITY;
+inline float initial_alt_m = -INFINITY;
 inline float alt_rate_est_mps = 0.0f;
+
+inline low_pass_filter_t yaw_rate_lpf;
 inline float yaw_est_deg = 0.0f;
 inline float yaw_est_deg_prev = 0.0f;
 inline float pitch_est_deg = 0.0f;
@@ -65,6 +73,9 @@ inline float yaw_rate_dps = 0.0f;
 inline float roll_rate_dps = 0.0f;
 inline float pitch_rate_dps = 0.0f;
 
+inline float qw = 1.0f, qx = 0.0f, qy = 0.0f, qz = 0.0f;
+inline float lin_acc_x_g = 0.0f, lin_acc_y_g = 0.0f, lin_acc_z_g = 0.0f;
+
 inline int current_tunning = -1;
 
 inline float alt_sp = 0.0f;
@@ -72,14 +83,12 @@ inline float yaw_sp_deg = 0.0f;
 inline float x_world_sp_m = 0.0f;
 inline float y_world_sp_m = 0.0f;
 
-inline float qw = 1.0f, qx = 0.0f, qy = 0.0f, qz = 0.0f;
-inline float lin_acc_x_g = 0.0f, lin_acc_y_g = 0.0f, lin_acc_z_g = 0.0f;
-
 // ? FCS channels indexed from 0, RC transmitter indexed from 1
 // ? Channels have range of (-1,1) and default value of 0
 // 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
 inline float ctrl_channels_norm[NUM_CTRL_CHANNELS] = { 0 };
 
+// inline low_pass_filter_t throttle_lpf;
 inline float yaw_channel = 0.0f;
 inline float pitch_channel = 0.0f;
 inline float roll_channel = 0.0f;

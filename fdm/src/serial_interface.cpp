@@ -6,6 +6,7 @@
 
 #ifdef __linux__
 #include <sys/ioctl.h>
+#include <linux/serial.h>
 #endif
 
 #include "sim_events.h"

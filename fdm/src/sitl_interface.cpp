@@ -161,7 +161,7 @@ void SITLInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_numbe
     }
 
     /**
-     * Receive HITL data
+     * Receive SITL/HITL data
      */
     if (channel_number == 0x02) {
         float *new_data = (float *)(current_data + J_PACKET_HEADER_SIZE);
