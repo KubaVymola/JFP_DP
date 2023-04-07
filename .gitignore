@@ -2,8 +2,10 @@
 .cache/
 .webpack/
 out/
-data_output/
 venv/
+
+**/data_output/*
+!**/data_output/.to_make_fdm_work
 
 build*/
 

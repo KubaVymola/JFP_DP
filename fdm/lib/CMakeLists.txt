@@ -10,6 +10,7 @@ add_subdirectory(json)
 add_subdirectory(tinyxml2)
 
 find_package(websocketpp REQUIRED)
+find_package(Threads REQUIRED)
 
 target_link_libraries(app_external_deps INTERFACE
     websocketpp::websocketpp
@@ -17,6 +18,7 @@ target_link_libraries(app_external_deps INTERFACE
     dl
     nlohmann_json::nlohmann_json
     tinyxml2::tinyxml2
+    Threads::Threads
 )
 
 target_include_directories(app_external_deps INTERFACE
