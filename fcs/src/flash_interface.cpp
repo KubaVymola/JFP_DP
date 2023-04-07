@@ -55,6 +55,7 @@ void flash_erase() {
 
 void do_flash_log(char *buf) {
     if (can_do_logging && is_armed) {
+        // HAL_Delay(2);
         write_flash_bytes((uint8_t *)buf, strlen(buf));
         HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     }

@@ -110,8 +110,8 @@ extern "C" void init() {
 
     load_pid_flash(false);
     
-    low_pass_filter_init(alt_est_lpf, 0.5f); // might be 0.16 Hz, according to ChatGPT
-    low_pass_filter_init(alt_rate_est_lpf, 8.0f);
+    low_pass_filter_init(alt_est_lpf, 0.3f); // might be 0.16 Hz, according to ChatGPT
+    low_pass_filter_init(throttle_lpf, 4.0f);
 
     low_pass_filter_init(yaw_rate_lpf, 5.0f);
     
@@ -119,7 +119,7 @@ extern "C" void init() {
     low_pass_filter_init(acc_y_lpf, 5.0f);
     low_pass_filter_init(acc_z_lpf, 5.0f);
 
-    // low_pass_filter_init(throttle_lpf, 1.0f);
+    // low_pass_filter_init(alt_rate_est_lpf, 30.0f);
 
 
     /**
@@ -199,7 +199,7 @@ extern "C" void control_loop(void) {
     /**
      * Calibration
      */
-    if (time_s < CALIBRATION_TIME_S) {
+    if (calibration_samples >= 0 && calibration_samples < LOOP_FREQUENCY * 2.0f) {
         if (pressure_pa == 0.0f) return;
         
         float curr_acc_norm = sqrtf(ax_g * ax_g + ay_g * ay_g + az_g * az_g);
@@ -212,11 +212,12 @@ extern "C" void control_loop(void) {
         pressure_pa_mean = (pressure_pa_mean * calibration_samples + pressure_pa) / (calibration_samples + 1);
 
         calibration_samples++;
+
         return;
     }
 
 
-    if (time_s >= CALIBRATION_TIME_S && calibration_samples > 0) {
+    if (calibration_samples > 0) {
         send_jpacket_info(0x03, "acc_norm_mean %f", 64, acc_norm_mean);
         send_jpacket_info(0x03, "gx_mean %f°", 64, gx_mean_rad * RAD_TO_DEG);
         send_jpacket_info(0x03, "gy_mean %f°", 64, gy_mean_rad * RAD_TO_DEG);
@@ -224,7 +225,7 @@ extern "C" void control_loop(void) {
         send_jpacket_info(0x03, "mean pressure %f Pa", 64, pressure_pa_mean);
         send_jpacket_info(0x03, "READY...", 64);
         
-        calibration_samples = 0;
+        calibration_samples = -1;
     }
 
     if (acc_norm_mean <= 0.1f) acc_norm_mean = 1.0f;
@@ -258,18 +259,19 @@ extern "C" void control_loop(void) {
     /**
      * ==== Altitude ====
      */
-
+    
     alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
 
-    if (alt_est_m      == -INFINITY) alt_est_m      = get_alt_asl_from_pressure(pressure_pa_mean);
-    if (alt_est_m_prev == -INFINITY) alt_est_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
-    if (initial_alt_m  == -INFINITY) initial_alt_m  = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (alt_est_m      == NO_ALTITUDE) alt_est_m      = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (alt_est_m_prev == NO_ALTITUDE) alt_est_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
+    if (initial_alt_m  == NO_ALTITUDE) initial_alt_m  = get_alt_asl_from_pressure(pressure_pa_mean);
     
     alt_est_m = low_pass_filter_update(alt_est_lpf, alt_measurement_m, delta_t_s);
-    alt_rate_est_mps = complementary_filter_update(0.02f,
+    alt_rate_est_mps = complementary_filter_update(0.01f,
                                                    (alt_est_m - alt_est_m_prev) / delta_t_s,
                                                    alt_rate_est_mps + lin_acc_z_g * G_TO_MPS * delta_t_s);
-    alt_rate_est_mps = low_pass_filter_update(alt_rate_est_lpf, alt_rate_est_mps, delta_t_s);
+    
+    // alt_rate_est_mps = low_pass_filter_update(alt_rate_est_lpf, alt_rate_est_mps, delta_t_s);
 
     alt_est_m_prev = alt_est_m;
 
@@ -380,6 +382,7 @@ extern "C" void control_loop(void) {
         }
 
         throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
+        throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
 
         /**
          * Idle thrust when on the ground
@@ -393,7 +396,6 @@ extern "C" void control_loop(void) {
 
     }
 
-    // throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
 
     /**
      * ==== END Throttle command ====

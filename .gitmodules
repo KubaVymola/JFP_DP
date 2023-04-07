@@ -1,12 +1,12 @@
 [submodule "fdm/lib/jsbsim"]
 	path = fdm/lib/jsbsim
-	url = git@github.com:JSBSim-Team/jsbsim.git
+	url = https://github.com/JSBSim-Team/jsbsim.git
 [submodule "fdm/lib/json"]
 	path = fdm/lib/json
-	url = git@github.com:nlohmann/json.git
+	url = https://github.com/nlohmann/json.git
 [submodule "fdm/lib/tinyxml2"]
 	path = fdm/lib/tinyxml2
-	url = git@github.com:leethomason/tinyxml2.git
+	url = https://github.com/leethomason/tinyxml2.git
 [submodule "fcs/lib/tinyxml2"]
 	path = fcs/lib/tinyxml2
-	url = git@github.com:leethomason/tinyxml2.git
+	url = https://github.com/leethomason/tinyxml2.git

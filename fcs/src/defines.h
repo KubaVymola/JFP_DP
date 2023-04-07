@@ -80,4 +80,6 @@
 #define G_TO_MPS                         9.81f
 #define MPS_TO_G                         (1.0f / 9.81f)
 
+#define NO_ALTITUDE                      -1000000
+
 #endif // DEFINES_H

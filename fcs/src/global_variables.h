@@ -52,14 +52,14 @@ inline float gx_mean_rad = 0.0f, gy_mean_rad = 0.0f, gz_mean_rad = 0.0f;
 inline float acc_norm_mean = 1.0f; 
 inline int calibration_samples = 0;
 
+// inline low_pass_filter_t alt_rate_est_lpf;
 inline low_pass_filter_t alt_est_lpf;
-inline low_pass_filter_t alt_rate_est_lpf;
 inline float pressure_pa = 0.0f;
 inline float pressure_pa_mean = 0.0f;
 inline float alt_measurement_m = 0.0f;
-inline float alt_est_m = -INFINITY;
-inline float alt_est_m_prev = -INFINITY;
-inline float initial_alt_m = -INFINITY;
+inline float alt_est_m = NO_ALTITUDE;
+inline float alt_est_m_prev = NO_ALTITUDE;
+inline float initial_alt_m = NO_ALTITUDE;
 inline float alt_rate_est_mps = 0.0f;
 
 inline low_pass_filter_t yaw_rate_lpf;
@@ -88,7 +88,7 @@ inline float y_world_sp_m = 0.0f;
 // 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
 inline float ctrl_channels_norm[NUM_CTRL_CHANNELS] = { 0 };
 
-// inline low_pass_filter_t throttle_lpf;
+inline low_pass_filter_t throttle_lpf;
 inline float yaw_channel = 0.0f;
 inline float pitch_channel = 0.0f;
 inline float roll_channel = 0.0f;
