@@ -4,6 +4,7 @@
 Run:
 
 ```
+rm package-lock.json  # not removing cases trouble with babylon.js dependencies
 npm install
 ```
 

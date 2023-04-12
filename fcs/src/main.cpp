@@ -110,8 +110,8 @@ extern "C" void init() {
 
     load_pid_flash(false);
     
-    low_pass_filter_init(alt_est_lpf, 0.3f); // might be 0.16 Hz, according to ChatGPT
-    low_pass_filter_init(throttle_lpf, 4.0f);
+    low_pass_filter_init(alt_est_lpf, 0.2f); // might be 0.16 Hz, according to ChatGPT
+    low_pass_filter_init(throttle_lpf, 3.0f);
 
     low_pass_filter_init(yaw_rate_lpf, 5.0f);
     
@@ -298,8 +298,11 @@ extern "C" void control_loop(void) {
     #endif
 
 
-    if (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
-    if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
+    /**
+     * TODO is "while" correct? It was "if" before
+    */
+    while (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
+    while (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
 
     float yaw_diff_deg = yaw_est_deg - yaw_est_deg_prev;
     if (yaw_diff_deg < -180) yaw_diff_deg += 360.0f;
@@ -374,11 +377,11 @@ extern "C" void control_loop(void) {
         float target_alt_rate = 0.0f;
 
         if (throttle_channel < -VERTICAL_RATE_THRUST_POS_DEADBAND) {
-            target_alt_rate = (throttle_channel + VERTICAL_RATE_THRUST_POS_DEADBAND) * MAX_VERICAL_RATE / (1.0 - VERTICAL_RATE_THRUST_POS_DEADBAND);
+            target_alt_rate = (throttle_channel + VERTICAL_RATE_THRUST_POS_DEADBAND) * MAX_VERICAL_RATE / (1.0f - VERTICAL_RATE_THRUST_POS_DEADBAND);
         }
 
         if (throttle_channel > VERTICAL_RATE_THRUST_POS_DEADBAND) {
-            target_alt_rate = (throttle_channel - VERTICAL_RATE_THRUST_POS_DEADBAND) * MAX_VERICAL_RATE / (1.0 - VERTICAL_RATE_THRUST_POS_DEADBAND);
+            target_alt_rate = (throttle_channel - VERTICAL_RATE_THRUST_POS_DEADBAND) * MAX_VERICAL_RATE / (1.0f - VERTICAL_RATE_THRUST_POS_DEADBAND);
         }
 
         throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
@@ -413,11 +416,11 @@ extern "C" void control_loop(void) {
     } else if (heading_mode == HEADING_MODE_DYNAMIC) {
         float target_yaw_rate = 0.0f;
 
-        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = yaw_channel - HEADING_DYNAMIC_DEADBAND;
-        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = yaw_channel + HEADING_DYNAMIC_DEADBAND;
+        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
+        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
 
         float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
-        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
+        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
 
         if (target_yaw_rate == 0.0f) {
             yaw_cmd = yaw_sp_pid_out;

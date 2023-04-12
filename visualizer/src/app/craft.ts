@@ -426,6 +426,8 @@ class Craft {
             ? navigator.getGamepads()[0]
             : null;
 
+        // console.log('gamepad count', navigator.getGamepads().length);
+
         return this.toJSBSimNames.reduce((acc, name, id) => {
             if (gamepad === null
             || !gamepad.connected
