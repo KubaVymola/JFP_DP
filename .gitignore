@@ -30,5 +30,3 @@ node_modules/
 
 *.blend*
 *.mtl
-
-libfcs.so

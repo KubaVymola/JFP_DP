@@ -64,8 +64,6 @@
 
 /**
  * TODO better altitude measurement (higher oversampling and divide the resulting vertical rate over the duration that it took to produce the masurement - to avoid spikes)
- * TODO rethink variable names
- * TODO better architecture for calibration (don't skip it in rt_telem)
  * TODO better loop timing design - merge the two separate timers in HITL
  */
 
@@ -110,16 +108,14 @@ extern "C" void init() {
 
     load_pid_flash(false);
     
-    low_pass_filter_init(alt_est_lpf, 0.2f); // might be 0.16 Hz, according to ChatGPT
-    low_pass_filter_init(throttle_lpf, 3.0f);
+    low_pass_filter_init(alt_est_lpf, 0.1211f);
+    // low_pass_filter_init(throttle_lpf, 3.0f);
 
     low_pass_filter_init(yaw_rate_lpf, 5.0f);
     
-    low_pass_filter_init(acc_x_lpf, 5.0f); // might be 1-2 Hz, according to ChatGPT
-    low_pass_filter_init(acc_y_lpf, 5.0f);
-    low_pass_filter_init(acc_z_lpf, 5.0f);
-
-    // low_pass_filter_init(alt_rate_est_lpf, 30.0f);
+    low_pass_filter_init(acc_x_lpf, 10.0f);
+    low_pass_filter_init(acc_y_lpf, 10.0f);
+    low_pass_filter_init(acc_z_lpf, 10.0f);
 
 
     /**
@@ -197,7 +193,7 @@ extern "C" void control_loop(void) {
     if (delta_t_s <= 0.0f) return;
 
     /**
-     * Calibration
+     * Calibration (First 2 sec of execution)
      */
     if (calibration_samples >= 0 && calibration_samples < LOOP_FREQUENCY * 2.0f) {
         if (pressure_pa == 0.0f) return;
@@ -298,11 +294,12 @@ extern "C" void control_loop(void) {
     #endif
 
 
-    /**
-     * TODO is "while" correct? It was "if" before
-    */
-    while (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
-    while (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
+    float yaw_sp_diff_deg = yaw_sp_deg - yaw_est_deg;
+    while (yaw_sp_diff_deg > 180) yaw_sp_diff_deg -= 360;
+    while (yaw_sp_diff_deg < -180) yaw_sp_diff_deg += 360;
+
+    // while (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
+    // while (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
 
     float yaw_diff_deg = yaw_est_deg - yaw_est_deg_prev;
     if (yaw_diff_deg < -180) yaw_diff_deg += 360.0f;
@@ -385,12 +382,12 @@ extern "C" void control_loop(void) {
         }
 
         throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
-        throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
+        // throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
 
         /**
          * Idle thrust when on the ground
          */
-        if (!is_airborne && throttle_channel < IDLE_THRUST_POS_THRESHLD) {
+        if (!is_airborne && throttle_channel < VERTICAL_RATE_TAKEOFF_THRUST) {
             throttle_cmd = 0.0f;
         }
 
@@ -408,7 +405,7 @@ extern "C" void control_loop(void) {
      * ==== Yaw command ====
      */
     if (heading_mode == HEADING_MODE_SP) {
-        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
+        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
 
     } else if (heading_mode == HEADING_MODE_RATE) {
         yaw_cmd = pid_update(yaw_rate_pid, yaw_channel * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
@@ -419,7 +416,7 @@ extern "C" void control_loop(void) {
         if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
         if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
 
-        float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
+        float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
         float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
 
         if (target_yaw_rate == 0.0f) {

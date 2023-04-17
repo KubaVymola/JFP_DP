@@ -38,6 +38,7 @@
 
 #define IDLE_ARM_THRUST                  0.1f
 #define IDLE_THRUST_POS_THRESHLD        -0.9f   /* Stick position required to register idle thrust */
+#define VERTICAL_RATE_TAKEOFF_THRUST     0.3f
 
 #define TAKEOFF_THRUST_POS_THRESHLD     -0.5f   /* Stick position required to register take-off event */
 #define TAKEOFF_LIN_ACC_THRESHLD         0.1f
