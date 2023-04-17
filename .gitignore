@@ -30,3 +30,6 @@ node_modules/
 
 *.blend*
 *.mtl
+
+fdm/docs/latex
+fdm/docs/html

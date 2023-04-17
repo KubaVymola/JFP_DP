@@ -14,6 +14,15 @@
 
 using json = nlohmann::json;
 
+/**
+ * This class handles notifications for all SimEvents observers. Observers must implement the
+ * ISimClient interface, i.e. the handle_event method.
+ * 
+ * There are currently two events supported: EVENT_SIM_BEFORE_ITER, EVENT_SIM_AFTER_ITER.
+ * Each observer has to register to respective events that they want to react to.
+ * 
+ * The events are fired by JSBSimInterface and RealtimeLoop.
+*/
 class SimEvents {
 public:
     void register_client(const std::string& event_name, ISimClient *sim_client);

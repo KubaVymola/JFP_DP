@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+/**
+ * Struct that holds CLI configuration from the user
+*/
 struct sim_config_t {
     std::string root_dir;
     std::string script_path;

@@ -24,6 +24,27 @@ typedef void (*control_loop_func)(void);
 typedef void (*after_loop_func)(void);
 typedef uint8_t (*data_to_jsbsim_func)(uint8_t *);
 
+/**
+ * SITL interface encapsulates loading and interfacing with the FCS compiled into a library file.
+ * 
+ * The library must implement the following list of functions: init, init_override,
+ * data_from_jsbsim, from_jsbsim_to_glob_state, control_loop, after_loop, data_to_jsbsim
+ * 
+ * The functionality is very similar to the SerialInterface, which allows the SITLInterface to
+ * perform advanced tasks, such as using the CommandInterface or saving telemetry.
+ * 
+ * The communication with the FCS library is achieved by data_from_jsbsim and data_to_jsbsim
+ * functions. These functions relay buffers with the same packets as the SerialInterface's
+ * USB communication.
+ * 
+ * These packets contain simulated data and commands in SITL simulation.
+ * 
+ * There is a telemetry stream present in the data that gets saved to a file.
+ * 
+ * There's also a command input/output stream that gets relayed between a socket server and the FCS.
+ * 
+ * There can be a debug stream that gets printed to a terminal with printf
+*/
 class SITLInterface : public ISimClient {
 public:
     void sitl_init(sim_config_t& sim_config,

@@ -58,9 +58,7 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     
     // TODO allow default values for all properties
     
-    /**
-     * Get properties for the 3d visualizer
-     */
+    // Get properties for the 3d visualizer
     if (sim_config.ws_port != 0) {
 
         XMLElement *ws_elem = root_elem->FirstChildElement("ws");
@@ -91,9 +89,7 @@ void JSBSimInterface::parse_xml_config(sim_config_t& sim_config,
     }
 
 
-    /**
-     * Get properties for FCS interface
-     */
+    // Get properties for FCS interface
     if (!sim_config.sitl_path.empty() || sim_config.use_hitl) {
 
         XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
@@ -189,9 +185,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         }
     }
 
-    /**
-     * Load script that loads all other files
-     */
+    // Load script that loads all other files
     result = FDMExec->LoadScript(SGPath::fromLocal8Bit(sim_config.script_path.c_str()),
                                  override_sim_rate_value);
 
@@ -201,9 +195,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         exit(-1);
     }
 
-    /**
-     * Create all properties that are propagated back to JSBSim (to enable logging)
-     */
+    // Create all properties that are propagated back to JSBSim (to enable logging)
     for (const std::string& to_jsbsim_property : properties_to_jsbsim) {
         if (FDMExec->GetPropertyManager()->GetNode(to_jsbsim_property) == nullptr) {
             FDMExec->SetPropertyValue(to_jsbsim_property, 0.0);
@@ -211,9 +203,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         }
     }
 
-    /**
-     * Default values for extended properties that are not by default in the property catalogue
-     */
+    // Default values for extended properties that are not by default in the property catalogue
     FDMExec->SetPropertyValue("ext/altitude-m", 0.0);
     FDMExec->SetPropertyValue("ext/latitude-deg", 0.0);
     FDMExec->SetPropertyValue("ext/latitude-rad", 0.0);
@@ -239,9 +229,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
     FDMExec->SetPropertyValue("ext/cg-y-m", 0.0);
     FDMExec->SetPropertyValue("ext/cg-z-m", 0.0);
 
-    /**
-     * Load output directives file[s], if given
-     */
+    // Load output directives file[s], if given
     for (unsigned int i=0; i < sim_config.jsbsim_outputs.size(); i++) {
         SGPath logOutput = SGPath::fromLocal8Bit(sim_config.jsbsim_outputs[i].c_str());
         
@@ -254,9 +242,7 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
 
     FDMExec->RunIC();
     
-    /**
-     * Set simulation options from command line
-     */
+    // Set simulation options from command line
     for (unsigned int i=0; i < sim_config.command_line_properties.size(); i++) {
         if (FDMExec->GetPropertyManager()->GetNode(sim_config.command_line_properties[i])) {
             printf("Setting %s to %f\n", sim_config.command_line_properties[i].c_str(), sim_config.command_line_property_values[i]);
@@ -266,10 +252,8 @@ void JSBSimInterface::jsbsim_init(sim_config_t& sim_config,
         }
     }
 
-    /**
-     * Update sim_data from the initial run, but do not fire event
-     * ^ don't care about mutexes since the server should not be running at this point
-     */
+    // Update sim_data from the initial run, but do not fire event
+    // ^ don't care about mutexes since the server should not be running at this point
     update_sim_data(sim_data);
     
     std::cout << "sim_data" << sim_data->dump(4) << std::endl;
@@ -334,17 +318,13 @@ void JSBSimInterface::jsbsim_iter(sim_config_t& sim_config,
 
         if ( ! FDMExec->Holding()) {
             if ( ! sim_config.realtime ) {
-                /**
-                 * Batch mode
-                 */
+                // Batch mode
                 
                 result = handle_iter(sim_data, sim_data_lock, sim_events);
 
                 if (play_nice) sim_nsleep(sleep_nseconds);
             } else {
-                /**
-                 * Realtime
-                 */
+                // Realtime
 
                 // "was_paused" will be true if entering this "run" loop from a paused state.
                 if (was_paused) {
@@ -395,9 +375,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
     {
         std::lock_guard<std::mutex> guard(sim_data_lock);
 
-        /**
-         * Update JSBSim internal state from sim_data after the sim:before_iter event
-         */
+        // Update JSBSim internal state from sim_data after the sim:before_iter event
         sim_events.notify_all(EVENT_SIM_BEFORE_ITER, sim_data);
         update_sim_properties(sim_data);
     }
@@ -407,9 +385,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
     {
         std::lock_guard<std::mutex> guard(sim_data_lock);
         
-        /**
-         * Update sim_data from JSBSim internal state before the sim:after_iter event
-         */
+        // Update sim_data from JSBSim internal state before the sim:after_iter event
         update_sim_data(sim_data);
         sim_events.notify_all(EVENT_SIM_AFTER_ITER, sim_data);
     }
@@ -418,9 +394,7 @@ bool JSBSimInterface::handle_iter(json *sim_data,
 }
 
 void JSBSimInterface::update_sim_properties(json *sim_data) {
-    /**
-     * Take data from FCS and ws (user ctrl) stored in sim_data JSON and use them to update JSBSim
-     */
+    // Take data from FCS and ws (user ctrl) stored in sim_data JSON and use them to update JSBSim
 
     for (const std::string& to_jsbsim_prop : properties_to_jsbsim) {
         FDMExec->SetPropertyValue(to_jsbsim_prop, sim_data->value<double>(to_jsbsim_prop, 0.0));
@@ -428,9 +402,7 @@ void JSBSimInterface::update_sim_properties(json *sim_data) {
 }
 
 void JSBSimInterface::update_sim_data(json *sim_data) {
-    /**
-     * Default properties defined by the interface
-     */
+    // Default properties defined by the interface
     FDMExec->SetPropertyValue("ext/altitude-m", FDMExec->GetPropagate()->GetAltitudeASL() * FT_TO_M);
     FDMExec->SetPropertyValue("ext/latitude-deg", FDMExec->GetPropagate()->GetLatitudeDeg());
     FDMExec->SetPropertyValue("ext/latitude-rad", FDMExec->GetPropagate()->GetLatitude());
@@ -458,9 +430,7 @@ void JSBSimInterface::update_sim_data(json *sim_data) {
     FDMExec->SetPropertyValue("ext/cg-y-m", FDMExec->GetMassBalance()->GetXYZcg(2) * IN_TO_M);
     FDMExec->SetPropertyValue("ext/cg-z-m", FDMExec->GetMassBalance()->GetXYZcg(3) * IN_TO_M);
 
-    /**
-     * Update properties from jsbsim into the sim_data for 3d visualization 
-     */
+    // Update properties from jsbsim into the sim_data for 3d visualization 
     for (const std::string& to_sim_data_prop : properties_from_jsbsim) {
         (*sim_data)[to_sim_data_prop] = FDMExec->GetPropertyValue(to_sim_data_prop.c_str());
     }

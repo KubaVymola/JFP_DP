@@ -47,11 +47,10 @@ void SITLInterface::sitl_init(sim_config_t& sim_config,
         save_telemetry_file << std::endl;
     }
 
-    /**
-     * Init FCS
-     */
+    // Init FCS
     init_fcs(sim_data);
 
+    // Used to reconfigure PID controllers for example. (sitl_config_props is taken from CLI params)
     init_override(sim_config.sitl_config_props);
 }
 
@@ -64,18 +63,14 @@ void SITLInterface::parse_xml_config(sim_config_t& sim_config) {
     XMLElement *root_elem = craft_doc.FirstChildElement("fdm_config");
     XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
 
-    /**
-     * Get all properties that go from FCS to sim_data
-     */
+    // Get all properties that go from FCS to sim_data
     XMLElement *to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
     XMLElement *to_jsb_prop_elem = to_jsb_elem->FirstChildElement("property");
     for (; to_jsb_prop_elem != nullptr; to_jsb_prop_elem = to_jsb_prop_elem->NextSiblingElement("property")) {
         to_jsbsim_properties.push_back(to_jsb_prop_elem->GetText());
     }
     
-    /**
-     * Get all properties that go from sim_data to FCS
-     */
+    // Get all properties that go from sim_data to FCS
     XMLElement *from_jsb_elem = fcs_elem->FirstChildElement("from_jsbsim");
 
     XMLElement *from_jsb_prop_elem = from_jsb_elem->FirstChildElement("property");
@@ -83,12 +78,9 @@ void SITLInterface::parse_xml_config(sim_config_t& sim_config) {
         from_jsbsim_properties.push_back(from_jsb_prop_elem->GetText());
     }
 
-
-    /**
-     * Get all telemetry properties
-     * This is used to print the telemetry header and potentially propagate the telemetry to
-     * sim_data (for visualization when using rt_telem or replay_telem)
-     */
+    // Get all telemetry properties
+    // ^ This is used to print the telemetry header and potentially propagate the telemetry to
+    // ^ sim_data (for visualization when using rt_telem or replay_telem)
     XMLElement *telemetry_elem = fcs_elem->FirstChildElement("telemetry");
     XMLElement *telemetry_prop_elem = telemetry_elem->FirstChildElement("property");
     int i = 0;
@@ -142,17 +134,13 @@ void SITLInterface::handle_event(const std::string& event_name, json *sim_data) 
 
 
 void SITLInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset) {
-    /**
-     * Receive and print command output
-     */
+    // Receive and print command output
     if (channel_number == 0x00) {
         printf("CMD: Received cmd output\n");
         command_interface->send_command_output((char *)(current_data + J_PACKET_HEADER_SIZE), data_size);
     }
     
-    /**
-     * Receive and log telemetry
-     */
+    // Receive and log telemetry
     if (channel_number == 0x01) {
         if (save_telemetry_file.is_open()) {
             save_telemetry_file.write((char *)(current_data + J_PACKET_HEADER_SIZE), data_size);
@@ -160,9 +148,7 @@ void SITLInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_numbe
         }
     }
 
-    /**
-     * Receive SITL/HITL data
-     */
+    // Receive SITL/HITL data
     if (channel_number == 0x02) {
         float *new_data = (float *)(current_data + J_PACKET_HEADER_SIZE);
         int data_items_offset = data_offset / sizeof(float);
@@ -172,15 +158,11 @@ void SITLInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_numbe
         }
     }
 
-    /**
-     * Receive and print debug output
-     */
+    // Receive and print debug output
     if (channel_number == 0x03) {
         char debug_buf[data_size + 1];
         memcpy(debug_buf, current_data + J_PACKET_HEADER_SIZE, data_size);
         debug_buf[data_size] = '\0';
         printf("FCS: %s\n", debug_buf);
-        
-        // write(STDOUT_FILENO, current_data + J_PACKET_HEADER_SIZE, data_size);
     }
 }

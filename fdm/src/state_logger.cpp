@@ -4,9 +4,7 @@
 #include "tinyxml2.h"
 
 void StateLogger::init(sim_config_t& sim_config) {
-    /**
-     * Parse log output def
-     */
+    // Parse log output def
     using namespace tinyxml2;
 
     SGPath log_output_def_path = SGPath(sim_config.root_dir)/sim_config.log_output_def;
@@ -32,9 +30,7 @@ void StateLogger::init(sim_config_t& sim_config) {
     
     outstream.open(log_output_out_path.str(), std::ios::out);
     
-    /**
-     * Print header
-     */
+    // Print header
     for (int i = 0; i < logged_properties.size(); ++i) {
         if (i > 0) outstream << ",";
         outstream << logged_properties[i];

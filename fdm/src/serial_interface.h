@@ -20,6 +20,18 @@
 
 using json = nlohmann::json;
 
+/**
+ * SerialInterface encapsulates the USB communication between an FCS running on a flight controller.
+ * 
+ * This communication contains simulated data and commands in HITL simulation, and real-world sensor
+ * data and commands in real-time telemetry mode.
+ * 
+ * There is a telemetry stream present in the data that gets saved to a file.
+ * 
+ * There's also a command input/output stream that gets relayed between a socket server and the FCS.
+ * 
+ * There can be a debug stream that gets printed to a terminal with printf
+*/
 class SerialInterface : public ISimClient {
 public:
     SerialInterface() { }
@@ -30,6 +42,14 @@ public:
                 
     void parse_xml_config(sim_config_t& sim_config);
 
+    /**
+     * On EVENT_SIM_BEFORE_ITER event, the SerialInterface receives and processes data from the USB
+     * connection. This data gets included in the sim_data object, making it accessible to
+     * JSBSimInterface and by extension to JSBSim. This data can contain motor commands.
+     * 
+     * On EVENT_SIM_AFTER_ITER event, the SerialInterface sends new simulation data from JSBSim over
+     * the USB to the FCS. This data can contain sensor values.
+    */
     virtual void handle_event(const std::string& event_name, json *sim_data);
 
 private:

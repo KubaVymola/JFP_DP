@@ -67,9 +67,7 @@ std::string CommandInterface::update_socket_and_read_commands() {
             }
 
 
-            /**
-             * Pass the read command to serial interface and to FCS
-             */
+            // Pass the read command to serial interface and to FCS
             buf[len] = '\0';            
             return std::string(buf);
         }

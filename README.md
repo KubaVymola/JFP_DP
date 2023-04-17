@@ -23,7 +23,7 @@ Small python script for real-time or static visualization of telemetry in a form
 
 This program is a 3d visualizer intended to display real-time data in 3D using websocket interface.
 
-# Required files
+# Required asset files
 
 ```
 assets/
@@ -71,8 +71,3 @@ $ source ./venv/bin/activate
 - Improve pressure measurement using interrupts
 - Try faster PWM duty cycle for better responses
 - Remove external dependencies and allow running on a supercomputer
-
-# Bugs
-
-- Higher loop frequencies result in HITL errors (packet bug?)
-- Flash logging uses large amount of CPU power

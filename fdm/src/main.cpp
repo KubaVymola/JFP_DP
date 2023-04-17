@@ -25,18 +25,14 @@
 
 using json = nlohmann::json;
 
-/**
- * ==== FORWARD DECLARATION ====
- */
+// ==== FORWARD DECLARATION ====
 
 void parse_cli_options(sim_config_t& sim_config, int argc, char **argv);
 void check_valid_options(sim_config_t& sim_config);
 void get_craft_config_path(sim_config_t& sim_config);
 void print_help();
 
-/**
- * ==== END FORWARD DECLARATION ====
- */
+// ==== END FORWARD DECLARATION ====
 
 bool continue_running = true;
 
@@ -58,12 +54,7 @@ void push_thread_func(websocket_server* server_instance) {
             sim_data_cpy.merge_patch(sim_data);
         }
         
-        /**
-         * Sending message outside of a sim_data_lock to avoid deadlock
-         */
-
-        // std::cout << sim_data_cpy.dump(4);
-
+        // Sending message outside of a sim_data_lock to avoid deadlock
         server_instance->send_message(sim_data_cpy.dump());
         
         usleep(1'000'000.0 / 60);
@@ -82,9 +73,7 @@ void user_input_cb(std::string message) {
 }
 
 int main(int argc, char **argv) {
-    /**
-     * Config
-     */
+    // Config
     sim_config_t sim_config;
     sim_config.realtime = true;
     sim_config.end_time = 0.0;
@@ -123,9 +112,7 @@ int main(int argc, char **argv) {
     std::thread server_thread;
     std::thread sim_thread;
 
-    /**
-     * Init
-     */
+    // Init
     get_craft_config_path(sim_config);
     jsbsim_interface.init(sim_config, &sim_data);
 
@@ -154,9 +141,7 @@ int main(int argc, char **argv) {
 
     printf("initialized\n");
 
-    /**
-     * Run
-     */
+    // Run
     if (!sim_config.rt_telem) {
         sim_thread = std::thread(&JSBSimInterface::jsbsim_iter,
                                  &jsbsim_interface,
@@ -191,9 +176,7 @@ int main(int argc, char **argv) {
         usleep(250000);
     }
 
-    /**
-     * Stop
-     */
+    // Stop
     if (sim_config.ws_port != 0) {
         server_instance.stop();
 
@@ -341,9 +324,7 @@ void get_craft_config_path(sim_config_t& sim_config) {
     SGPath script_path;
     SGPath aircraft_path;
 
-    /**
-     * Load main script to get aircraft name
-     */
+    // Load main script to get aircraft name
     script_path = SGPath(sim_config.root_dir)/sim_config.script_path;
     
     XMLDocument script_doc;
@@ -352,9 +333,7 @@ void get_craft_config_path(sim_config_t& sim_config) {
     XMLElement *runscript_elem = script_doc.FirstChildElement("runscript");
     XMLElement *use_elem = runscript_elem->FirstChildElement("use");
 
-    /**
-     * Load aircraft to get properites 
-     */
+    // Load aircraft to get properites 
     std::string aircraft_name(use_elem->Attribute("aircraft"));
     
     aircraft_path = SGPath(sim_config.root_dir)/"aircraft"/aircraft_name/(aircraft_name + ".xml");

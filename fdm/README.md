@@ -39,22 +39,25 @@ $ ./fdm <script_file> [<output_file> [<output_file> ...]] <options>
 
 ### SITL example
 
+
 ```
-$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.dylib --sitl_div=5 --ws=9002 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sitl_config=alt_sp_pid_p=0.035 --sim_end=-1
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --sitl=../../fcs/build/libfcs.so --sitl_div=2 --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1 --cmd=1234 --set=propulsion/engine\[1\]/pitch-angle-rad=1 --sitl_config=alt_sp_pid_p=0.035
 ```
 
 ### HITL example
 
+
 ```
-$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem1747313034341 --hitl --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem376D387232321 --hitl --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1 --cmd=1234
 ```
 
 ### Real-time telemetry visualization
 
+
 ```
-./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem1747313034341 --rt_telem --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1
+$ ./fdm script/quad_script_001.xml aircraft/quad/output_def/quad_out_def.xml --root_dir=../../assets --serial=/dev/tty.usbmodem3452345833311 --rt_telem --save_telem=../../assets/aircraft/quad/data_output/quad_telem.csv --ws=9002 --sim_end=-1 --cmd=1234
 ```
 
 ```
-python j-viz.py quad_config_telem.xml ../../assets/aircraft/quad/data_output/quad_telem.csv --running 10
+(venv) $ python j-viz.py configs/quad_config_telem.xml ../assets/aircraft/quad/data_output/quad_telem.csv --running 10
 ```

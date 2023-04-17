@@ -32,16 +32,12 @@ void SerialInterface::serial_init(sim_config_t &sim_config,
     
     printf("Opening serial port: %s\n", sim_config.serial_path.c_str());
 
-    /**
-     * Open in non-blocking mode - should work with /dev/tty.* on macos
-     */
+    // Open in non-blocking mode - should work with /dev/tty.* on macos
     serial_device = open(sim_config.serial_path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
 
-    /**
-     * Remove non-blocking mode from fd after opening
-     */
-    // int flag = fcntl(serial_device, F_GETFL);
-    // fcntl(serial_device, F_SETFL, flag & ~O_NONBLOCK);
+    // // Remove non-blocking mode from fd after opening
+    // // int flag = fcntl(serial_device, F_GETFL);
+    // // fcntl(serial_device, F_SETFL, flag & ~O_NONBLOCK);
 
     struct termios tty;
 
@@ -83,10 +79,8 @@ void SerialInterface::serial_init(sim_config_t &sim_config,
     }
     
 #ifdef __linux__
-    /**
-     * ? On linux reduce USB latency from 16 ms to about 2 ms
-     * https://www.projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/
-     */
+    // ? On linux reduce USB latency from 16 ms to about 2 ms
+    // ^ https://www.projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/
     struct serial_struct serinfo;
     ioctl(serial_device, TIOCGSERIAL, &serinfo);
     serinfo.flags |= ASYNC_LOW_LATENCY;
@@ -95,9 +89,7 @@ void SerialInterface::serial_init(sim_config_t &sim_config,
 
     parse_xml_config(sim_config);
 
-    /**
-     * Open telemetry output file and print header
-     */
+    // Open telemetry output file and print header
     if (!sim_config.save_telemetry_path.empty()) {
         save_telemetry_file.open(sim_config.save_telemetry_path, std::ios::out);
 
@@ -118,18 +110,14 @@ void SerialInterface::parse_xml_config(sim_config_t &sim_config) {
     XMLElement *root_elem = craft_doc.FirstChildElement("fdm_config");
     XMLElement *fcs_elem = root_elem->FirstChildElement("fcs_interface");
 
-    /**
-     * Get all properties that go from FCS to sim_data
-     */
+    // Get all properties that go from FCS to sim_data
     XMLElement *to_jsb_elem = fcs_elem->FirstChildElement("to_jsbsim");
     XMLElement *to_jsb_prop_elem = to_jsb_elem->FirstChildElement("property");
     for (; to_jsb_prop_elem != nullptr; to_jsb_prop_elem = to_jsb_prop_elem->NextSiblingElement("property")) {
         to_jsbsim_properties.push_back(to_jsb_prop_elem->GetText());
     }
     
-    /**
-     * Get all properties that go from sim_data to FCS
-     */
+    // Get all properties that go from sim_data to FCS
     XMLElement *from_jsb_elem = fcs_elem->FirstChildElement("from_jsbsim");
 
     XMLElement *from_jsb_prop_elem = from_jsb_elem->FirstChildElement("property");
@@ -137,12 +125,9 @@ void SerialInterface::parse_xml_config(sim_config_t &sim_config) {
         from_jsbsim_properties.push_back(from_jsb_prop_elem->GetText());
     }
 
-    
-    /**
-     * Get all telemetry properties
-     * This is used to print the telemetry header and potentially propagate the telemetry to
-     * sim_data (for visualization when using rt_telem or replay_telem)
-     */
+    // Get all telemetry properties
+    // ^ This is used to print the telemetry header and potentially propagate the telemetry to
+    // ^ sim_data (for visualization when using rt_telem or replay_telem)
     XMLElement *telemetry_elem = fcs_elem->FirstChildElement("telemetry");
     XMLElement *telemetry_prop_elem = telemetry_elem->FirstChildElement("property");
     int i = 0;
@@ -202,9 +187,7 @@ void SerialInterface::receive_data_usb(json *sim_data) {
     memset(packet_buf + buf_carry, '\0', sizeof(packet_buf) - buf_carry);
     int len = read(serial_device, packet_buf + buf_carry, 2048) + buf_carry;
 
-    /**
-     * n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-     */
+    // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
     if (len < 0) {
         printf("ERR: serial read error\n");
         return;
@@ -228,17 +211,13 @@ void SerialInterface::receive_data_usb(json *sim_data) {
 }
 
 void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_number, uint8_t *current_data, uint16_t data_size, uint16_t data_offset) {
-    /**
-     * Receive and print command output
-     */
+    // Receive and print command output
     if (channel_number == 0x00) {
         printf("CMD: Received cmd output\n");
         command_interface->send_command_output((char *)(current_data + J_PACKET_HEADER_SIZE), data_size);
     }
     
-    /**
-     * Receive and log telemetry
-     */
+    // Receive and log telemetry
     if (channel_number == 0x01) {
         if (save_telemetry_file.is_open()) {
             save_telemetry_file.write((char *)(current_data + J_PACKET_HEADER_SIZE), data_size);
@@ -248,10 +227,8 @@ void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_num
         if (use_rt_telem || use_replay_telem) {
             for (int i = 0; i < data_size; ++i) {
 
-                /**
-                 * When JSBSim is not running, map given properties to sim_data
-                 * TODO make mapping more elegant
-                 */
+                // When JSBSim is not running, map given properties to sim_data
+                // TODO make mapping more elegant
                 if (current_data[i + J_PACKET_HEADER_SIZE] == '\n') {
                     process_new_telem_line(sim_data);
                     memset(new_telem_line, 0, sizeof(new_telem_line));
@@ -267,9 +244,7 @@ void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_num
         }
     }
 
-    /**
-     * Receive HITL data
-     */
+    // Receive HITL data
     if (channel_number == 0x02) {
         float *new_data = (float *)(current_data + J_PACKET_HEADER_SIZE);
         int data_items_offset = data_offset / sizeof(float);
@@ -279,16 +254,12 @@ void SerialInterface::j_packet_recv_callback(json *sim_data, uint8_t channel_num
         }
     }
 
-    /**
-     * Receive and print debug output
-     */
+    // Receive and print debug output
     if (channel_number == 0x03) {
         char debug_buf[data_size + 1];
         memcpy(debug_buf, current_data + J_PACKET_HEADER_SIZE, data_size);
         debug_buf[data_size] = '\0';
         printf("FCS: %s\n", debug_buf);
-
-        // write(STDOUT_FILENO, current_data + J_PACKET_HEADER_SIZE, data_size);
     }
 }
 

@@ -11,6 +11,14 @@
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
+/**
+ * Gives a meaning to an action.
+ * 
+ * "SUBSCRIBE" action_type marks a new client.
+ * "UNSUBSCRIBE" action_type marks a disconnection of a client.
+ * If action_type is "MESSAGE", the on_message_cb function gets called.
+ * If action_type is "PUSH_MESSAGE", the given message is sent to all clients.
+*/
 enum action_type {
     SUBSCRIBE,
     UNSUBSCRIBE,
@@ -29,7 +37,13 @@ struct action {
     std::string payload;
 };
 
-
+/**
+ * websocket_server class encapsulates a server used to send JSON data over websocket to a 3D
+ * visualization application.
+ * 
+ * This server runs in a dedicated thread and it spawns two additional threads, which are used to
+ * handle the server and to handle processing of the action queue (m_actions).
+*/
 class websocket_server {
 public:
     websocket_server();
