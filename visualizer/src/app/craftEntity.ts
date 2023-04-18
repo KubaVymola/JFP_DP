@@ -5,8 +5,6 @@ import Entity from "./entity";
 const SPINNER_COEF = 1 / 30;
 
 class CraftEntity extends TransformNode {
-    // posOffset: Vector3;
-    // pivot: Vector3;
     axis: Vector3;
     angleProperty: string;
     angleOffset: number;
@@ -27,6 +25,9 @@ class CraftEntity extends TransformNode {
     updateFromSim(data: any, deltaT_s: number) {
         const rotationQuat: Quaternion = Quaternion.Identity();
         
+        /**
+         * Visualize propellers
+         */
         if (this.spinnerProperty && this.spinnerProperty in data) {
             const currentRPM = Number(data[this.spinnerProperty]);
             const sense = Number(data[this.propSenseProperty]);
@@ -40,6 +41,9 @@ class CraftEntity extends TransformNode {
             rotationQuat.multiplyInPlace(Quaternion.RotationAxis(this.axis, this.spinnerAngle));
         }
         
+        /**
+         * Visualize thrust by scaling the red, semi-transparent cone
+         */
         if (this.thrustProperty) {
             const thrustNormalized = Math.pow(data[this.thrustProperty] || 0, 1/3) / 5;
             
@@ -50,13 +54,18 @@ class CraftEntity extends TransformNode {
             );
         }
         
-
+        /**
+         * Visualize thrust-vectoring in yaw
+         */
         if (this.engineYawProperty && data[this.engineYawProperty]) {
             rotationQuat.multiplyInPlace(
                 Quaternion.RotationAxis(new Vector3(0, 0, 1), data[this.engineYawProperty]),
             );
         }
 
+        /**
+         * Visualize thrust-vectoring in pitch
+         */
         if (this.enginePitchProperty && data[this.enginePitchProperty]) {
             rotationQuat.multiplyInPlace(
                 Quaternion.RotationAxis(new Vector3(0, 1, 0), data[this.enginePitchProperty]),

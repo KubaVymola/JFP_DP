@@ -49,8 +49,8 @@ float pid_update(struct pid_state_t &pid, float set_point, float measurement, fl
         pid.integrator = 0;
     }
 
-    pid.differentiator = (2.0 * -pid.k_d * (measurement - pid.prev_measurement) 
-                       + (2.0 *  pid.tau - delta_t) * pid.differentiator) / (2.0 *  pid.tau + delta_t);
+    pid.differentiator = (2.0 * -pid.k_d * (measurement - pid.prev_measurement) + (2.0 *  pid.tau - delta_t) * pid.differentiator)
+                       / (2.0 *  pid.tau + delta_t);
 
 
     pid.output = pid.proportional + pid.integrator + pid.differentiator;

@@ -6,6 +6,12 @@ from lpf import *
 import scienceplots
 plt.style.use(['science', 'no-latex'])
 
+"""
+Script that plot attenuation and phase shift of a lowpass filter. X-axis is the frequency.
+Cutoff frequency is 20 Hz, therefore attenuation of 3 dB and phase shift of 45 ° is expected at
+this frequency.
+"""
+
 T = 30 # end time
 F = 400 # samples per sec
 N = T * F

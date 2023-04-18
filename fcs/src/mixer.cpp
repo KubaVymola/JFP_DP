@@ -5,9 +5,6 @@
 #include "defines.h"
 #include "utils.h"
 
-/**
- * @param engine_id Engine id from 0 to 3
- */
 const float engine_mixer(const int engine_id,
                          const float throttle_cmd,
                          const float yaw_cmd,
@@ -22,21 +19,19 @@ const float engine_mixer(const int engine_id,
     if (min_output < idle_2) thrust_offset = idle_2 - min_output;
     if (max_output > 1.0f)   thrust_offset = 1.0f - max_output;
 
-    // send_jpacket_info(0x00, "idl2 %.4f, th %.4f, yw %.4f, rl %.4f, pt %.4f, mx %.4f, mn %.4f, off %.4f\n", 128, idle_2, throttle_cmd, yaw_cmd,roll_cmd, pitch_cmd, max_output, min_output, thrust_offset);
-
-    if (engine_id == 0) {
+    if (engine_id == 1) {
         return throttle_cmd - yaw_cmd - pitch_cmd - roll_cmd + thrust_offset;
     }
 
-    if (engine_id == 1) {
+    if (engine_id == 2) {
         return throttle_cmd + yaw_cmd + pitch_cmd - roll_cmd + thrust_offset;
     }
 
-    if (engine_id == 2) {
+    if (engine_id == 3) {
         return throttle_cmd + yaw_cmd - pitch_cmd + roll_cmd + thrust_offset;
     }
 
-    if (engine_id == 3) {
+    if (engine_id == 4) {
         return throttle_cmd - yaw_cmd + pitch_cmd + roll_cmd + thrust_offset;
     }
 
@@ -44,7 +39,5 @@ const float engine_mixer(const int engine_id,
 }
 
 const float mixer_to_cmd(const float mixer_output) {
-    // return std::max(IDLE_ARM_THRUST, std::min(1.0f, mixer_output));
-
     return sqrtf(std::max(IDLE_ARM_THRUST * IDLE_ARM_THRUST, std::min(1.0f, mixer_output)));
 }

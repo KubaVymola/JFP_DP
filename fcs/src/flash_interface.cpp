@@ -191,6 +191,10 @@ void load_pid_flash(bool send_info) {
 
 #else // MCU
 
+/**
+ * Empty implementation of flash communication when there is no flash memory available (i.e. in SITL mode)
+*/
+
 void configure_logging() { }
 void write_flash_bytes(uint8_t *buf, uint32_t num_bytes) { }
 void flash_erase() { }

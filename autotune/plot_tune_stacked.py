@@ -12,19 +12,18 @@ plt.style.use(['science', 'no-latex'])
 
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 
-
 slider = False
 
-# rest_time = 5.0
-# lti = signal.lti([1.0], [0.5, 1.0])
-# time, y_amp = signal.step(lti)
+"""
+This script creates a 2D plot, where X-axis is the simulation time, and Y-axis shows the observed
+variable (e.g. altitude).
 
+Each line in the plot represents a single run of the simulation with a
+given state vector variable values. The color is based simply on the number of the simulation
+iteration, and has nothing to do with the cost function value.
 
-# plt.plot(time, y_amp)
-# plt.show()
-
-# exit(0)
-
+The blue line is a target function for which the autotune tries to optimize.
+"""
 
 class Transition:
     def __init__(self, type, at_time, to, rate):

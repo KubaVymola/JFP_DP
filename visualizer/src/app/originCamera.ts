@@ -21,14 +21,12 @@ class OriginCamera extends ArcRotateCamera {
     public get doubletgt() { return this._doubletgt; }
     public set doubletgt(tgt: Vector3) {
         this._doubletgt.copyFrom(tgt);
-        // this.setTarget(this._doubletgt.subtract(this._doublepos));
     }
 
     // Constructor
     constructor(name: string, target: Vector3, radius: number, scene: Scene) {
         super(name, Math.PI / 4, Math.PI / 4, radius, new Vector3(0, 0, 0), scene);
 
-        // this.doublepos = position;
         this.doubletgt = target;
 
         this.lowerRadiusLimit = 0.2;
@@ -44,9 +42,6 @@ class OriginCamera extends ArcRotateCamera {
             // leaving that responsibility for the original UniversalCamera,
             // so when it moves from origin, we must update our doublepos
             // and reset the UniversalCamera back to origin.
-
-            // this.doublepos.addInPlace(this.position);
-            // this.position.set(0, 0, 0);
 
             this.setTarget(new Vector3(0, 0, 0));
 

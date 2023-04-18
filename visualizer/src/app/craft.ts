@@ -65,7 +65,6 @@ class Craft {
          */
 
         this.rootEntity.doublepos = new Vector3(0, 0, EARTH_RADIUS);
-        // this.rootEntity.setPivotPoint(new Vector3(0, 0, 0));
 
         const inputButton: HTMLButtonElement = document.querySelector('#open-root-dir');
         inputButton.addEventListener('click', () => this.handleLoadAllData(scene));
@@ -81,8 +80,8 @@ class Craft {
 
     update(craftData: any, camera: OriginCamera) {
         /**
-         * [?] - my coordinates
-         * {?} - JSBSim coordinates
+         * [x] - my coordinates
+         * {x} - JSBSim coordinates
          * 
          * Update crafts position and rotation
          * [X] = {Y}   // East
@@ -91,8 +90,6 @@ class Craft {
          * s = latitude
          * t = longitude
          */
-
-        // console.log(craftData);
 
         const deltaT_s = Math.max((craftData["simulation/sim-time-sec"] || 0) - this.lastTime, 0);
         this.lastTime = craftData["simulation/sim-time-sec"] || 0;
@@ -186,8 +183,6 @@ class Craft {
             properties: ['openFile']
         });
         console.log(path);
-        
-        
         
         if (path) {
             const buffer: string = await window.api.readFile(path, { encoding: 'utf-8' });    
@@ -355,7 +350,6 @@ class Craft {
 
         const newCraftEntity = new CraftEntity('', scene);
         newCraftEntity.parent = parentEntity;
-        // newCraftEntity.setposi = currentDefNode.position;
         newCraftEntity.position = currentDefNode.position;
         newCraftEntity.setPivotPoint(currentDefNode.pivot);
         newCraftEntity.axis = currentDefNode.axis;
@@ -418,15 +412,9 @@ class Craft {
     }
 
     getGamepadData() {
-        // let gamepad: Gamepad = null;
-
-        // TODO use ternary operator
-
         const gamepad = navigator.getGamepads().length > 0
             ? navigator.getGamepads()[0]
             : null;
-
-        // console.log('gamepad count', navigator.getGamepads().length);
 
         return this.toJSBSimNames.reduce((acc, name, id) => {
             if (gamepad === null
@@ -435,30 +423,6 @@ class Craft {
             
             return { ...acc, [name]: gamepad.axes[id] };
         }, {});
-
-        
-        // if (navigator.getGamepads().length > 0) {
-        //     gamepad = navigator.getGamepads()[0];
-        // }
-        
-        // const toReturn: any = {};
-
-        // if (gamepad === null || !gamepad.connected) {
-        //     this.toJSBSimNames.forEach((name) => {
-        //         toReturn[name] = 0.0;
-        //     });
-            
-        //     return toReturn;
-        // }
-
-        // // TODO reduce this to single reduce
-        
-        // this.toJSBSimNames.forEach((name, id) => {
-        //     if (id >= gamepad.axes.length) toReturn[name] = 0.0;
-        //     else toReturn[name] = gamepad.axes[id];
-        // });
-
-        // return toReturn;
     }
 }
 

@@ -6,19 +6,22 @@ int round_down_to_multiple(int number, int multiple) {
     return number - number % multiple;    
 }
 
-/**
- * Send data up to 64 - HEADER_SIZE - FOOTER_SIZE bytes. Currently can send only one packet.
- * 
- * @param channel_number 0: commands, 1: telemetry, 2: SITL/HITL data, 3: debug log
- * @param data pointer to the data
- * @param data_size how many bytes of data to send
- * @param item_size what is the size of unseparable unit (sizeof(<datatype>), e.g. sizeof(float))
-*/
 int j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_t item_size, uint16_t buffer_size, std::function<uint8_t(uint8_t *Buf, uint16_t Len)> j_packet_send_callback) {
     uint16_t current_offset = 0;
+    
+    /**
+     * The maximum amount of data in 64-byte packet is 57 bytes
+    */
     uint16_t maximum_data_in_packet = round_down_to_multiple(buffer_size - J_PACKET_HEADER_SIZE - J_PACKET_FOOTER_SIZE, item_size);
 
+    /**
+     * A 64-byte buffer (or any arbitrary size)
+    */
     uint8_t to_send[buffer_size];
+
+    /**
+     * The buffer is prefilled with a constant header
+    */
     to_send[0] = channel_number;
     to_send[1] = 0x55;
 
@@ -26,6 +29,10 @@ int j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_
         uint16_t remaining_size = data_size - current_offset;
         uint16_t to_send_size = MIN(remaining_size, maximum_data_in_packet);
 
+
+        /**
+         * Fill packet with data
+        */
         to_send[2] = LOBYTE(to_send_size);
         to_send[3] = HIBYTE(to_send_size);
         to_send[4] = LOBYTE(current_offset);
@@ -33,14 +40,18 @@ int j_packet_send(uint8_t channel_number, void *data, uint16_t data_size, uint8_
 
         memcpy(to_send + J_PACKET_HEADER_SIZE, (uint8_t *)data + current_offset, to_send_size);
 
+        /**
+         * A footer right after the data
+        */
         to_send[J_PACKET_HEADER_SIZE + to_send_size] = '\0';
 
         while (1) {
             uint8_t result = j_packet_send_callback(to_send, J_PACKET_HEADER_SIZE + to_send_size + J_PACKET_FOOTER_SIZE);
 
-            if (result == 0) break;         // equiv. to USBD_OK
-            if (result == 1) continue;      // equiv. to USBD_BUSY
-            if (result == 3) return -1;     // equiv. to USBD_FAIL
+            // TODO make the magic constants into macros, and have the callback translate USBD codes into j-packet codes
+            if (result == 0) break;         // 0 is equiv. to USBD_OK
+            if (result == 1) continue;      // 1 is equiv. to USBD_BUSY
+            if (result == 3) return -1;     // 3 is equiv. to USBD_FAIL
         }
 
         current_offset += to_send_size;

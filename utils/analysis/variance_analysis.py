@@ -2,6 +2,11 @@ import math
 import matplotlib.pyplot as plt
 import sys
 
+"""
+A script used to calculate a variance of data and plot the data in a histogram. Used to obtain
+variance of a real-world sensor measurements to be used with JSBSim sensor
+"""
+
 # acc: 7,8,9 (g)
 # const_mult = 9.81
 # const_col_num = 9

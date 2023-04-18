@@ -1,5 +1,9 @@
 import numpy as np
 
+"""
+Pyton implementation of FCS's lowpass filter
+"""
+
 class lpf_t:
     cutoff_freq: float
     output: float

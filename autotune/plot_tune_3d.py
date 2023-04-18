@@ -8,6 +8,12 @@ plt.style.use(['science', 'no-latex'])
 
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 
+"""
+This scrit creates a 3D plot of the automatic tunning. Each data point's location are the values
+of the first three state vector variables. Color of each data point is the cost function value for
+the given state vector
+"""
+
 if len(sys.argv) < 2:
     print('Usage: python plot_tune_3d.py <log_file>')
     exit(1)
@@ -37,25 +43,4 @@ ax.set_zlabel(header[2])
 ax.set_aspect('equal', adjustable='box')
 plt.grid()
 plt.show()
-
-
-
-# rest_time = 10.0
-# lti = signal.lti([1.0], [0.6 / 5.0, 1 / 5.0])
-
-# time = [0.0, rest_time - 0.1]
-# y_amp = [0.0, 0.0]
-
-# l_time, l_y_amp = signal.step(lti)
-
-# time.extend(x + rest_time for x in l_time)
-# y_amp.extend(l_y_amp)
-
-# time.extend([time[-1] + 0.1, 30.0])
-# y_amp.extend([y_amp[-1], y_amp[-1]])
-
-# plt.plot(time, y_amp)
-# plt.show()
-
-# exit(0)
 

@@ -87,7 +87,6 @@ inline float y_world_sp_m = 0.0f;
 // 0-roll, 1-pitch, 2-throttle, 3-yaw, 4-arm, 5-mode, 6-mode, 7-mode
 inline float ctrl_channels_norm[NUM_CTRL_CHANNELS] = { 0 };
 
-// inline low_pass_filter_t throttle_lpf;
 inline float yaw_channel = 0.0f;
 inline float pitch_channel = 0.0f;
 inline float roll_channel = 0.0f;

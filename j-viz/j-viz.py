@@ -12,8 +12,15 @@ plt.style.use(['science', 'no-latex'])
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+"""
+This scripts runs a visualization of CSV data. The visualization is configured with an XML file,
+examples are present in the 'configs' directory.
+
+The script can visualize either first n seconds, or last n seconds, depending on the CLI parameters.
+"""
+
 new_data = False
-lns = []    
+lns = []
 
 # 2d array that contains each line
 data = []

@@ -1,9 +1,17 @@
-// either INDEP, HITL, or SITL will be defined
-// either MCU or CPU will be defined
+//==============================================================================
+// main.cpp
+//==============================================================================
+//
+// Source code of the Flight controller software developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/18/2023
+//
+//==============================================================================
 
-// #define MCU
-// #define HITL
-// #define SITL
+// either INDEP, HITL, or SITL macro will be defined by the Makefile
+// either MCU, or CPU macro will be defined by the Makefile
 
 /**
  * ==== INCLUDES ====
@@ -84,6 +92,9 @@ extern "C" void SystemClock_Config(void);
  * ==== END FUNCTION DECLARATIONS ====
  */
 
+/**
+ * Initialize internal state of the FCS to default values
+*/
 extern "C" void init() {
 
     send_jpacket_info(0x03, "Hello from FCS", 64);
@@ -108,14 +119,13 @@ extern "C" void init() {
 
     load_pid_flash(false);
     
-    low_pass_filter_init(alt_est_lpf, 0.1211f);
-    // low_pass_filter_init(throttle_lpf, 3.0f);
+    low_pass_filter_init(alt_est_lpf, 0.13f);
 
     low_pass_filter_init(yaw_rate_lpf, 5.0f);
     
-    low_pass_filter_init(acc_x_lpf, 10.0f);
-    low_pass_filter_init(acc_y_lpf, 10.0f);
-    low_pass_filter_init(acc_z_lpf, 10.0f);
+    low_pass_filter_init(acc_x_lpf, 4.0f);
+    low_pass_filter_init(acc_y_lpf, 4.0f);
+    low_pass_filter_init(acc_z_lpf, 4.0f);
 
 
     /**
@@ -147,6 +157,9 @@ extern "C" void init() {
 
 }
 
+/**
+ * Only called in SITL/HITL. The function commits data from buffer to the internal state
+*/
 extern "C" void from_jsbsim_to_glob_state() {
     time_s              = from_jsbsim[0];  // simulation/sim-time-sec
 
@@ -169,9 +182,6 @@ extern "C" void from_jsbsim_to_glob_state() {
 
     real_yaw_deg        = from_jsbsim[11];  // attitude/psi-deg
  
-
-// #ifdef SITL
-
     ctrl_channels_norm[0] = from_jsbsim[12];  // user-control/channel-1
     ctrl_channels_norm[1] = from_jsbsim[13];  // user-control/channel-2
     ctrl_channels_norm[2] = from_jsbsim[14];  // user-control/channel-3
@@ -181,11 +191,12 @@ extern "C" void from_jsbsim_to_glob_state() {
     ctrl_channels_norm[6] = from_jsbsim[18];  // user-control/channel-4
     ctrl_channels_norm[7] = from_jsbsim[19];  // user-control/channel-4
 
-// #endif
-
     if (prev_time_s < 0) prev_time_s = time_s;
 }
 
+/**
+ * Main interation function, is ran at LOOP_FREQUENCY frequency
+*/
 extern "C" void control_loop(void) {
     const float delta_t_s = time_s - prev_time_s;
     prev_time_s = time_s;
@@ -294,12 +305,12 @@ extern "C" void control_loop(void) {
     #endif
 
 
-    float yaw_sp_diff_deg = yaw_sp_deg - yaw_est_deg;
-    while (yaw_sp_diff_deg > 180) yaw_sp_diff_deg -= 360;
-    while (yaw_sp_diff_deg < -180) yaw_sp_diff_deg += 360;
+    // float yaw_sp_diff_deg = yaw_sp_deg - yaw_est_deg;
+    // while (yaw_sp_diff_deg > 180) yaw_sp_diff_deg -= 360;
+    // while (yaw_sp_diff_deg < -180) yaw_sp_diff_deg += 360;
 
-    // while (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
-    // while (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
+    if (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
+    if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
 
     float yaw_diff_deg = yaw_est_deg - yaw_est_deg_prev;
     if (yaw_diff_deg < -180) yaw_diff_deg += 360.0f;
@@ -382,7 +393,6 @@ extern "C" void control_loop(void) {
         }
 
         throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
-        // throttle_cmd = low_pass_filter_update(throttle_lpf, throttle_cmd, delta_t_s);
 
         /**
          * Idle thrust when on the ground
@@ -405,7 +415,7 @@ extern "C" void control_loop(void) {
      * ==== Yaw command ====
      */
     if (heading_mode == HEADING_MODE_SP) {
-        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
+        yaw_cmd = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
 
     } else if (heading_mode == HEADING_MODE_RATE) {
         yaw_cmd = pid_update(yaw_rate_pid, yaw_channel * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
@@ -413,11 +423,14 @@ extern "C" void control_loop(void) {
     } else if (heading_mode == HEADING_MODE_DYNAMIC) {
         float target_yaw_rate = 0.0f;
 
-        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
-        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
+        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND);
+        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND);
 
-        float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
-        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
+        // float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
+        // float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
+
+        float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
+        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
 
         if (target_yaw_rate == 0.0f) {
             yaw_cmd = yaw_sp_pid_out;
@@ -471,10 +484,10 @@ extern "C" void control_loop(void) {
         
         throttle_cmd = throttle_cmd / pitch_div / roll_div;
         
-        engine_0_cmd_norm = mixer_to_cmd(engine_mixer(0, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
-        engine_1_cmd_norm = mixer_to_cmd(engine_mixer(1, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
-        engine_2_cmd_norm = mixer_to_cmd(engine_mixer(2, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
-        engine_3_cmd_norm = mixer_to_cmd(engine_mixer(3, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
+        engine_0_cmd_norm = mixer_to_cmd(engine_mixer(1, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
+        engine_1_cmd_norm = mixer_to_cmd(engine_mixer(2, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
+        engine_2_cmd_norm = mixer_to_cmd(engine_mixer(3, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
+        engine_3_cmd_norm = mixer_to_cmd(engine_mixer(4, throttle_cmd, yaw_cmd, pitch_cmd, roll_cmd));
 
     } else {
         engine_0_cmd_norm = 0.0f;
@@ -484,6 +497,13 @@ extern "C" void control_loop(void) {
     }
 }
 
+/**
+ * Executed at each iteration. It is separate from control_loop to minimize the delay between
+ * calculating motor commands and writing them to the respective timers.
+ * 
+ * The function outputs SITL/HITL data to JSBSim and performs logging (using both j-packets and
+ * an on-board flash memory). The logging happens at LOG_FREQUENCY frequency.
+*/
 void after_loop(void) {
 
     float to_jsbsim[] = {
@@ -509,15 +529,12 @@ void after_loop(void) {
     // snprintf(buf, sizeof(buf), "%f\r\n", alt_est_m);
     // j_packet_send(0x03, (void *)buf, strlen(buf), 1, J_PACKET_SIZE, j_packet_send_callback);
 
-    /**
-     * Rotate quaternion that's send via telemetry by -90 deg in pitch to correctly visualize
-     * the vehicle in 3D
-     */
-
-
     if (iteration % (int)(LOOP_FREQUENCY / LOG_FREQUENCY) == 0) {
-    // if (true) {
 
+        /**
+         * Rotate quaternion that's send via telemetry by -90 deg in pitch to correctly visualize
+         * the vehicle in 3D
+         */
         float ret_x = 0 * qw + -0.7071067811865475 * qz - 0 * qy + 0.7071067811865476 * qx;
         float ret_y = -0 * qz + -0.7071067811865475 * qw + 0 * qx + 0.7071067811865476 * qy;
         float ret_z = 0 * qy - -0.7071067811865475 * qx + 0 * qw + 0.7071067811865476 * qz;
@@ -609,6 +626,9 @@ void after_loop(void) {
 
 #ifdef MCU
 
+/**
+ * the main function is compiled only for hitl/indep Makefile targets (i.e. the MCU macro is defined)
+*/
 int main(void) {
     HAL_Init();
 
@@ -710,6 +730,11 @@ int main(void) {
     }
 }
 
+/**
+ * Callback for rising edge of the PPM signal. Works correctly with overflow in the timer register
+ * 
+ * Transforms the captured time difference into the (-1;+1) interval
+*/
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     /**
      * Input capture PPM (pin PB9)

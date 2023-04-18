@@ -71,6 +71,10 @@ bool detect_landing() {
     return true;
 }
 
+
+/**
+ * Cannot false-arm, for safety
+*/
 bool detect_arm() {
     if (!is_armed && AUTO_ARM) return true;
 
@@ -85,6 +89,9 @@ bool detect_arm() {
     return true;
 }
 
+/**
+ * Has to be very easy to disarm, only ARM_CHANNEL value needed to disarm
+*/
 bool detect_disarm() {
     if (AUTO_ARM) return false;
     if (!is_armed) return false;

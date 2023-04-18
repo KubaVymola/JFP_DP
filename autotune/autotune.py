@@ -14,6 +14,16 @@ from pathlib import Path
 
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
 
+"""
+This script runs a fully-contained automatic tunning algorithm. It is based on a stripped-down
+version of a gradient descent. The initial values of the state vector variables, as well as the
+resolution and limits are chosen by the user.
+
+Simulations for each state vector neighborhood are ran in parallel and the state vector with the
+lowest cost function value from the neighborhood is chosen for the next set of iteration, until
+there are no better state vectors in the current neighborhood.
+"""
+
 class IterationPass:
     def __init__(self,
                 pass_name: str,

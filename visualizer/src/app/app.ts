@@ -51,8 +51,6 @@ class App {
             this.pressedKeys[e.key] = false;
         });
 
-        // const loader: OBJFileLoader = new OBJFileLoader();
-
         /**
          * initialize babylon scene and engine
          */
@@ -108,9 +106,6 @@ class App {
         groundPlaneEntity.doublepos = new Vector3(0, 0, EARTH_RADIUS);
         groundPlane.parent = groundPlaneEntity;
         groundPlane.material = tiledMaterial;
-        // var groundMaterial = new StandardMaterial('groundMaterial', this.scene);
-        // groundMaterial.diffuseColor = new Color3(65 / 255, 152 / 255, 10 / 255);
-         
         
         /**
          * Hide/show the Inspector

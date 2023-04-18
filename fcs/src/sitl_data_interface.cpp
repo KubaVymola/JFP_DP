@@ -25,7 +25,6 @@ extern "C" uint8_t data_to_jsbsim(uint8_t *buf) {
     memcpy(buf, data_ptr, len);
     to_jsbsim_queue.pop();
 
-
     return len;
 }
 
