@@ -14,7 +14,6 @@ import {
     Texture,
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-// import { OBJFileLoader } from "@babylonjs/loaders";
 
 import OriginCamera from "./originCamera";
 import Entity from "./entity";
