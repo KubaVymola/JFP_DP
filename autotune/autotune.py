@@ -1,3 +1,16 @@
+#==============================================================================
+# autotune.py
+#==============================================================================
+# 
+# Automatic tunning script (CIFT) developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
+
 import os
 import signal as sgnl
 import sys

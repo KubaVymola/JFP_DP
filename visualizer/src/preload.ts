@@ -1,3 +1,15 @@
+//==============================================================================
+// preload.ts
+//==============================================================================
+//
+// Source code of the 3D visualization developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 

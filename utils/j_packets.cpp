@@ -1,3 +1,15 @@
+//==============================================================================
+// j_packets.cpp
+//==============================================================================
+//
+// Source code of the j-packets data transfer protocol developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 #include "j_packets.h"
 
 #include <string.h>

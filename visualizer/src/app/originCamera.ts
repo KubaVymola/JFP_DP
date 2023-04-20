@@ -1,3 +1,17 @@
+//==============================================================================
+// originCamera.ts
+//==============================================================================
+//
+// Source code of the 3D visualization developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Inspired by: https://doc.babylonjs.com/features/featuresDeepDive/scene/floating_origin#how-floating-origin-works
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 import {
     Scene,
     Vector3,

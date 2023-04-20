@@ -1,3 +1,16 @@
+#==============================================================================
+# plot_tune_3d.py
+#==============================================================================
+# 
+# Visualization of the tunning developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
+
 import matplotlib.pyplot as plt
 import sys
 import scienceplots
@@ -7,12 +20,6 @@ from scipy import signal
 plt.style.use(['science', 'no-latex'])
 
 sgnl.signal(sgnl.SIGINT, sgnl.SIG_DFL)
-
-"""
-This scrit creates a 3D plot of the automatic tunning. Each data point's location are the values
-of the first three state vector variables. Color of each data point is the cost function value for
-the given state vector
-"""
 
 if len(sys.argv) < 2:
     print('Usage: python plot_tune_3d.py <log_file>')

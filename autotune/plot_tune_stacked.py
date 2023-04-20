@@ -1,3 +1,15 @@
+#==============================================================================
+# plot_tune_stacked.py
+#==============================================================================
+# 
+# Visualization of the tunning developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.widgets import Slider
