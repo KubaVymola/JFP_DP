@@ -1,3 +1,15 @@
+//==============================================================================
+// hp203b.cpp
+//==============================================================================
+//
+// Source code of the Flight controller software developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 #include "hp203b.h"
 
 void hp203b_setup(struct hp203b_t *hhp203b, I2C_HandleTypeDef *hi2c, uint8_t csb_pin) {

@@ -1,3 +1,15 @@
+#==============================================================================
+# j-viz.py
+#==============================================================================
+# 
+# Source code of the j-viz script developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
 import argparse
 from typing import TextIO
 import time
@@ -12,12 +24,6 @@ plt.style.use(['science', 'no-latex'])
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-"""
-This scripts runs a visualization of CSV data. The visualization is configured with an XML file,
-examples are present in the 'configs' directory.
-
-The script can visualize either first n seconds, or last n seconds, depending on the CLI parameters.
-"""
 
 new_data = False
 lns = []

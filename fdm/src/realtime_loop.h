@@ -1,3 +1,15 @@
+//==============================================================================
+// realtime_loop.h
+//==============================================================================
+//
+// Source code of the fdm program (JSBSim wrapper) developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 #ifndef REALTIMELOOP_H
 #define REALTIMELOOP_H
 

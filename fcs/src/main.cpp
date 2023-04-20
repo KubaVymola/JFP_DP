@@ -6,7 +6,7 @@
 // "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
 //
 // Author: Jakub Výmola (kuba.vymola@gmail.com)
-// Date: 04/18/2023
+// Date: 04/30/2023
 //
 //==============================================================================
 
@@ -24,7 +24,7 @@
 
 #include "utils.h"
 #include "complementary_filter.h"
-#include "Adafruit_AHRS_Madgwick.h"
+#include "MadgwickAHRS.h"
 #include "low_pass_filter.h"
 #include "pid.h"
 #include "j_packets.h"
@@ -153,7 +153,7 @@ extern "C" void init() {
     
     disable_pid_integrators();
 
-    sensor_fusion.begin(LOOP_FREQUENCY);
+    // sensor_fusion.begin(LOOP_FREQUENCY);
 
 }
 
@@ -248,11 +248,14 @@ extern "C" void control_loop(void) {
     ay_g = low_pass_filter_update(acc_y_lpf, ay_g, delta_t_s);
     az_g = low_pass_filter_update(acc_z_lpf, az_g, delta_t_s);
 
-    sensor_fusion.updateIMU(-gx_rad * RAD_TO_DEG, gy_rad * RAD_TO_DEG, -gz_rad * RAD_TO_DEG, ax_g, -ay_g, az_g);
-    sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
-    roll_est_deg = sensor_fusion.getRoll();
-    pitch_est_deg = sensor_fusion.getPitch();
-    yaw_est_deg = sensor_fusion.getYaw() - 180.0;
+    MadgwickAHRSupdateIMU(-gx_rad, gy_rad, -gz_rad, ax_g, -ay_g, az_g, delta_t_s);
+    MagdwickGetOuput(&qw, &qx, &qy, &qz, &yaw_est_deg, &pitch_est_deg, &roll_est_deg);
+
+    // MadgwickAHRSupdateIMU(-gx_rad * RAD_TO_DEG, gy_rad * RAD_TO_DEG, -gz_rad * RAD_TO_DEG, ax_g, -ay_g, az_g);
+    // sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
+    // roll_est_deg = sensor_fusion.getRoll();
+    // pitch_est_deg = sensor_fusion.getPitch();
+    // yaw_est_deg = sensor_fusion.getYaw() - 180.0;
 
     Quaterion_t acc =   { 0,   ax_g, -ay_g, az_g };
     Quaterion_t q =     { qw,  qx,    qy,   qz   };

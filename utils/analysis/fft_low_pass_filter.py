@@ -1,3 +1,15 @@
+#==============================================================================
+# j-viz.py
+#==============================================================================
+# 
+# Source code of the low-pass visualization script developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
 from scipy.fft import fft, fftfreq
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,12 +17,6 @@ from lpf import *
 
 import scienceplots
 plt.style.use(['science', 'no-latex'])
-
-"""
-Script that plot attenuation and phase shift of a lowpass filter. X-axis is the frequency.
-Cutoff frequency is 20 Hz, therefore attenuation of 3 dB and phase shift of 45 ° is expected at
-this frequency.
-"""
 
 T = 30 # end time
 F = 400 # samples per sec

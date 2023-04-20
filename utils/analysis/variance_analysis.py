@@ -1,11 +1,18 @@
+#==============================================================================
+# j-viz.py
+#==============================================================================
+# 
+# Source code for variance analysis script developed as a part of the
+# "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+#
+# Author: Jakub Výmola (kuba.vymola@gmail.com)
+# Date: 04/30/2023
+#
+#==============================================================================
+
 import math
 import matplotlib.pyplot as plt
 import sys
-
-"""
-A script used to calculate a variance of data and plot the data in a histogram. Used to obtain
-variance of a real-world sensor measurements to be used with JSBSim sensor
-"""
 
 # acc: 7,8,9 (g)
 # const_mult = 9.81

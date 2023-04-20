@@ -1,3 +1,15 @@
+//==============================================================================
+// sitl_interface.cpp
+//==============================================================================
+//
+// Source code of the fdm program (JSBSim wrapper) developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 #include "sitl_interface.h"
 
 #include <unistd.h>

@@ -1,3 +1,15 @@
+//==============================================================================
+// global_variables.h
+//==============================================================================
+//
+// Source code of the Flight controller software developed as a part of the
+// "Control Units Interface for JSBSim Simulator" thesis by Jakub Výmola
+//
+// Author: Jakub Výmola (kuba.vymola@gmail.com)
+// Date: 04/30/2023
+//
+//==============================================================================
+
 #ifndef GLOBALVARIABLES_H
 #define GLOBALVARIABLES_H
 
@@ -8,7 +20,6 @@
 #include "defines.h"
 #include "pid.h"
 #include "low_pass_filter.h"
-#include "Adafruit_AHRS_Madgwick.h"
 #include "j_packets.h"
 
 #ifdef MCU
@@ -22,8 +33,6 @@ inline char cmd_string[128] = { 0 };
 inline uint8_t heading_mode  = HEADING_MODE_DYNAMIC;
 inline uint8_t lateral_mode  = LATERAL_MODE_ANGLE;
 inline uint8_t vertical_mode = VERTICAL_MODE_DIRECT;
-
-inline Adafruit_Madgwick sensor_fusion;
 
 inline pid_state_t alt_sp_pid;   /* VERTICAL_MODE_SP */
 inline pid_state_t alt_rate_pid; /* VERTICAL_MODE_RATE */
