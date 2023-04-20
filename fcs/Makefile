@@ -43,7 +43,6 @@ C_SOURCES = \
 src/delay_us.c
 
 CXX_SOURCES = \
-src/Adafruit_AHRS_Madgwick.cpp \
 src/complementary_filter.cpp \
 src/demo_sequence.cpp \
 src/flash_interface.cpp \
@@ -51,6 +50,7 @@ src/flight_events.cpp \
 src/j_packet_recv_callback.cpp \
 src/j_packet_send_callback.cpp \
 src/low_pass_filter.cpp \
+src/MadgwickAHRS.cpp \
 src/main.cpp \
 src/mixer.cpp \
 src/pid.cpp \

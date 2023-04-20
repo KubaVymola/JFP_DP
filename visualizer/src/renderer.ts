@@ -65,19 +65,6 @@ export default class Renderer {
 
         engine.runRenderLoop(() => {
             this._scene.render();
-
-            // let gamepad = null;
-            // if (navigator.getGamepads().length > 0)
-            //     gamepad = navigator.getGamepads()[0]
-
-            // console.log('num gamepads', navigator.getGamepads().length);
-            // console.log('gamepad is null', gamepad === null);
-
-            // if (gamepad !== null) {
-            //     console.log('gamepad num axes', gamepad.axes.length);
-            //     console.log('gamepad axes', gamepad.axes);
-            // }
-            
         })
 
         window.addEventListener('resize', function () {
