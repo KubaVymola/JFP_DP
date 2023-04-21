@@ -24,6 +24,12 @@
 
 # Building
 
+NOTE:
+
+If you have downloaded a .zip file of this project that has no parent git repository, the
+`git submodule` command won't work. Run the `download-dependencies.sh` script in the lib
+directory instead!
+
 ```
 $ git submodule update --init --recursive
 $ mkdir build && cd build

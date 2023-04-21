@@ -3,11 +3,12 @@
 Run:
 
 ```
-$ rm package-lock.json  # not removing cases trouble with babylon.js dependencies
+$ rm package-lock.json  # not removing causes trouble with babylon.js dependencies
 $ npm install
 ```
 
-It might be neccessary to manually run:
+It might be neccessary to manually run, but do not try this, unless you have verified, that
+`babylon.js` is really missing those dependencies:
 
 ```
 $ npm install @babylonjs/materials
