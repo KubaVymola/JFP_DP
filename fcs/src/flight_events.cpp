@@ -88,7 +88,7 @@ bool detect_landing() {
  * Cannot false-arm, for safety
 */
 bool detect_arm() {
-    if (!is_armed && AUTO_ARM) return true;
+    if (!is_armed && AUTOARM_L) return true;
 
     if (is_armed) return false;
     if (ctrl_channels_norm[THROTTLE_CHANNEL] > IDLE_THRUST_POS_THRESHLD) return false;
@@ -105,7 +105,7 @@ bool detect_arm() {
  * Has to be very easy to disarm, only ARM_CHANNEL value needed to disarm
 */
 bool detect_disarm() {
-    if (AUTO_ARM) return false;
+    if (AUTOARM_L) return false;
     if (!is_armed) return false;
     if (force_arm) return false;
     if (ctrl_channels_norm[ARM_CHANNEL] > 0.5f) return false;

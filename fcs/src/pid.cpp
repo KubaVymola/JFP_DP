@@ -23,6 +23,16 @@ void pid_reset(struct pid_state_t &pid) {
     pid.prev_measurement = 0;
 }
 
+void pid_set_d_threshold(struct pid_state_t &pid, float d_threshold) {
+    pid.d_threshold_enable = 1;
+    pid.d_threshold = d_threshold;
+}
+
+void pid_reset_d_threshold(struct pid_state_t &pid) {
+    pid.d_threshold_enable = 0;
+}
+
+
 void pid_integrator_disable(struct pid_state_t& pid) {
     pid.integrator_enable = 0;
 }
@@ -59,6 +69,10 @@ float pid_update(struct pid_state_t &pid, float set_point, float measurement, fl
 
     } else {
         pid.integrator = 0;
+    }
+
+    if (pid.d_threshold_enable > 0 && abs(measurement - pid.prev_measurement) > pid.d_threshold) {
+        pid.prev_measurement = measurement;
     }
 
     pid.differentiator = (2.0 * -pid.k_d * (measurement - pid.prev_measurement) + (2.0 *  pid.tau - delta_t) * pid.differentiator)

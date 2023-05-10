@@ -293,12 +293,12 @@
             <property> telem/sensor/imu/gyroZ-dps </property>
 
             <property> telem/yaw </property>
-            <property> telem/pitch </property>
             <property> telem/roll </property>
+            <property> telem/pitch </property>
 
-            <property> telem/pitch-rate-dps </property>
-            <property> telem/roll-rate-dps </property>
             <property> telem/yaw-rate-dps </property>
+            <property> telem/roll-rate-dps </property>
+            <property> telem/pitch-rate-dps </property>
 
             <property> telem/alt-rate-mps </property>
 

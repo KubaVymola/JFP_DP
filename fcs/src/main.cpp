@@ -105,27 +105,32 @@ extern "C" void init() {
     pid_init(alt_sp_pid,   0.0469, 0.0019, 0.0727, 0.15, -0.5, 0.5);
     pid_init(alt_rate_pid, 0.1299, 0.031,  0.0332, 0.15, -0.5, 0.5);
 
-    pid_init(yaw_sp_pid,   0.00098,  0.00001,  0.00059, 0.15, -0.2, 0.2);
+    pid_init(yaw_sp_pid,   0.00098,  0.00001,  0.00059,  0.15, -0.2, 0.2);
     pid_init(yaw_rate_pid, 0.000204, 0.000002, 0.000037, 0.15, -0.2, 0.2);
 
     pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
     pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
 
-    pid_init(roll_pid,  0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
-    pid_init(pitch_pid, 0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
+    pid_init(roll_pid,  5.0, 0.0, 2.0, 0.15, -50, 50); // Holds an angle, output used as roll_rate setpoint
+    pid_init(pitch_pid, 5.0, 0.0, 2.0, 0.15, -50, 50); // Holds an angle, output used as pitch_rate setpoint
 
-    pid_init(roll_rate_pid,  0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
-    pid_init(pitch_rate_pid, 0.002, 0.0, 0.0012, 0.15, -0.2, 0.2);
+    pid_init(roll_rate_pid,  0.0015, 0.0, 0.0001, 0.15, -0.2, 0.2);
+    pid_init(pitch_rate_pid, 0.0015, 0.0, 0.0001, 0.15, -0.2, 0.2);
 
     load_pid_flash(false);
     
     low_pass_filter_init(alt_est_lpf, 0.13f);
 
-    low_pass_filter_init(yaw_rate_lpf, 5.0f);
+    low_pass_filter_init(yaw_rate_lpf, 6.0f);
+    low_pass_filter_init(roll_rate_lpf, 6.0f);
+    low_pass_filter_init(pitch_rate_lpf, 6.0f);
     
-    low_pass_filter_init(acc_x_lpf, 4.0f);
-    low_pass_filter_init(acc_y_lpf, 4.0f);
-    low_pass_filter_init(acc_z_lpf, 4.0f);
+    low_pass_filter_init(acc_x_lpf, 6.0f);
+    low_pass_filter_init(acc_y_lpf, 6.0f);
+    low_pass_filter_init(acc_z_lpf, 6.0f);
+
+    // Prevent wild behavior when yaw_est_deg loop around 180° to -180°
+    pid_set_d_threshold(yaw_sp_pid, 100);
 
 
     /**
@@ -141,8 +146,8 @@ extern "C" void init() {
     // pid_init(x_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as roll  setpoint
     // pid_init(y_body_pid, 4.47, 0.1, 6.82, 0.15, -10, 10);  // Output is used as pitch setpoint
 
-    // pid_init(roll_pid,  0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
-    // pid_init(pitch_pid, 0.00017, 0.00002, 0.000099, 0.15, -0.2, 0.2);
+    // pid_init(roll_pid,  0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
+    // pid_init(pitch_pid, 0.00009, 0.00003, 0.00005, 0.15, -0.2, 0.2);
 
     // pid_init(roll_rate_pid,  0.002, 0, 0.0012, 0.15, -0.2, 0.2);
     // pid_init(pitch_rate_pid, 0.002, 0, 0.0012, 0.15, -0.2, 0.2);
@@ -251,12 +256,6 @@ extern "C" void control_loop(void) {
     MadgwickAHRSupdateIMU(-gx_rad, gy_rad, -gz_rad, ax_g, -ay_g, az_g, delta_t_s);
     MagdwickGetOuput(&qw, &qx, &qy, &qz, &yaw_est_deg, &pitch_est_deg, &roll_est_deg);
 
-    // MadgwickAHRSupdateIMU(-gx_rad * RAD_TO_DEG, gy_rad * RAD_TO_DEG, -gz_rad * RAD_TO_DEG, ax_g, -ay_g, az_g);
-    // sensor_fusion.getQuaternion(&qw, &qx, &qy, &qz);
-    // roll_est_deg = sensor_fusion.getRoll();
-    // pitch_est_deg = sensor_fusion.getPitch();
-    // yaw_est_deg = sensor_fusion.getYaw() - 180.0;
-
     Quaterion_t acc =   { 0,   ax_g, -ay_g, az_g };
     Quaterion_t q =     { qw,  qx,    qy,   qz   };
     Quaterion_t q_inv = { qw, -qx,   -qy,  -qz   };
@@ -270,7 +269,13 @@ extern "C" void control_loop(void) {
      * ==== Altitude ====
      */
     
-    alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
+    if (pressure_pa_prev == 0.0f) pressure_pa_prev = pressure_pa;
+
+    // Prevent big error jumps
+    if (abs(pressure_pa - pressure_pa_prev) <= 100.0f) {
+        alt_measurement_m = get_alt_asl_from_pressure(pressure_pa);
+    }
+
 
     if (alt_est_m      == NO_ALTITUDE) alt_est_m      = get_alt_asl_from_pressure(pressure_pa_mean);
     if (alt_est_m_prev == NO_ALTITUDE) alt_est_m_prev = get_alt_asl_from_pressure(pressure_pa_mean);
@@ -280,19 +285,18 @@ extern "C" void control_loop(void) {
     alt_rate_est_mps = complementary_filter_update(0.01f,
                                                    (alt_est_m - alt_est_m_prev) / delta_t_s,
                                                    alt_rate_est_mps + lin_acc_z_g * G_TO_MPS * delta_t_s);
-    
-    // alt_rate_est_mps = low_pass_filter_update(alt_rate_est_lpf, alt_rate_est_mps, delta_t_s);
 
     alt_est_m_prev = alt_est_m;
+    pressure_pa_prev = pressure_pa;
 
 
     /**
      * ==== END Altitude ====
      */
 
-#ifdef DEMO_SEQ
-    demo_sequence();
-#endif
+    if (DEMO_SEQ_L) {
+        demo_sequence();
+    }
 
     /**
      * ==== Yaw ====
@@ -307,13 +311,8 @@ extern "C" void control_loop(void) {
     if (yaw_est_deg > 180.0f) yaw_est_deg = -360.0f + yaw_est_deg;
     #endif
 
-
-    // float yaw_sp_diff_deg = yaw_sp_deg - yaw_est_deg;
-    // while (yaw_sp_diff_deg > 180) yaw_sp_diff_deg -= 360;
-    // while (yaw_sp_diff_deg < -180) yaw_sp_diff_deg += 360;
-
-    if (yaw_sp_deg - yaw_est_deg > 180) yaw_sp_deg -= 360;
-    if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360;
+    if (yaw_sp_deg - yaw_est_deg >= 180) yaw_sp_deg -= 360.0f;
+    if (yaw_sp_deg - yaw_est_deg < -180) yaw_sp_deg += 360.0f;
 
     float yaw_diff_deg = yaw_est_deg - yaw_est_deg_prev;
     if (yaw_diff_deg < -180) yaw_diff_deg += 360.0f;
@@ -321,8 +320,12 @@ extern "C" void control_loop(void) {
 
     yaw_rate_dps = yaw_diff_deg / delta_t_s;
     yaw_rate_dps = low_pass_filter_update(yaw_rate_lpf, yaw_rate_dps, delta_t_s);
+    
     roll_rate_dps = (roll_est_deg - roll_est_deg_prev) / delta_t_s;
+    roll_rate_dps = low_pass_filter_update(roll_rate_lpf, roll_rate_dps, delta_t_s);
+    
     pitch_rate_dps = (pitch_est_deg - pitch_est_deg_prev) / delta_t_s;
+    pitch_rate_dps = low_pass_filter_update(pitch_rate_lpf, pitch_rate_dps, delta_t_s);
 
     yaw_est_deg_prev = yaw_est_deg;
     roll_est_deg_prev = roll_est_deg;
@@ -356,7 +359,6 @@ extern "C" void control_loop(void) {
     pitch_channel = ctrl_channels_norm[PITCH_CHANNEL];
     roll_channel = ctrl_channels_norm[ROLL_CHANNEL];
     vert_mode_channel = ctrl_channels_norm[VERT_MODE_CHANNEL];
-
 
     if (current_tunning < 0) {
         if (vert_mode_channel < -0.5f) vertical_mode = VERTICAL_MODE_RATE;
@@ -397,6 +399,8 @@ extern "C" void control_loop(void) {
 
         throttle_cmd = ZERO_RATE_THROTTLE + pid_update(alt_rate_pid, target_alt_rate, alt_rate_est_mps, delta_t_s);
 
+        // TODO maybe have VERTICAL_MODE_DYNAMIC similar to HEADING_MODE_DYNAMIC
+
         /**
          * Idle thrust when on the ground
          */
@@ -426,14 +430,11 @@ extern "C" void control_loop(void) {
     } else if (heading_mode == HEADING_MODE_DYNAMIC) {
         float target_yaw_rate = 0.0f;
 
-        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND);
-        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND);
-
-        // float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_diff_deg, 0.0f, delta_t_s);
-        // float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
+        if (yaw_channel > HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel - HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
+        if (yaw_channel < -HEADING_DYNAMIC_DEADBAND) target_yaw_rate = (yaw_channel + HEADING_DYNAMIC_DEADBAND) * MAX_YAW_RATE / (1.0f - HEADING_DYNAMIC_DEADBAND);
 
         float yaw_sp_pid_out = pid_update(yaw_sp_pid, yaw_sp_deg, yaw_est_deg, delta_t_s);
-        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate * MAX_YAW_RATE, yaw_rate_dps, delta_t_s);
+        float yaw_rate_pid_out = pid_update(yaw_rate_pid, target_yaw_rate, yaw_rate_dps, delta_t_s);
 
         if (target_yaw_rate == 0.0f) {
             yaw_cmd = yaw_sp_pid_out;
@@ -466,8 +467,11 @@ extern "C" void control_loop(void) {
         pitch_cmd = pid_update(pitch_rate_pid, pitch_channel * MAX_ANGLE_RATE, pitch_rate_dps, delta_t_s);
 
     } else if (lateral_mode == LATERAL_MODE_ANGLE) {
-        roll_cmd = pid_update(roll_pid, roll_channel * MAX_ANGLE, roll_est_deg, delta_t_s);
-        pitch_cmd = pid_update(pitch_pid, -pitch_channel * MAX_ANGLE, pitch_est_deg, delta_t_s);
+        float roll_rate_sp  = pid_update(roll_pid,   roll_channel  * MAX_ANGLE, roll_est_deg,  delta_t_s);
+        float pitch_rate_sp = pid_update(pitch_pid, -pitch_channel * MAX_ANGLE, pitch_est_deg, delta_t_s);
+
+        roll_cmd =  pid_update(roll_rate_pid,  roll_rate_sp,  roll_rate_dps,  delta_t_s);
+        pitch_cmd = pid_update(pitch_rate_pid, pitch_rate_sp, pitch_rate_dps, delta_t_s);
     }
     /**
      * ==== END Pitch/roll command ====
@@ -565,12 +569,12 @@ void after_loop(void) {
 
             time_s,
 
-            ctrl_channels_norm[0],
-            ctrl_channels_norm[1],
-            ctrl_channels_norm[2],
-            ctrl_channels_norm[3],
-            ctrl_channels_norm[4],
-            ctrl_channels_norm[5],
+            ctrl_channels_norm[ROLL_CHANNEL],       // ROLL_CHANNEL
+            ctrl_channels_norm[PITCH_CHANNEL],      // PITCH_CHANNEL
+            ctrl_channels_norm[THROTTLE_CHANNEL],   // THROTTLE_CHANNEL
+            ctrl_channels_norm[YAW_CHANNEL],        // YAW_CHANNEL
+            ctrl_channels_norm[ARM_CHANNEL],        // ARM_CHANNEL
+            ctrl_channels_norm[VERT_MODE_CHANNEL],  // VERT_MODE_CHANNEL
             
             ax_g,
             ay_g,
@@ -585,12 +589,12 @@ void after_loop(void) {
             gz_rad * RAD_TO_DEG,
             
             yaw_est_deg,
-            pitch_est_deg,
             roll_est_deg,
+            pitch_est_deg,
             
+            yaw_rate_dps,
             roll_rate_dps,
             pitch_rate_dps,
-            yaw_rate_dps,
 
             alt_rate_est_mps,
 
@@ -651,7 +655,7 @@ int main(void) {
 
     HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
 
-    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_400HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_400HZ, BMI160_GYRO_RANGE_1000DPS);
+    bmi160_init(&hbmi160, &hspi3, 0, BMI160_ACC_RATE_1600HZ, BMI160_ACC_RANGE_4G, BMI160_GYRO_RATE_3200HZ, BMI160_GYRO_RANGE_1000DPS);
     hp203b_setup(&hhp203b, &hi2c2, 1);
 
     HAL_TIM_Base_Start(&htim6);

@@ -56,7 +56,10 @@ extern "C" {
 #define BMI160_ACC_RATE_200HZ           0x09
 #define BMI160_ACC_RATE_400HZ           0x0A
 #define BMI160_ACC_RATE_800HZ           0x0B
+#define BMI160_ACC_RATE_1600HZ          0x0C
 #define BMI160_ACC_BWP_NORMAL           (0x02 << 4)
+#define BMI160_ACC_BWP_OSR2             (0x01 << 4)
+#define BMI160_ACC_BWP_OSR4             (0x00 << 4)
 
 #define BMI160_ACC_RANGE_ADDRESS        0x41
 #define BMI160_ACC_RANGE_2G             0x03
@@ -75,7 +78,11 @@ extern "C" {
 #define BMI160_GYRO_RATE_200HZ          0x09
 #define BMI160_GYRO_RATE_400HZ          0x0A
 #define BMI160_GYRO_RATE_800HZ          0x0B
+#define BMI160_GYRO_RATE_1600HZ         0x0C
+#define BMI160_GYRO_RATE_3200HZ         0x0D
 #define BMI160_GYRO_BWP_NORMAL          (0x02 << 4)
+#define BMI160_GYRO_BWP_OSR2            (0x01 << 4)
+#define BMI160_GYRO_BWP_OSR4            (0x00 << 4)
 
 #define BMI160_GYRO_RANGE_ADDRESS       0x43
 #define BMI160_GYRO_RANGE_2000DPS       0x00

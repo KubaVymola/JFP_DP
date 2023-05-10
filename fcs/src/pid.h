@@ -30,11 +30,14 @@ struct pid_state_t {
     float differentiator;
     float integrator;
     float output;
+
+    float d_threshold;
     
     float prev_error;
     float prev_measurement;
 
     uint8_t integrator_enable;
+    uint8_t d_threshold_enable;
 };
 
 /**
@@ -46,6 +49,8 @@ void pid_init(struct pid_state_t& pid, float k_p, float k_i, float k_d, float ta
  * Resets the pid differentiator, integrator, prev_error and prev_measurement
 */
 void pid_reset(struct pid_state_t &pid);
+void pid_set_d_threshold(struct pid_state_t &pid, float d_threshold);
+void pid_reset_d_threshold(struct pid_state_t &pid);
 void pid_integrator_disable(struct pid_state_t& pid);
 void pid_integrator_enable(struct pid_state_t& pid);
 

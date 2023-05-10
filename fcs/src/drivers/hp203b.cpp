@@ -43,7 +43,7 @@ float hp203b_get_pressure_pa(struct hp203b_t *hhp203b) {
     uint8_t i2c_cmd;
     uint8_t buf[3] = { 0 };
 
-    i2c_cmd = 0x48; /* Preform ADC conversion */
+    i2c_cmd = 0x48; /* Start ADC conversion */
     HAL_I2C_Master_Transmit(hhp203b->hi2c, hhp203b->address, &i2c_cmd, sizeof(i2c_cmd), 100);
 
     i2c_cmd = 0x30; /* Read pressure */

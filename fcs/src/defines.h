@@ -13,12 +13,18 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-// #define DEMO_SEQ                        1
+#include "config.h"
 
 #ifdef AUTOARM
-#define AUTO_ARM                         true
+#define AUTOARM_L                        true
 #else
-#define AUTO_ARM                         false
+#define AUTOARM_L                        false
+#endif
+
+#ifdef DEMO_SEQ
+#define DEMO_SEQ_L                       true
+#else
+#define DEMO_SEQ_L                       false
 #endif
 
 #define LOOP_FREQUENCY                   400.0f
@@ -39,14 +45,14 @@
 
 #define CALIBRATION_TIME_S               2.0f
 
-#define MAX_VERICAL_RATE                 2.0f  /* M/S */
-#define MAX_YAW_RATE                     100.0f /* DEG/S */
+#define MAX_VERICAL_RATE                 MAX_VERICAL_RATE_CONFIG  /* M/S */
+#define MAX_YAW_RATE                     75.0f /* DEG/S */
 #define MAX_ANGLE_RATE                   20.0f  /* DEG/S */
 #define MAX_ANGLE                        30.0f  /* DEG */
 
 #define VERTICAL_RATE_THRUST_POS_DEADBAND 0.3f
 
-#define ZERO_RATE_THROTTLE               0.4f
+#define ZERO_RATE_THROTTLE               ZERO_RATE_THROTTLE_CONFIG
 
 #define IDLE_ARM_THRUST                  0.1f
 #define IDLE_THRUST_POS_THRESHLD        -0.9f   /* Stick position required to register idle thrust */
@@ -68,12 +74,12 @@
 
 #define NUM_CTRL_CHANNELS                8
 
-#define ROLL_CHANNEL                     0
-#define PITCH_CHANNEL                    1
-#define THROTTLE_CHANNEL                 2
-#define YAW_CHANNEL                      3
-#define ARM_CHANNEL                      4
-#define VERT_MODE_CHANNEL                5
+#define ROLL_CHANNEL                     ROLL_CHANNEL_CONFIG
+#define PITCH_CHANNEL                    PITCH_CHANNEL_CONFIG
+#define THROTTLE_CHANNEL                 THROTTLE_CHANNEL_CONFIG
+#define YAW_CHANNEL                      YAW_CHANNEL_CONFIG
+#define ARM_CHANNEL                      ARM_CHANNEL_CONFIG
+#define VERT_MODE_CHANNEL                VERT_MODE_CHANNEL_CONFIG
 
 #define TUNE_ANGLE_SP                    0
 #define TUNE_POS_SP                      1

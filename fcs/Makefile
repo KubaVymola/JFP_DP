@@ -16,10 +16,14 @@ OPT =
 BUILD_DIR = build
 
 AUTOARM =
-TARGET =
+DEMO_SEQ =
+
+TARGET = 
 FAMILY = 
 VENDOR =
 OUTPUT_TYPE =
+
+QUAD_CONFIG ?= HOME_QUAD
 
 # ==== TARGET SETTINGS ====
 # Target list:
@@ -217,6 +221,21 @@ endif
 ifeq ($(AUTOARM),1)
 DEFS += -DAUTOARM
 endif
+ifeq ($(DEMO_SEQ),1)
+DEFS += -DDEMO_SEQ
+endif
+
+####################################################################################################
+# CONFIGS
+####################################################################################################
+ifeq ($(QUAD_CONFIG),HOME_QUAD)
+DEFS += -DCONFIG_HOME_QUAD
+endif
+
+ifeq ($(QUAD_CONFIG),SCHOOL_QUAD)
+DEFS += -DCONFIG_SCHOOL_QUAD
+endif
+
 
 # all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 all: sitl

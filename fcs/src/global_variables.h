@@ -64,6 +64,7 @@ inline int calibration_samples = 0;
 inline low_pass_filter_t alt_est_lpf;
 inline float pressure_pa = 0.0f;
 inline float pressure_pa_mean = 0.0f;
+inline float pressure_pa_prev = 0.0f;
 inline float alt_measurement_m = 0.0f;
 inline float alt_est_m = NO_ALTITUDE;
 inline float alt_est_m_prev = NO_ALTITUDE;
@@ -71,6 +72,8 @@ inline float initial_alt_m = NO_ALTITUDE;
 inline float alt_rate_est_mps = 0.0f;
 
 inline low_pass_filter_t yaw_rate_lpf;
+inline low_pass_filter_t roll_rate_lpf;
+inline low_pass_filter_t pitch_rate_lpf;
 inline float yaw_est_deg = 0.0f;
 inline float yaw_est_deg_prev = 0.0f;
 inline float pitch_est_deg = 0.0f;

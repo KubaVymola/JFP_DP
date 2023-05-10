@@ -98,7 +98,7 @@ uint8_t bmi160_test_chip_id(struct bmi160_t *hbmi160) {
 void bmi160_config_accel(struct bmi160_t *hbmi160, uint8_t accel_rate, uint8_t accel_range) {
     {
         // Config accel output data rate (ODR) and bandwidth parameter (BWP)
-        uint8_t buf[2] = { BMI160_ACC_CONF_ADDRESS, (uint8_t)(accel_rate | BMI160_ACC_BWP_NORMAL) };
+        uint8_t buf[2] = { BMI160_ACC_CONF_ADDRESS, (uint8_t)(accel_rate | BMI160_ACC_BWP_OSR4) };
 
         bmi160_spi_write(hbmi160->hspi, buf, 2);
 
@@ -128,7 +128,7 @@ void bmi160_config_accel(struct bmi160_t *hbmi160, uint8_t accel_rate, uint8_t a
 void bmi160_config_gyro(struct bmi160_t *hbmi160, uint8_t gyro_rate, uint8_t gyro_range) {
     {
         // Config gyro output data rate (ODR) and bandwidth parameter (BWP)
-        uint8_t buf[2] = { BMI160_GYRO_CONF_ADDRESS, (uint8_t)(gyro_rate | BMI160_GYRO_BWP_NORMAL) };
+        uint8_t buf[2] = { BMI160_GYRO_CONF_ADDRESS, (uint8_t)(gyro_rate | BMI160_GYRO_BWP_OSR4) };
 
         bmi160_spi_write(hbmi160->hspi, buf, 2);
 
